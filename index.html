@@ -26,74 +26,6 @@
 <body>
 
 <!-- ════════════════════════════════════════════════════
-     AUTH SCREEN
-════════════════════════════════════════════════════ -->
-<div id="auth-screen">
-  <div class="auth-wrap">
-    <div class="auth-logo">
-      <div class="n-mark">N</div>
-      <div class="brand">Netzerra</div>
-      <div class="tagline">Kenya's Carbon Intelligence Platform 🇰🇪</div>
-    </div>
-    <div class="auth-card">
-      <div class="auth-tabs">
-        <div class="auth-tab active" onclick="switchAuthTab('login')">Sign In</div>
-        <div class="auth-tab"        onclick="switchAuthTab('register')">Create Account</div>
-      </div>
-
-      <!-- LOGIN -->
-      <div id="login-form">
-        <div class="fg">
-          <label>Email Address</label>
-          <input type="email" id="login-email" placeholder="you@organization.ke" value="shukriali411@gmail.com" autocomplete="email">
-        </div>
-        <div class="fg">
-          <label>Password</label>
-          <input type="password" id="login-pw" placeholder="••••••••" value="password123" autocomplete="current-password">
-        </div>
-        <button class="btn-auth" onclick="login()">Sign In to Netzerra →</button>
-        <div class="auth-sep"><span>OR</span></div>
-        <button class="btn-guest" onclick="loginAsGuest()">
-          👁️ Continue as Guest &nbsp;<span style="font-size:.7rem;opacity:.6">(view-only)</span>
-        </button>
-        <div class="auth-foot">New to Netzerra? <a onclick="switchAuthTab('register')">Create account</a></div>
-      </div>
-
-      <!-- REGISTER -->
-      <div id="register-form" style="display:none">
-        <div class="fg"><label>Full Name</label><input type="text" id="reg-name" placeholder="Shukri Ali" autocomplete="name"></div>
-        <div class="fg"><label>Email Address</label><input type="email" id="reg-email" placeholder="you@organization.ke" autocomplete="email"></div>
-        <div class="fg"><label>Phone Number</label><input type="tel" id="reg-phone" placeholder="+254 7XX XXX XXX" autocomplete="tel"></div>
-        <div class="fg">
-          <label>Organisation / County</label>
-          <select id="reg-org">
-            <option value="">Select...</option>
-            <option>Turkana County Government</option>
-            <option>Laikipia County Government</option>
-            <option>Kajiado County Government</option>
-            <option>Nakuru County Government</option>
-            <option>Isiolo County Government</option>
-            <option>Samburu County Government</option>
-            <option>Narok County Government</option>
-            <option>Baringo County Government</option>
-            <option>ASAL Development Fund</option>
-            <option>Kenya Water Institute</option>
-            <option>FAO Kenya</option>
-            <option>World Bank Kenya</option>
-            <option>Private Agri-Business</option>
-            <option>Research Institution</option>
-            <option>Other</option>
-          </select>
-        </div>
-        <div class="fg"><label>Password</label><input type="password" id="reg-pw" placeholder="Min. 8 characters" autocomplete="new-password"></div>
-        <button class="btn-auth" onclick="register()">Create Account & Start →</button>
-        <div class="auth-foot">Already have an account? <a onclick="switchAuthTab('login')">Sign in</a></div>
-      </div>
-    </div>
-  </div>
-</div>
-
-<!-- ════════════════════════════════════════════════════
      ONBOARDING MODAL
 ════════════════════════════════════════════════════ -->
 <div id="onboarding-overlay">
@@ -106,7 +38,7 @@
 <!-- ════════════════════════════════════════════════════
      APP SHELL
 ════════════════════════════════════════════════════ -->
-<div id="app" style="display:none">
+<div id="app">
 
   <!-- ──────────────── SIDEBAR ──────────────── -->
   <nav id="sidebar">
@@ -116,14 +48,17 @@
         <div class="brand">Netzerra</div>
         <div class="sub">Carbon Intelligence Platform</div>
       </div>
+      <!-- X close button — visible on all sizes -->
+      <button class="sb-close" onclick="toggleSidebar()" aria-label="Close sidebar" title="Close sidebar">✕</button>
     </div>
 
-    <div class="sb-user">
+    <div class="sb-user" onclick="openProfileModal()" title="Edit your profile" style="cursor:pointer">
       <div class="sb-avatar" id="sb-avatar">SA</div>
       <div class="sb-user-info">
         <div class="name" id="sb-name">Shukri Ali</div>
         <div class="plan" id="sb-plan">🌱 Seedling Plan</div>
       </div>
+      <div style="margin-left:auto;font-size:.75rem;color:rgba(109,217,140,.5);flex-shrink:0">✏️</div>
     </div>
 
     <div class="sb-nav">
@@ -164,7 +99,8 @@
       <div class="nav-label">Account</div>
       <div class="nav-item" onclick="showSection('membership')"><span class="ico">💎</span> Membership Plans</div>
       <div class="nav-item" onclick="showSection('about')"><span class="ico">ℹ️</span> About & Founder</div>
-      <div class="nav-item" onclick="logout()"><span class="ico">🚪</span> Sign Out</div>
+      <div class="nav-item" onclick="openProfileModal()"><span class="ico">👤</span> My Profile</div>
+      <div class="nav-item" onclick="showSection('disclaimer')"><span class="ico">📋</span> Disclaimer & Legal</div>
     </div>
 
     <div class="sb-footer">
@@ -220,7 +156,7 @@
           <div class="s-icon">🐄</div>
           <h4>Livestock Management</h4>
           <p>Enteric CH₄ + manure N₂O for 8 species. AR6 GWP₁₀₀.</p>
-          <div class="s-ef">GWP CH₄: 27.9 (IPCC AR6)</div>
+          <div class="s-ef">GWP CH₄: 27.0 (IPCC AR6, GHG Protocol Aug 2024)</div>
         </div>
         <div class="sector-card transport" onclick="openCalcTab('transport')">
           <div class="s-icon">🚌</div>
@@ -238,14 +174,14 @@
           <div class="s-icon">🏭</div>
           <h4>Manufacturing & SMEs</h4>
           <p>Tea factories, flower farms, steel fabricators — energy + refrigerants.</p>
-          <div class="s-ef">KPLC grid: 0.497 kgCO₂e/kWh</div>
+          <div class="s-ef">Kenya grid: 0.070 kgCO₂e/kWh (IEA 2024)</div>
         </div>
       </div>
 
       <div class="g3">
         <div class="card">
           <h4>🎯 IPCC AR6 Compliant</h4>
-          <p style="margin-top:.35rem;font-size:.78rem">AR6 GWP₁₀₀ values throughout: CH₄ = 27.9, N₂O = 273. Every number traceable to a peer-reviewed source.</p>
+          <p style="margin-top:.35rem;font-size:.78rem">AR6 GWP₁₀₀ values (GHG Protocol Aug 2024): CH₄ = 27.0, N₂O = 273, HFC-134a = 1,530. Switch to AR5 for UNFCCC Paris Agreement reporting. Every number traceable to a peer-reviewed source.</p>
         </div>
         <div class="card">
           <h4>🇰🇪 Kenya-Calibrated</h4>
@@ -340,7 +276,8 @@
           <!-- BOREHOLE -->
           <div class="calc-panel active card" id="panel-borehole">
             <h3 style="color:#90CAF9;margin-bottom:.18rem">💧 Borehole Operations</h3>
-            <p style="font-size:.73rem;margin-bottom:1rem">Scope 1 (diesel) + Scope 2 (grid) + Scope 3 (materials). <span class="src-chip">IPCC 2006 Vol.2</span></p>
+            <p style="font-size:.73rem;margin-bottom:1rem">Scope 1 (diesel) + Scope 2 (grid) + Scope 3 (materials). Depth drives auto-estimates for all material quantities. <span class="src-chip">IPCC 2006 Vol.2</span></p>
+
             <div class="calc-sec-lbl">Project Details</div>
             <div class="inp-grid">
               <div class="inp"><label>Project Name</label><input type="text" id="bh-name" placeholder="e.g. Turkana BH-07"></div>
@@ -348,32 +285,144 @@
                 <select id="bh-county"><option>Turkana</option><option>Baringo</option><option>Nakuru</option><option>Laikipia</option><option>Marsabit</option><option>Garissa</option><option>Wajir</option><option>Mandera</option><option>Kitui</option><option>Machakos</option><option>Kajiado</option><option>Narok</option><option>Other</option></select>
               </div>
             </div>
-            <div class="calc-sec-lbl">Scope 1 — Diesel Combustion</div>
-            <div class="inp-grid">
-              <div class="inp"><label>Diesel for Drilling <span class="unit">(litres)</span></label><input type="number" id="bh-diesel-drill" value="850"><div class="hint">Drilling rig fuel</div></div>
-              <div class="inp"><label>Diesel for Pumping <span class="unit">(L/year)</span></label><input type="number" id="bh-diesel-pump" value="2400"></div>
-              <div class="inp"><label>Generator Diesel <span class="unit">(L/year)</span></label><input type="number" id="bh-diesel-gen" value="600"></div>
-              <div class="inp"><label>Pump Lifetime <span class="unit">(years)</span></label><input type="number" id="bh-lifetime" value="20"><div class="hint">Amortises one-time materials</div></div>
+
+            <!-- ── DEPTH & SPECS — drives auto-calculation ── -->
+            <div class="calc-sec-lbl">🔩 Borehole Specifications <span class="ef-tip" title="Depth and diameter auto-populate all material and energy estimates below. You can override any value manually.">ⓘ</span></div>
+            <div class="bh-spec-box">
+              <div class="inp-grid">
+                <div class="inp">
+                  <label>Borehole Depth <span class="unit">(metres)</span> <span class="ef-tip" title="Total drilled depth. Kenya range: 30–300m. ASAL counties typically 80–200m. Each metre adds drilling diesel, casing, grout, and rising main.">ⓘ</span></label>
+                  <input type="number" id="bh-depth" value="80" min="10" max="500" oninput="autofillBorehole()">
+                  <div class="hint">Typical Kenya range: 30–300 m</div>
+                </div>
+                <div class="inp">
+                  <label>Casing Diameter <span class="unit">(inches)</span> <span class="ef-tip" title="6-inch (152mm) is most common for community boreholes. 8-inch for high-yield. Diameter affects casing weight, grout volume, and rising main size.">ⓘ</span></label>
+                  <select id="bh-diameter" onchange="autofillBorehole()">
+                    <option value="4">4-inch (102mm) — Small / test well</option>
+                    <option value="6" selected>6-inch (152mm) — Standard community</option>
+                    <option value="8">8-inch (203mm) — High-yield production</option>
+                    <option value="10">10-inch (254mm) — Municipal / irrigation</option>
+                  </select>
+                </div>
+                <div class="inp">
+                  <label>Rock Formation <span class="ef-tip" title="Rock hardness determines drilling fuel consumption per metre. Source: Kenyan drilling contractor survey / WSRB well logs.">ⓘ</span></label>
+                  <select id="bh-rock" onchange="autofillBorehole()">
+                    <option value="soft">Soft (sedimentary, sand, clay) — ~8 L/m</option>
+                    <option value="medium" selected>Medium (weathered rock) — ~15 L/m</option>
+                    <option value="hard">Hard (basement rock, granite) — ~22 L/m</option>
+                    <option value="veryhard">Very Hard (quartzite, ASAL deep) — ~30 L/m</option>
+                  </select>
+                </div>
+                <div class="inp">
+                  <label>Pump Type <span class="ef-tip" title="Diesel pump: Scope 1 emissions from fuel. Electric/solar pump: Scope 2 from KPLC grid. Solar pump: zero operational emissions.">ⓘ</span></label>
+                  <select id="bh-pump-type" onchange="autofillBorehole()">
+                    <option value="electric">Electric (KPLC grid)</option>
+                    <option value="solar">Solar PV (zero grid)</option>
+                    <option value="diesel">Diesel engine pump</option>
+                    <option value="hybrid">Hybrid (solar + diesel backup)</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Auto-estimate callout -->
+              <div class="bh-auto-callout" id="bh-auto-callout">
+                💡 Enter depth above — material quantities and energy will auto-fill below
+              </div>
             </div>
+
+            <!-- ── SCOPE 1 — shows diesel estimates ── -->
+            <div class="calc-sec-lbl">Scope 1 — Diesel Combustion <span style="font-size:.62rem;color:var(--teal);font-weight:400">auto-estimated from depth · override if you have exact figures</span></div>
+            <div class="inp-grid">
+              <div class="inp">
+                <label>Diesel for Drilling <span class="unit">(litres)</span> <span class="ef-tip" title="EF: 2.68 kgCO₂e/L — Source: IPCC 2006 Vol.2 Table 3.2.2. Auto-estimated: depth × rock formation fuel rate.">ⓘ</span></label>
+                <input type="number" id="bh-diesel-drill" value="1200" class="bh-auto-field">
+                <div class="hint" id="bh-drill-hint">Auto: 80m × 15 L/m (medium rock) = 1,200 L</div>
+              </div>
+              <div class="inp">
+                <label>Diesel for Pumping <span class="unit">(L/year)</span> <span class="ef-tip" title="EF: 2.68 kgCO₂e/L. Only if diesel pump selected. Auto-estimated from pump power and operating hours.">ⓘ</span></label>
+                <input type="number" id="bh-diesel-pump" value="0" class="bh-auto-field">
+                <div class="hint" id="bh-pump-hint">0 L/yr — electric/solar pump selected</div>
+              </div>
+              <div class="inp">
+                <label>Generator Diesel <span class="unit">(L/year)</span> <span class="ef-tip" title="EF: 2.68 kgCO₂e/L — on-site generator for lighting, controls, maintenance.">ⓘ</span></label>
+                <input type="number" id="bh-diesel-gen" value="300">
+                <div class="hint">Site generator (lighting, controls)</div>
+              </div>
+              <div class="inp">
+                <label>Pump Lifetime <span class="unit">(years)</span></label>
+                <input type="number" id="bh-lifetime" value="20">
+                <div class="hint">Amortises one-time drilling & materials</div>
+              </div>
+            </div>
+
+            <!-- ── SCOPE 2 — grid electricity ── -->
             <div class="calc-sec-lbl">Scope 2 — Grid Electricity</div>
             <div class="inp-grid">
-              <div class="inp"><label>Grid Electricity <span class="unit">(kWh/year)</span></label><input type="number" id="bh-kwh" value="5200"></div>
-              <div class="inp"><label>Solar Fraction <span class="unit">(%)</span></label><input type="number" id="bh-solar" value="0" min="0" max="100"></div>
+              <div class="inp">
+                <label>Annual Grid Electricity <span class="unit">(kWh/year)</span> <span class="ef-tip" title="EF: 0.070 kgCO₂e/kWh — Source: IEA 2024 / SEforAll Kenya. Kenya grid ~90% renewable. Auto-estimated from pump power × operating hours.">ⓘ</span></label>
+                <input type="number" id="bh-kwh" value="4380" class="bh-auto-field">
+                <div class="hint" id="bh-kwh-hint">Auto: ~0.5 kW × 24 hrs/day × 365 = 4,380 kWh</div>
+              </div>
+              <div class="inp">
+                <label>Daily Operating Hours <span class="ef-tip" title="Hours the pump runs per day. Auto-calculates annual kWh. Community boreholes: 8–16 hrs/day. Irrigation: 12–20 hrs/day.">ⓘ</span></label>
+                <input type="number" id="bh-hours" value="12" min="1" max="24" oninput="autofillBorehole()">
+                <div class="hint">Hours pump operates per day</div>
+              </div>
+              <div class="inp">
+                <label>Solar Fraction <span class="unit">(%)</span> <span class="ef-tip" title="% of electricity from on-site solar. 100% = zero Scope 2. Auto-set to 100% if solar pump selected.">ⓘ</span></label>
+                <input type="number" id="bh-solar" value="0" min="0" max="100" class="bh-auto-field">
+                <div class="hint" id="bh-solar-hint">0% solar (electric pump)</div>
+              </div>
+              <div class="inp">
+                <label>Pump Yield <span class="unit">(m³/hour)</span> <span class="ef-tip" title="Water output rate. Used to estimate pump power. Typical community borehole: 2–8 m³/hr.">ⓘ</span></label>
+                <input type="number" id="bh-yield" value="5" min="0.5" max="200" oninput="autofillBorehole()">
+                <div class="hint">Typical community: 2–8 m³/hr</div>
+              </div>
             </div>
-            <div class="calc-sec-lbl">Scope 3 — Embodied Materials</div>
+
+            <!-- ── SCOPE 3 — materials auto-estimated ── -->
+            <div class="calc-sec-lbl">Scope 3 — Embodied Materials <span style="font-size:.62rem;color:var(--teal);font-weight:400">auto-estimated from depth & diameter · override if you have bill of quantities</span></div>
             <div class="inp-grid">
-              <div class="inp"><label>Steel Casing <span class="unit">(kg)</span></label><input type="number" id="bh-steel" value="1200"><div class="hint">EF: 1.85 kgCO₂e/kg</div></div>
-              <div class="inp"><label>PVC / HDPE <span class="unit">(kg)</span></label><input type="number" id="bh-pvc" value="300"><div class="hint">EF: 2.41 kgCO₂e/kg</div></div>
-              <div class="inp"><label>Cement Grout <span class="unit">(kg)</span></label><input type="number" id="bh-cement" value="800"></div>
-              <div class="inp"><label>Equipment Transport <span class="unit">(km)</span></label><input type="number" id="bh-tkm" value="350"><div class="hint">Distance from Nairobi depot</div></div>
+              <div class="inp">
+                <label>Steel Casing <span class="unit">(kg)</span> <span class="ef-tip" title="EF: 1,850 kgCO₂e/t BOF steel — Source: World Steel 2023. Auto-estimated: depth × casing kg/m by diameter. 6-inch: ~10 kg/m.">ⓘ</span></label>
+                <input type="number" id="bh-steel" value="800" class="bh-auto-field">
+                <div class="hint" id="bh-steel-hint">Auto: 80m × 10 kg/m (6-inch) = 800 kg</div>
+              </div>
+              <div class="inp">
+                <label>PVC / HDPE Rising Main <span class="unit">(kg)</span> <span class="ef-tip" title="EF: 2,410 kgCO₂e/t — Source: PlasticsEurope 2022. Auto-estimated: depth × pipe kg/m. 50mm HDPE: ~1.2 kg/m.">ⓘ</span></label>
+                <input type="number" id="bh-pvc" value="96" class="bh-auto-field">
+                <div class="hint" id="bh-pvc-hint">Auto: 80m × 1.2 kg/m = 96 kg</div>
+              </div>
+              <div class="inp">
+                <label>Cement Grout <span class="unit">(kg)</span> <span class="ef-tip" title="EF: 830 kgCO₂e/t — Source: Bath ICE v3.0. Auto-estimated from annular volume and casing depth.">ⓘ</span></label>
+                <input type="number" id="bh-cement" value="1600" class="bh-auto-field">
+                <div class="hint" id="bh-cement-hint">Auto: 80m × ~20 kg/m annular grout</div>
+              </div>
+              <div class="inp">
+                <label>Equipment Transport <span class="unit">(km)</span> <span class="ef-tip" title="EF: 0.20 kgCO₂e/tonne.km — Source: DEFRA 2023. One-way distance from nearest drilling equipment depot.">ⓘ</span></label>
+                <input type="number" id="bh-tkm" value="350">
+                <div class="hint">Distance from Nairobi or nearest depot</div>
+              </div>
             </div>
+
             <button class="btn-calc" onclick="calcBorehole()">⚡ Calculate Borehole Emissions →</button>
+
+            <!-- Data Sources -->
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources <span class="src-why">Raises Data Quality Score — needed for NEMA audit-ready reports</span></div>
+              <div class="src-grid">
+                <div class="src-item"><label>Depth / spec source</label><select id="src-bh-diesel-drill" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="log">📒 Driller's completion report</option><option value="invoice">📋 Contractor invoice</option><option value="estimate">📐 Engineering estimate</option></select></div>
+                <div class="src-item"><label>Pump diesel / kWh source</label><select id="src-bh-diesel-pump" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="meter">⚡ Meter reading / KPLC bill</option><option value="receipt">📄 Fuel receipts</option><option value="log">📒 Operational log</option><option value="estimate">📐 Engineering estimate</option></select></div>
+                <div class="src-item"><label>Materials source</label><select id="src-bh-kwh" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="invoice">📋 Purchase invoice / BOQ</option><option value="log">📒 Site material log</option><option value="estimate">📐 Engineering estimate</option></select></div>
+                <div class="src-item"><label>Transport distance source</label><select id="src-bh-steel" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="log">📒 Contractor trip records</option><option value="estimate">📐 Maps estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-bh">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
           </div>
 
           <!-- LIVESTOCK -->
           <div class="calc-panel card" id="panel-livestock">
             <h3 style="color:#FFCC80;margin-bottom:.18rem">🐄 Livestock Management</h3>
-            <p style="font-size:.73rem;margin-bottom:1rem">Enteric CH₄ + manure N₂O. <span class="src-chip">IPCC 2006 Vol.4 Ch.10</span> <span class="src-chip">AR6 CH₄=27.9</span></p>
+            <p style="font-size:.73rem;margin-bottom:1rem">Enteric CH₄ + manure N₂O. <span class="src-chip">IPCC 2006 Vol.4 Ch.10</span> <span class="src-chip">AR6 CH₄=27.0 (GHG Protocol Aug 2024)</span></p>
             <div class="calc-sec-lbl">Project Details</div>
             <div class="inp-grid">
               <div class="inp"><label>Project Name</label><input type="text" id="ls-name" placeholder="e.g. Narok Ranch"></div>
@@ -388,14 +437,14 @@
             </div>
             <div class="calc-sec-lbl">Herd Count by Species</div>
             <div class="inp-grid">
-              <div class="inp"><label>Dairy Cattle 🐄</label><input type="number" id="ls-dairy" value="120"><div class="hint">EF: 68 kgCH₄/head/yr</div></div>
-              <div class="inp"><label>Beef Cattle 🐂</label><input type="number" id="ls-beef" value="300"><div class="hint">EF: 47 kgCH₄/head/yr</div></div>
-              <div class="inp"><label>Goats 🐐</label><input type="number" id="ls-goats" value="500"></div>
-              <div class="inp"><label>Sheep 🐑</label><input type="number" id="ls-sheep" value="200"></div>
-              <div class="inp"><label>Camels 🐪</label><input type="number" id="ls-camels" value="0"></div>
-              <div class="inp"><label>Pigs 🐷</label><input type="number" id="ls-pigs" value="0"></div>
-              <div class="inp"><label>Donkeys 🫏</label><input type="number" id="ls-donkeys" value="20"></div>
-              <div class="inp"><label>Poultry 🐓 <span class="unit">(hundreds)</span></label><input type="number" id="ls-poultry" value="0"></div>
+              <div class="inp"><label>Dairy Cattle 🐄 <span class="ef-tip" title="Enteric CH₄: 68 kg/head/yr | Manure CH₄: 16 kg/head/yr | N excretion: 70 kgN/head/yr. Source: IPCC 2006 Vol.4 Table 10.11 (Eastern Africa defaults)">ⓘ</span></label><input type="number" id="ls-dairy" value="120"><div class="hint">EF: 68 kgCH₄/head/yr</div></div>
+              <div class="inp"><label>Beef Cattle 🐂 <span class="ef-tip" title="Enteric CH₄: 47 kg/head/yr | Manure CH₄: 10 kg/head/yr | N excretion: 50 kgN/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-beef" value="300"><div class="hint">EF: 47 kgCH₄/head/yr</div></div>
+              <div class="inp"><label>Goats 🐐 <span class="ef-tip" title="Enteric CH₄: 5 kg/head/yr | Manure CH₄: 0.17 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-goats" value="500"></div>
+              <div class="inp"><label>Sheep 🐑 <span class="ef-tip" title="Enteric CH₄: 8 kg/head/yr | Manure CH₄: 0.19 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-sheep" value="200"></div>
+              <div class="inp"><label>Camels 🐪 <span class="ef-tip" title="Enteric CH₄: 46 kg/head/yr | Manure CH₄: 7 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-camels" value="0"></div>
+              <div class="inp"><label>Pigs 🐷 <span class="ef-tip" title="Enteric CH₄: 1 kg/head/yr | Manure CH₄: 4.5 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-pigs" value="0"></div>
+              <div class="inp"><label>Donkeys 🫏 <span class="ef-tip" title="Enteric CH₄: 10 kg/head/yr | Manure CH₄: 1 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-donkeys" value="20"></div>
+              <div class="inp"><label>Poultry 🐓 <span class="unit">(hundreds)</span> <span class="ef-tip" title="Enteric CH₄: 0.02 kg/bird/yr | Manure CH₄: 0.02 kg/bird/yr. Enter count in hundreds. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-poultry" value="0"></div>
             </div>
             <div class="calc-sec-lbl">Feed & Energy</div>
             <div class="inp-grid">
@@ -403,6 +452,16 @@
               <div class="inp"><label>Electricity <span class="unit">(kWh/year)</span></label><input type="number" id="ls-kwh" value="8000"></div>
             </div>
             <button class="btn-calc" onclick="calcLivestock()">⚡ Calculate Livestock Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Cattle count source</label><select id="src-ls-dairy" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="log">📒 Herd register</option><option value="receipt">📄 Purchase records</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual count</option></select></div>
+                <div class="src-item"><label>Goats/sheep source</label><select id="src-ls-beef" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="log">📒 Herd register</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual count</option></select></div>
+                <div class="src-item"><label>Feed concentrate source</label><select id="src-ls-goats" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="receipt">📄 Purchase receipt</option><option value="invoice">📋 Feed invoice</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Electricity source</label><select id="src-ls-feed" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="meter">⚡ KPLC meter</option><option value="receipt">📄 KPLC bill</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-ls">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
           </div>
 
           <!-- TRANSPORT -->
@@ -428,10 +487,20 @@
             </div>
             <div class="calc-sec-lbl">Cold Chain Refrigerants (kg/year)</div>
             <div class="inp-grid">
-              <div class="inp"><label>HFC-134a</label><input type="number" id="tr-hfc" value="0"><div class="hint">GWP = 1,430 (AR6)</div></div>
-              <div class="inp"><label>R-404A</label><input type="number" id="tr-r404" value="0"><div class="hint">GWP = 3,922 (AR6)</div></div>
+              <div class="inp"><label>HFC-134a</label><input type="number" id="tr-hfc" value="0"><div class="hint">GWP = 1,530 (AR6) — <span class="ef-tip" title="AR6=1,530 | AR5=1,300 | AR4=1,430. Source: GHG Protocol Global Warming Potential Values, August 2024.">ⓘ</span> was 1,430 (AR4 — now corrected)</div></div>
+              <div class="inp"><label>R-404A</label><input type="number" id="tr-r404" value="0"><div class="hint">GWP = 4,180 (AR6) — <span class="ef-tip" title="AR6=4,180 | AR5=3,922. Source: GHG Protocol Global Warming Potential Values, August 2024.">ⓘ</span></div></div>
             </div>
             <button class="btn-calc" onclick="calcTransport()">⚡ Calculate Transport Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Fleet diesel source</label><select id="src-tr-heavy" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="receipt">📄 Fuel receipts</option><option value="invoice">📋 Fleet fuel invoices</option><option value="log">📒 Fleet management log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Matatu/bus source</label><select id="src-tr-matatu" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="receipt">📄 SACCO fuel receipts</option><option value="log">📒 Driver fuel log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Refrigerant HFC source</label><select id="src-tr-moto" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="log">📒 Refrigerant service log</option><option value="invoice">📋 Top-up invoice</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual check</option></select></div>
+                <div class="src-item"><label>Vehicle count source</label><select id="src-tr-hfc" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="log">📒 Fleet register</option><option value="invoice">📋 Registration docs</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-tr">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
           </div>
 
           <!-- CONSTRUCTION -->
@@ -445,12 +514,12 @@
             </div>
             <div class="calc-sec-lbl">Scope 3 — Embodied Materials</div>
             <div class="inp-grid">
-              <div class="inp"><label>Cement <span class="unit">(tonnes)</span></label><input type="number" id="con-cement" value="850"><div class="hint">EF: 830 kgCO₂e/t</div></div>
-              <div class="inp"><label>Concrete <span class="unit">(m³)</span></label><input type="number" id="con-concrete" value="1200"><div class="hint">EF: 159 kgCO₂e/m³</div></div>
-              <div class="inp"><label>Structural Steel <span class="unit">(tonnes)</span></label><input type="number" id="con-steel" value="180"><div class="hint">EF: 1,850 kgCO₂e/t</div></div>
-              <div class="inp"><label>Rebar <span class="unit">(tonnes)</span></label><input type="number" id="con-rebar" value="240"><div class="hint">EF: 1,990 kgCO₂e/t</div></div>
-              <div class="inp"><label>Asphalt <span class="unit">(tonnes)</span></label><input type="number" id="con-asphalt" value="0"></div>
-              <div class="inp"><label>Timber <span class="unit">(m³)</span></label><input type="number" id="con-timber" value="0"></div>
+              <div class="inp"><label>Cement <span class="unit">(tonnes)</span> <span class="ef-tip" title="OPC EF: 830 kgCO₂e/t. PLC (low-carbon): 725 kgCO₂e/t (saves 13%). Source: Bath ICE v3.0 (2019)">ⓘ</span></label><input type="number" id="con-cement" value="850"><div class="hint">EF: 830 kgCO₂e/t</div></div>
+              <div class="inp"><label>Concrete <span class="unit">(m³)</span> <span class="ef-tip" title="Ready-mix C25 EF: 159 kgCO₂e/m³. Source: Bath ICE v3.0 (2019)">ⓘ</span></label><input type="number" id="con-concrete" value="1200"><div class="hint">EF: 159 kgCO₂e/m³</div></div>
+              <div class="inp"><label>Structural Steel <span class="unit">(tonnes)</span> <span class="ef-tip" title="BOF primary steel: 1,850 kgCO₂e/t. EAF recycled: 430 kgCO₂e/t (saves 77%). Source: World Steel Association 2023">ⓘ</span></label><input type="number" id="con-steel" value="180"><div class="hint">EF: 1,850 kgCO₂e/t (BOF)</div></div>
+              <div class="inp"><label>Rebar <span class="unit">(tonnes)</span> <span class="ef-tip" title="EF: 1,990 kgCO₂e/t BOF rebar. Specify EAF (430 kgCO₂e/t) to save 77%. Source: Bath ICE v3.0">ⓘ</span></label><input type="number" id="con-rebar" value="240"><div class="hint">EF: 1,990 kgCO₂e/t</div></div>
+              <div class="inp"><label>Asphalt <span class="unit">(tonnes)</span> <span class="ef-tip" title="EF: 45 kgCO₂e/t. Source: DEFRA 2023">ⓘ</span></label><input type="number" id="con-asphalt" value="0"></div>
+              <div class="inp"><label>Timber <span class="unit">(m³)</span> <span class="ef-tip" title="EF: 720 kgCO₂e/m³. FSC-certified sustainable source has similar EF but lower deforestation risk. Source: Bath ICE v3.0">ⓘ</span></label><input type="number" id="con-timber" value="0"></div>
             </div>
             <div class="calc-sec-lbl">Scope 1 — Site Machinery</div>
             <div class="inp-grid">
@@ -459,7 +528,38 @@
               <div class="inp"><label>Truck Deliveries <span class="unit">(truck-km)</span></label><input type="number" id="con-tkm" value="25000"></div>
               <div class="inp"><label>Site Electricity <span class="unit">(kWh/month)</span></label><input type="number" id="con-kwh" value="3200"></div>
             </div>
+            <div class="calc-sec-lbl">🌳 Leakage — Land Clearing (if applicable) <span class="ef-tip" title="Source: IPCC 2006 Vol.4 Ch.4 Table 4.7 — carbon stocks for Eastern Africa land cover types">ⓘ</span></div>
+            <div class="inp-grid">
+              <div class="inp">
+                <label>Land type cleared</label>
+                <select id="con-land-type">
+                  <option value="">No land clearing (skip leakage)</option>
+                  <option value="moist_forest">Moist tropical forest (Coast/Mt Kenya) — 620 tCO₂e/ha</option>
+                  <option value="dry_woodland">Dry woodland / bush (ASAL) — 85 tCO₂e/ha</option>
+                  <option value="grassland">Savannah / grassland (Maasai Mara) — 18 tCO₂e/ha</option>
+                  <option value="wetland">Wetland / riparian — 380 tCO₂e/ha</option>
+                  <option value="cropland_active">Active cropland / smallholder — 22 tCO₂e/ha</option>
+                  <option value="degraded_land">Degraded / bare land — 12 tCO₂e/ha</option>
+                </select>
+                <div class="hint">Only needed if trees or vegetation were cleared for this project</div>
+              </div>
+              <div class="inp">
+                <label>Area cleared <span class="unit">(hectares)</span></label>
+                <input type="number" id="con-land-ha" value="0" min="0" step="0.1">
+                <div class="hint">1 ha = 10,000 m². Football pitch ≈ 0.7 ha</div>
+              </div>
+            </div>
             <button class="btn-calc" onclick="calcConstruction()">⚡ Calculate Construction Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Cement/concrete source</label><select id="src-con-cement" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="invoice">📋 Purchase invoice</option><option value="log">📒 Bill of quantities</option><option value="estimate">📐 Engineer estimate</option></select></div>
+                <div class="src-item"><label>Steel/rebar source</label><select id="src-con-steel" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="invoice">📋 Purchase invoice</option><option value="log">📒 Bill of quantities</option><option value="estimate">📐 Engineer estimate</option></select></div>
+                <div class="src-item"><label>Machinery diesel source</label><select id="src-con-excav" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="receipt">📄 Fuel receipts</option><option value="log">📒 Site fuel log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Electricity source</label><select id="src-con-kwh" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="meter">⚡ KPLC meter</option><option value="receipt">📄 KPLC bill</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-con">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
           </div>
 
           <!-- MANUFACTURING -->
@@ -480,17 +580,27 @@
             </div>
             <div class="calc-sec-lbl">Scope 2 — Electricity</div>
             <div class="inp-grid">
-              <div class="inp"><label>KPLC Grid <span class="unit">(kWh/year)</span></label><input type="number" id="mfg-kwh" value="380000"><div class="hint">EF: 0.497 kgCO₂e/kWh</div></div>
+              <div class="inp"><label>KPLC Grid <span class="unit">(kWh/year)</span> <span class="ef-tip" title="EF: 0.070 kgCO₂e/kWh — Source: IEA 2024 / SEforAll Kenya. Kenya grid ~90% renewable (geothermal 44%, hydro 23%, wind 16%).">ⓘ</span></label><input type="number" id="mfg-kwh" value="380000"><div class="hint">EF: 0.070 kgCO₂e/kWh (IEA 2024)</div></div>
               <div class="inp"><label>On-site Solar <span class="unit">(kWh/year)</span></label><input type="number" id="mfg-solar" value="0"></div>
             </div>
             <div class="calc-sec-lbl">Scope 3 — Refrigerants & Waste</div>
             <div class="inp-grid">
-              <div class="inp"><label>HFC-134a <span class="unit">(kg/year)</span></label><input type="number" id="mfg-hfc" value="5"><div class="hint">GWP = 1,430</div></div>
-              <div class="inp"><label>R-404A <span class="unit">(kg/year)</span></label><input type="number" id="mfg-r404" value="0"></div>
+              <div class="inp"><label>HFC-134a <span class="unit">(kg/year)</span> <span class="ef-tip" title="AR6 GWP=1,530 | AR5=1,300 | AR4=1,430. Leaks from cold stores, flower farm refrigeration. Source: GHG Protocol Aug 2024">ⓘ</span></label><input type="number" id="mfg-hfc" value="5"><div class="hint">GWP = 1,530 (AR6)</div></div>
+              <div class="inp"><label>R-404A <span class="unit">(kg/year)</span> <span class="ef-tip" title="AR6 GWP=4,180 | AR5=3,922. Being phased out — transition to R-448A (GWP 1,273). Source: GHG Protocol Aug 2024">ⓘ</span></label><input type="number" id="mfg-r404" value="0"></div>
               <div class="inp"><label>Wastewater <span class="unit">(m³/year)</span></label><input type="number" id="mfg-ww" value="0"></div>
               <div class="inp"><label>Solid Waste <span class="unit">(tonnes/year)</span></label><input type="number" id="mfg-waste" value="0"></div>
             </div>
             <button class="btn-calc" onclick="calcManufacturing()">⚡ Calculate Manufacturing Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Fuel consumption source</label><select id="src-mf-diesel" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="receipt">📄 Fuel receipts</option><option value="invoice">📋 Supplier invoices</option><option value="meter">⚡ Flow meter</option><option value="log">📒 Fuel log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Electricity source</label><select id="src-mf-kwh" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="meter">⚡ KPLC smart meter</option><option value="receipt">📄 KPLC bill</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Refrigerant leak source</label><select id="src-mf-hfc" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="log">📒 Service/top-up log</option><option value="invoice">📋 Refrigerant invoice</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual check</option></select></div>
+                <div class="src-item"><label>Waste tonnage source</label><select id="src-mf-waste" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="log">📒 Waste manifest</option><option value="receipt">📄 Disposal receipts</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-mf">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
           </div>
         </div><!-- /calc panels -->
 
@@ -502,22 +612,57 @@
             <p>Complete a calculation to see your emission breakdown, NTZ Score, and offset recommendations.</p>
           </div>
           <div id="res-content" style="display:none">
+            <!-- GWP version tag + switcher -->
+            <div class="gwp-tag-bar">
+              <span id="res-gwp-tag" class="gwp-tag-badge">AR6 · CH₄=27.0 · N₂O=273</span>
+              <button class="gwp-switch-btn" onclick="document.getElementById('gwp-panel').classList.toggle('gwp-open')">Switch GWP ▾</button>
+            </div>
+            <!-- GWP panel -->
+            <div class="gwp-panel" id="gwp-panel">
+              <h4 style="margin-bottom:.48rem;font-size:.8rem;color:var(--mint)">⚖️ GWP Version — matches your verifier's standard</h4>
+              <p style="font-size:.7rem;color:rgba(255,255,255,.42);margin-bottom:.65rem">UNFCCC Paris Agreement uses AR5. Kenya KNCR recommends AR6.</p>
+              <label class="gwp-option"><input type="radio" name="gwp" value="AR6" checked onchange="applyGWP('AR6')">
+                <div><b style="color:var(--mint)">AR6 (IPCC 2021)</b> <span class="gwp-rec">✅ Kenya KNCR</span><br>
+                <span class="gwp-vals">CH₄=27.0 · N₂O=273 · HFC-134a=1,530 · R-404A=4,180</span></div>
+              </label>
+              <label class="gwp-option" style="margin-top:.38rem"><input type="radio" name="gwp" value="AR5" onchange="applyGWP('AR5')">
+                <div><b>AR5 (IPCC 2013)</b> <span class="gwp-rec" style="color:#90CAF9">📋 UNFCCC Paris Agreement</span><br>
+                <span class="gwp-vals">CH₄=28 · N₂O=265 · HFC-134a=1,300 · R-404A=3,922</span></div>
+              </label>
+              <div style="margin-top:.52rem;font-size:.64rem;color:rgba(255,255,255,.24)">Source: GHG Protocol Global Warming Potential Values, August 2024</div>
+            </div>
             <div class="res-total">
               <div class="lbl">Total Emissions</div>
               <div class="val" id="res-total">0</div>
               <div class="unit">tCO₂e per year</div>
             </div>
+            <!-- Uncertainty band -->
+            <div class="unc-box" id="res-uncertainty" style="display:none">
+              <div class="unc-label">IPCC Tier 1 Uncertainty</div>
+              <div class="unc-range" id="res-unc-range">—</div>
+              <div class="unc-pct" id="res-unc-pct">—</div>
+              <div class="unc-basis" id="res-unc-basis">—</div>
+            </div>
             <div class="scope-bars">
               <div class="scope-bar-item">
-                <div class="scope-bar-hdr"><span>Scope 1 (Direct)</span><span class="v" id="res-s1">0</span></div>
+                <div class="scope-bar-hdr">
+                  <span>Scope 1 (Direct) <span class="ef-tip" title="Source: IPCC 2006 Vol.2 — fuel combustion EF: diesel 2.68 kgCO₂e/L, petrol 2.31">ⓘ</span></span>
+                  <span class="v" id="res-s1">0</span>
+                </div>
                 <div class="scope-track"><div class="scope-fill s1" id="res-s1-bar" style="width:0%"></div></div>
               </div>
               <div class="scope-bar-item" style="margin-top:.55rem">
-                <div class="scope-bar-hdr"><span>Scope 2 (Energy)</span><span class="v" id="res-s2">0</span></div>
+                <div class="scope-bar-hdr">
+                  <span>Scope 2 (Energy) <span class="ef-tip" title="Source: IEA 2024 — Kenya grid EF: 0.070 kgCO₂e/kWh (~90% renewable)">ⓘ</span></span>
+                  <span class="v" id="res-s2">0</span>
+                </div>
                 <div class="scope-track"><div class="scope-fill s2" id="res-s2-bar" style="width:0%"></div></div>
               </div>
               <div class="scope-bar-item" style="margin-top:.55rem">
-                <div class="scope-bar-hdr"><span>Scope 3 (Embodied)</span><span class="v" id="res-s3">0</span></div>
+                <div class="scope-bar-hdr">
+                  <span>Scope 3 (Embodied) <span class="ef-tip" title="Source: Bath ICE v3.0 / World Steel 2023 — embodied carbon in materials">ⓘ</span></span>
+                  <span class="v" id="res-s3">0</span>
+                </div>
                 <div class="scope-track"><div class="scope-fill s3" id="res-s3-bar" style="width:0%"></div></div>
               </div>
             </div>
@@ -526,9 +671,34 @@
               <div class="score" id="res-score">—</div>
               <div class="grade" id="res-grade">—</div>
             </div>
+            <!-- DQS Box -->
+            <div class="dqs-box" id="res-dqs-box">
+              <div class="dqs-lbl">Data Quality Score</div>
+              <div class="dqs-score" id="res-dqs-score">—</div>
+              <div class="dqs-grade" id="res-dqs-grade">Declare sources to score</div>
+            </div>
+            <!-- Plausibility Flags -->
+            <div id="res-flags" class="flags-box" style="display:none"></div>
+            <!-- Source audit trail -->
+            <div id="res-sources" class="sources-trail" style="display:none"></div>
             <div id="res-breakdown" style="font-size:.72rem;color:rgba(255,255,255,.5);line-height:1.9;margin-bottom:.58rem"></div>
+            <!-- Sector Benchmark Comparison -->
+            <div id="res-benchmark" class="benchmark-callout" style="display:none"></div>
             <div id="res-offsets" style="font-size:.72rem;padding:.6rem;background:rgba(58,170,92,.08);border:1px solid rgba(58,170,92,.17);border-radius:var(--r-sm);margin-bottom:.58rem"></div>
-            <button class="btn-report" onclick="generateAndDownloadPDF()">📄 Download PDF Report</button>
+            <!-- Action buttons row -->
+            <div class="res-actions">
+              <button class="btn-report btn-report-primary" onclick="generateAndDownloadPDF()">📄 Download PDF</button>
+              <button class="btn-report" onclick="printReport()">🖨️ Print / Save PDF</button>
+            </div>
+            <div class="res-actions" style="margin-top:.38rem">
+              <button class="btn-report btn-share-wa"  onclick="shareWhatsApp()">💬 Share on WhatsApp</button>
+              <button class="btn-report btn-share-tw"  onclick="shareTwitter()">🐦 Share on X</button>
+              <button class="btn-report btn-share-lnk" onclick="generateShareURL()">🔗 Copy Share Link</button>
+            </div>
+            <!-- Hidden share URL input for fallback copy -->
+            <input id="share-url-box" type="text" readonly
+              style="display:none;width:100%;margin-top:.38rem;background:rgba(0,0,0,.3);border:1px solid rgba(109,217,140,.3);border-radius:var(--r-sm);padding:.45rem .65rem;color:var(--mint);font-size:.7rem;font-family:'JetBrains Mono',monospace"
+              onclick="this.select()" placeholder="Share URL will appear here">
             <button class="btn-report" onclick="showSection('offsets')" style="margin-top:.38rem">🌳 Explore Offsets</button>
           </div>
         </div>
@@ -685,23 +855,40 @@
           <div class="method-panel active" id="mp-overview">
             <h2>Methodology Overview</h2>
             <p>Netzerra implements IPCC 2006 Guidelines updated with AR6 (2021) GWP₁₀₀ values. Calculations follow the GHG Protocol Scope 1/2/3 framework aligned with ISO 14064-1:2018.</p>
-            <div class="formula-box">Emissions (tCO₂e) = Σ [Activity Data × Emission Factor × GWP₁₀₀] ÷ 1000<br><em>GWP₁₀₀(CH₄) = 27.9, GWP₁₀₀(N₂O) = 273 — IPCC AR6 WG1 Ch.7</em></div>
-            <table class="ef-table"><thead><tr><th>Parameter</th><th>Value</th><th>Unit</th><th>Source</th></tr></thead><tbody>
-              <tr><td>Kenya Grid (KPLC 2022)</td><td class="mn">0.497</td><td>kgCO₂e/kWh</td><td><span class="src-chip">KPLC 2022</span></td></tr>
-              <tr><td>Diesel Combustion</td><td class="mn">2.68</td><td>kgCO₂e/L</td><td><span class="src-chip">IPCC 2006 Vol.2</span></td></tr>
-              <tr><td>Petrol Combustion</td><td class="mn">2.31</td><td>kgCO₂e/L</td><td><span class="src-chip">IPCC 2006 Vol.2</span></td></tr>
-              <tr><td>GWP₁₀₀ CH₄</td><td class="mn">27.9</td><td>kgCO₂e/kg</td><td><span class="src-chip">IPCC AR6 WG1</span></td></tr>
-              <tr><td>GWP₁₀₀ N₂O</td><td class="mn">273</td><td>kgCO₂e/kg</td><td><span class="src-chip">IPCC AR6 WG1</span></td></tr>
-              <tr><td>Cement / OPC</td><td class="mn">830</td><td>kgCO₂e/t</td><td><span class="src-chip">Bath ICE v3.0</span></td></tr>
-              <tr><td>Steel (BOF)</td><td class="mn">1,850</td><td>kgCO₂e/t</td><td><span class="src-chip">World Steel 2023</span></td></tr>
-              <tr><td>HFC-134a</td><td class="mn">1,430</td><td>kgCO₂e/kg</td><td><span class="src-chip">IPCC AR6</span></td></tr>
+            <div class="ef-correction-note">⚡ <b>Kenya Grid EF — Verified March 2026:</b> Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%). Correct EF: <b>0.070 kgCO₂e/kWh</b> (IEA 2024 / SEforAll Kenya). A figure of 0.497 kgCO₂e/kWh was previously incorrect and has been corrected across all Scope 2 calculations.</div>
+            <div class="formula-box">Emissions (tCO₂e) = Σ [Activity Data × Emission Factor × GWP₁₀₀] ÷ 1000<br><em>AR6 GWP₁₀₀(CH₄) = 27.0, GWP₁₀₀(N₂O) = 273 — GHG Protocol Aug 2024 / IPCC AR6 WG1 Ch.7</em><br><em>AR5 GWP₁₀₀(CH₄) = 28, GWP₁₀₀(N₂O) = 265 — UNFCCC Paris Agreement standard</em></div>
+            <table class="ef-table"><thead><tr><th>Parameter</th><th>Value (AR6)</th><th>Value (AR5)</th><th>Unit</th><th>Source</th></tr></thead><tbody>
+              <tr><td>Kenya Grid (IEA 2024)</td><td class="mn">0.070</td><td class="mn">0.070</td><td>kgCO₂e/kWh</td><td><span class="src-chip">IEA 2024 · SEforAll</span></td></tr>
+              <tr><td>Diesel Combustion</td><td class="mn">2.68</td><td class="mn">2.68</td><td>kgCO₂e/L</td><td><span class="src-chip">IPCC 2006 Vol.2</span></td></tr>
+              <tr><td>Petrol Combustion</td><td class="mn">2.31</td><td class="mn">2.31</td><td>kgCO₂e/L</td><td><span class="src-chip">IPCC 2006 Vol.2</span></td></tr>
+              <tr><td>GWP₁₀₀ CH₄ (non-fossil)</td><td class="mn">27.0</td><td class="mn">28</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>GWP₁₀₀ N₂O</td><td class="mn">273</td><td class="mn">265</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>HFC-134a refrigerant</td><td class="mn">1,530</td><td class="mn">1,300</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>R-404A refrigerant</td><td class="mn">4,180</td><td class="mn">3,922</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>Cement / OPC</td><td class="mn">830</td><td class="mn">830</td><td>kgCO₂e/t</td><td><span class="src-chip">Bath ICE v3.0</span></td></tr>
+              <tr><td>Steel (BOF primary)</td><td class="mn">1,850</td><td class="mn">1,850</td><td>kgCO₂e/t</td><td><span class="src-chip">World Steel 2023</span></td></tr>
             </tbody></table>
           </div>
-          <div class="method-panel" id="mp-borehole"><h2>Borehole Methodology</h2><p>Scope 1: diesel (drilling + pumping + generator). Scope 2: KPLC grid × (1 − solar%). Scope 3: casing materials amortised over design lifetime.</p><div class="formula-box">S1 = (L_drill/lifetime + L_pump + L_gen) × 2.68<br>S2 = kWh × 0.497 × (1 − solar%)<br>S3 = (kg_steel×1850 + kg_PVC×2410 + kg_cement×830) / lifetime / 1000<br><em>Total [tCO₂e/yr] = (S1 + S2 + S3) / 1000</em></div></div>
-          <div class="method-panel" id="mp-livestock"><h2>Livestock Methodology</h2><p>IPCC 2006 Vol.4 Ch.10 Tier 1 — Eastern Africa defaults. Enteric CH₄ + manure CH₄ + pasture N₂O (EF3 = 0.02). AR6 GWP₁₀₀ values applied.</p><div class="formula-box">E_enteric    = Σ(heads × EF_ent) × 27.9<br>E_manure_CH4 = Σ(heads × EF_man_CH4) × 27.9<br>E_manure_N2O = Σ(heads × Nex × 0.02 × 44/28) × 273<br><em>Total [tCO₂e/yr] = (E_ent + E_man + E_n2o + E_feed + E_elec) / 1000</em></div></div>
-          <div class="method-panel" id="mp-transport"><h2>Transport Methodology</h2><p>DEFRA/BEIS 2023 fuel-based method. Refrigerant fugitives use IPCC AR6 GWP values.</p><div class="formula-box">E_fuel = Σ(L_fuel × EF_fuel) / 1000<br>E_ref  = (kg_HFC134a × 1430 + kg_R404A × 3922) / 1000<br><em>Total [tCO₂e/yr] = E_fuel + E_ref</em></div></div>
-          <div class="method-panel" id="mp-construction"><h2>Construction Methodology</h2><p>Scope 3 embodied carbon (Bath ICE v3.0 cradle-to-gate) dominates most projects. Site diesel = Scope 1. Grid electricity = Scope 2.</p><div class="formula-box">S3 = t_cement×830 + m³_conc×159 + t_steel×1850 + t_rebar×1990 + ...<br>S1 = (L_excav + L_gen) × months × 2.68 + truck_km × 0.20<br>S2 = kWh/mo × months × 0.497</div></div>
-          <div class="method-panel" id="mp-manufacturing"><h2>Manufacturing Methodology</h2><p>IPCC 2006 Vol.3. Intensity benchmarked against KTDA, IFC, FAO, World Steel sector references. CBAM-ready output.</p><div class="formula-box">S1 = L_diesel×2.68 + L_HFO×3.17 + kg_LPG×2.98 + t_CO2×1000<br>S2 = (kWh_grid − kWh_solar) × 0.497<br>S3 = kg_HFC×1430 + kg_R404A×3922 + m³_ww×25 + t_waste×580<br><em>Intensity = Total_kgCO₂e ÷ tonnes_output</em></div></div>
+          <div class="method-panel" id="mp-borehole"><h2>Borehole Methodology</h2><p>Scope 1: diesel (drilling + pumping + generator). Scope 2: KPLC grid × (1 − solar%). Scope 3: casing materials amortised over design lifetime.</p><div class="formula-box">S1 = (L_drill/lifetime + L_pump + L_gen) × 2.68<br>S2 = kWh × 0.070 × (1 − solar%)  [Kenya grid, IEA 2024]<br>S3 = (kg_steel×1850 + kg_PVC×2410 + kg_cement×830) / lifetime / 1000<br><em>Total [tCO₂e/yr] = (S1 + S2 + S3) / 1000</em></div></div>
+          <div class="method-panel" id="mp-livestock"><h2>Livestock Methodology</h2>
+            <p>IPCC 2006 Vol.4 Ch.10 Tier 1 — Eastern Africa defaults. Enteric CH₄ + manure CH₄ + pasture N₂O. GWP values are dynamically applied from the active GWP set (AR6 default).</p>
+            <div class="formula-box">E_enteric    = Σ(heads × EF_ent) × GWP_CH4  [AR6: 27.0 | AR5: 28]<br>E_manure_CH4 = Σ(heads × EF_man_CH4) × GWP_CH4<br>E_manure_N2O = Σ(heads × Nex × EF3 × 44/28) × GWP_N2O  [AR6: 273 | AR5: 265]<br><em>EF3 = 0.02 pasture (IPCC 2006 Vol.4 Table 11.1)</em><br><em>Total [tCO₂e/yr] = (E_ent + E_man + E_n2o + E_feed + E_elec) / 1000</em></div>
+            <div class="ef-correction-note">📋 Uncertainty: ±30% enteric CH₄, ±50% manure N₂O (IPCC 2006 Vol.4 Table 1.4). Tier 1 values. For Tier 2 accuracy, use country-specific EFs from direct measurement.</div>
+          </div>
+          <div class="method-panel" id="mp-transport"><h2>Transport Methodology</h2>
+            <p>DEFRA/BEIS 2023 fuel-based method. Refrigerant fugitives classified as Scope 3 — use active GWP set.</p>
+            <div class="formula-box">E_fuel = Σ(L_fuel × EF_fuel) / 1000  [diesel 2.68, petrol 2.31 — IPCC 2006 Vol.2]<br>E_HFC  = kg_HFC134a × GWP_HFC134a  [AR6: 1,530 | AR5: 1,300 — GHG Protocol Aug 2024]<br>E_R404 = kg_R404A × GWP_R404A      [AR6: 4,180 | AR5: 3,922]<br><em>Total [tCO₂e/yr] = (E_fuel + E_HFC + E_R404) / 1000</em></div>
+            <div class="ef-correction-note">⚠️ Note: HFC-134a GWP changed significantly between assessment reports. AR4=1,430, AR5=1,300, AR6=1,530. The GWP selector above controls which value is applied.</div>
+          </div>
+          <div class="method-panel" id="mp-construction"><h2>Construction Methodology</h2>
+            <p>Scope 3 embodied carbon (Bath ICE v3.0 cradle-to-gate) typically dominates construction projects. Leakage from land clearing is added to the total if a land type is selected.</p>
+            <div class="formula-box">Scope 3 = t_cement×830 + m³_conc×159 + t_steel×1850 + t_rebar×1990 + ...  [Bath ICE v3.0]<br>Scope 1 = (L_excav + L_gen) × months × 2.68 + truck_km × 0.20  [IPCC 2006 / DEFRA 2023]<br>Scope 2 = kWh/mo × months × 0.070  [IEA 2024 — Kenya grid]<br>Leakage = hectares × tCO₂e/ha  [IPCC 2006 Vol.4 Table 4.7 — Eastern Africa land cover]<br><em>Total = Scope1 + Scope2 + Scope3 + Leakage</em></div>
+            <div class="ef-correction-note">📋 Uncertainty: ±20% steel, ±15% concrete, ±10% cement (Bath ICE v3.0 standard deviations). For KNCR Level 2 accuracy, use contractor-verified material quantities.</div>
+          </div>
+          <div class="method-panel" id="mp-manufacturing"><h2>Manufacturing Methodology</h2>
+            <p>IPCC 2006 Vol.3. Emission intensity benchmarked against KTDA, IFC, FAO, World Steel sector references. CBAM-ready output for EU export compliance.</p>
+            <div class="formula-box">Scope 1 = L_diesel×2.68 + L_HFO×3.17 + kg_LPG×2.98 + t_CO2×1000  [IPCC 2006 Vol.2]<br>Scope 2 = (kWh_grid − kWh_solar) × 0.070  [IEA 2024 — Kenya grid]<br>Scope 3 = kg_HFC134a×GWP_HFC + kg_R404A×GWP_R404 + m³_ww×25 + t_waste×580<br><em>Intensity = Total_kgCO₂e ÷ tonnes_output  [kgCO₂e/t product]</em></div>
+          </div>
           <div class="method-panel" id="mp-gs">
             <h2>Netzerra Score Formula</h2>
             <p>The NTZ Score (0–100) rewards intensity reduction, active offsetting, year-on-year improvement, and engagement. Aligned with SBTi 1.5°C pathway (7% annual reduction).</p>
@@ -903,8 +1090,10 @@
         <h2 style="color:#fff;margin-bottom:.35rem">KNCR Gateway</h2>
         <p style="color:rgba(255,255,255,.62);font-size:.86rem;max-width:560px">Netzerra is your upstream measurement layer for Kenya's sovereign carbon registry. Calculate emissions, generate KNCR-compliant DNA submission packages, and track your project pipeline — all in one platform.</p>
         <div class="kncr-badges">
-          <span class="kncr-badge">📋 Climate Change Act 2016 (Amended 2023)</span>
+          <span class="kncr-badge">📋 Climate Change Amendment Act 2023</span>
           <span class="kncr-badge">📜 Carbon Markets Regulations 2024</span>
+          <span class="kncr-badge" style="background:rgba(0,201,167,.12);border-color:rgba(0,201,167,.3);color:var(--teal)">🆕 Carbon Trading Regulations 2025</span>
+          <span class="kncr-badge" style="background:rgba(0,201,167,.12);border-color:rgba(0,201,167,.3);color:var(--teal)">🆕 Non-Market Approaches Regs 2025</span>
           <span class="kncr-badge">🌍 Article 6 Paris Agreement</span>
           <span class="kncr-badge">✅ Verra VCS · Gold Standard compatible</span>
         </div>
@@ -976,13 +1165,22 @@
             <div style="font-family:'Sora',sans-serif;font-size:.98rem;font-weight:700">Community Benefit Calculator</div>
           </div>
           <p style="font-size:.78rem;color:rgba(255,255,255,.48);margin-bottom:1.05rem">Kenya's Carbon Markets Regulations 2024 mandate <strong style="color:#FFCC80">25% of all credit proceeds</strong> must flow to local communities.</p>
+          <div class="inp" style="margin-bottom:.7rem"><label>Project Type</label>
+            <select id="cb-type" onchange="calcCB()">
+              <option value="land">🌳 Land-based (public/community land) — 40% mandate</option>
+              <option value="nonland">⚡ Non-land-based (renewables, clean cooking) — 25% mandate</option>
+              <option value="private">🏠 Private land — exempt from community mandate</option>
+            </select>
+            <div class="hint" id="cb-rate-label" style="color:var(--gold);font-weight:600;margin-top:.22rem"></div>
+            <div class="hint" style="color:rgba(255,255,255,.28)">Source: Carbon Markets Regulations 2024, Regulation 23E (verified March 2026)</div>
+          </div>
           <div class="inp" style="margin-bottom:.7rem"><label>Annual Credits <span class="unit">(tCO₂e/yr)</span></label><input type="number" id="cb-credits" placeholder="1500" oninput="calcCB()"></div>
           <div class="inp" style="margin-bottom:.7rem"><label>Credit Price <span class="unit">(USD/t)</span></label><input type="number" id="cb-price" value="12" oninput="calcCB()"></div>
           <div class="inp" style="margin-bottom:.7rem"><label>Project Duration <span class="unit">(years)</span></label><input type="number" id="cb-years" value="10" oninput="calcCB()"></div>
           <div class="inp" style="margin-bottom:1.05rem"><label>USD → KES Rate</label><input type="number" id="cb-fx" value="130" oninput="calcCB()"></div>
           <div class="benefit-calc">
             <div class="benefit-row"><span>Annual gross revenue</span><span class="benefit-val" id="cb-gross">—</span></div>
-            <div class="benefit-row"><span>Community fund (25%)</span><span class="benefit-val" id="cb-comm">—</span></div>
+            <div class="benefit-row"><span>Community fund <span id="cb-rate-display" style="color:var(--gold);font-size:.7rem">(select type above)</span></span><span class="benefit-val" id="cb-comm">—</span></div>
             <div class="benefit-row"><span>Developer share (75%)</span><span class="benefit-val" id="cb-dev">—</span></div>
             <div class="benefit-row"><span>Tax @ 15% preferential</span><span class="benefit-val" id="cb-tax">—</span></div>
             <div class="benefit-row"><span>Lifetime gross (×years)</span><span class="benefit-val" id="cb-life">—</span></div>
@@ -1020,6 +1218,69 @@
             <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 DNA submissions processed through NEMA's Climate Change Directorate. Netzerra prepares your complete package — contact <strong style="color:#FFCC80">shukriali411@gmail.com</strong> for guided support.</div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ DISCLAIMER ══════════════ -->
+    <section class="section" id="disclaimer-section">
+      <div class="sec-header">
+        <h2>📋 Disclaimer & Legal Notice</h2>
+        <p>Please read before using Netzerra for regulatory submissions.</p>
+      </div>
+      <div class="g2" style="margin-bottom:1.4rem">
+        <div style="background:rgba(245,166,35,.08);border:2px solid rgba(245,166,35,.3);border-radius:var(--r);padding:1.4rem">
+          <h3 style="color:var(--gold);margin-bottom:.72rem">🚧 MVP Status</h3>
+          <p style="font-size:.84rem">Netzerra is a <strong style="color:var(--gold)">Minimum Viable Product (Version 1.0)</strong> currently in active development. Features, data, and calculations are subject to change. The platform has not been audited or certified by any regulatory body.</p>
+        </div>
+        <div style="background:rgba(239,83,80,.08);border:2px solid rgba(239,83,80,.28);border-radius:var(--r);padding:1.4rem">
+          <h3 style="color:#EF9A9A;margin-bottom:.72rem">⚠️ Data Accuracy</h3>
+          <p style="font-size:.84rem">Calculations are based on user-inputted data. Netzerra does <strong style="color:#EF9A9A">not independently verify</strong> input data. Results must be reviewed by a qualified carbon auditor before submission to NEMA, KNCR, or any VCM standard.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">🏢 County Government Data</h3>
+        <p style="font-size:.84rem;margin-bottom:.72rem">All county government data, carbon project pipelines, FLLoCA compliance statuses, community benefit figures, and carbon levy revenue figures shown in the County Dashboard are <strong>illustrative samples created for demonstration purposes</strong>.</p>
+        <div style="background:rgba(239,83,80,.07);border-left:3px solid var(--coral);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:.78rem 1rem;font-size:.82rem;color:#EF9A9A">
+          Netzerra has <strong>no formal partnership, agreement, or data-sharing arrangement</strong> with any of the 47 county governments of Kenya, with the Kenya National Carbon Registry (KNCR), with the National Environment Management Authority (NEMA), with the Kenya Water Industry Association (KWIA), with the World Bank Kenya office, or with any bilateral carbon market partner. County names are used to illustrate how the platform would function when formally deployed with real data.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">📐 Methodology Disclaimer</h3>
+        <p style="font-size:.84rem">Emission factors are sourced from published scientific literature (IPCC 2006, IPCC AR6, IEA 2024, Bath ICE v3.0, World Steel Association 2023, DEFRA/BEIS 2023, KEFRI 2019, GHG Protocol August 2024). These are standard industry references, but:</p>
+        <ul style="font-size:.82rem;color:rgba(255,255,255,.7);margin:.72rem 0 0 1.2rem;line-height:2.1">
+          <li>Kenya-specific emission factors may change as KPLC updates its grid mix annually</li>
+          <li>IPCC Tier 1 defaults carry uncertainty ranges of ±5% to ±50% depending on the source</li>
+          <li>Formal KNCR project registration requires Tier 2 or Tier 3 country-specific data</li>
+          <li>The GWP selector defaults to AR6 — confirm with your VVB which standard they require</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">📱 Payment & Subscriptions</h3>
+        <p style="font-size:.84rem">M-Pesa STK Push billing shown in the platform is <strong>simulated</strong>. No actual payment is processed. Full Safaricom Daraja API integration is on the development roadmap. Membership plan features are indicative of planned functionality.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">🔒 Data Storage</h3>
+        <p style="font-size:.84rem">Netzerra MVP stores all data in your browser session only. No data is sent to any server. Your calculations, scores, and project lists are cleared when you close the browser tab. Persistent cloud storage with user accounts is on the development roadmap.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">⚖️ No Legal or Regulatory Advice</h3>
+        <p style="font-size:.84rem">Nothing in this platform constitutes legal, financial, regulatory, or investment advice. Users are responsible for ensuring compliance with Kenya's Climate Change Act 2016 (Amended 2023), the Carbon Markets Regulations 2024, the Carbon Trading Regulations 2025, and all applicable KNCR requirements. Consult qualified legal counsel before making regulatory submissions.</p>
+      </div>
+
+      <div style="background:rgba(58,170,92,.07);border:1px solid rgba(58,170,92,.18);border-radius:var(--r);padding:1.2rem;text-align:center">
+        <div style="font-size:.9rem;font-weight:600;color:var(--mint);margin-bottom:.38rem">Contact the Developer</div>
+        <p style="font-size:.82rem;margin-bottom:.62rem">For partnership enquiries, county government pilots, or technical feedback:</p>
+        <div style="display:flex;gap:.88rem;justify-content:center;flex-wrap:wrap;font-size:.82rem">
+          <a href="mailto:shukriali411@gmail.com" style="color:var(--mint)">📧 shukriali411@gmail.com</a>
+          <span style="color:var(--mint)">📱 +254 705 366 807</span>
+          <span style="color:var(--teal)">🌐 netzerrakenya.com</span>
+        </div>
+        <div style="margin-top:.88rem;font-size:.72rem;color:rgba(255,255,255,.32)">© 2026 Netzerra · Shukri Ali · All rights reserved</div>
       </div>
     </section>
 
@@ -1079,17 +1340,91 @@
   </div>
 </div>
 
+<!-- Profile / Account Modal -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal" style="max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.05rem">
+      <h3>👤 My Profile</h3>
+      <button onclick="closeModal('modal-profile')" class="modal-x">✕</button>
+    </div>
+    <div class="profile-tabs">
+      <div class="profile-tab active" id="ptab-details" onclick="switchProfileTab('details')">Profile Details</div>
+      <div class="profile-tab" id="ptab-account" onclick="switchProfileTab('account')">Sign In / Register</div>
+    </div>
+
+    <!-- Details panel -->
+    <div id="ppanel-details">
+      <div class="fg"><label>Full Name</label><input type="text" id="prof-name" placeholder="Your name"></div>
+      <div class="fg"><label>Organisation / County</label><input type="text" id="prof-org" placeholder="e.g. Laikipia County Government"></div>
+      <div class="fg"><label>Email</label><input type="email" id="prof-email" placeholder="you@organization.ke"></div>
+      <div class="fg"><label>Phone</label><input type="tel" id="prof-phone" placeholder="+254 7XX XXX XXX"></div>
+      <div style="background:rgba(58,170,92,.08);border:1px solid rgba(58,170,92,.18);border-radius:var(--r-sm);padding:.62rem .78rem;font-size:.72rem;color:rgba(109,217,140,.8);margin-bottom:.72rem">
+        💾 Your calculations and projects are <b>automatically saved</b> to this browser. They will be restored on your next visit.
+      </div>
+      <div class="modal-acts" style="flex-wrap:wrap;gap:.38rem">
+        <button class="btn-mc" onclick="closeModal('modal-profile')">Cancel</button>
+        <button style="padding:.55rem .88rem;background:rgba(239,83,80,.15);border:1px solid rgba(239,83,80,.3);color:#EF9A9A;border-radius:var(--r-sm);cursor:pointer;font-size:.78rem" onclick="if(confirm('Clear all saved data?'))clearStorage()">🗑️ Clear Saved Data</button>
+        <button class="btn-mp" onclick="saveProfile()">Save Profile</button>
+      </div>
+    </div>
+
+    <!-- Account panel -->
+    <div id="ppanel-account" style="display:none">
+      <p style="font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1rem">Sign in to sync your data, or create a free account to get started.</p>
+      <div class="auth-tabs" style="margin-bottom:1rem">
+        <div class="auth-tab active" onclick="switchAccountTab('signin')">Sign In</div>
+        <div class="auth-tab" onclick="switchAccountTab('create')">Create Account</div>
+      </div>
+      <div id="acc-signin">
+        <div class="fg"><label>Email</label><input type="email" id="acc-email" placeholder="you@organization.ke"></div>
+        <div class="fg"><label>Password</label><input type="password" id="acc-pw" placeholder="••••••••"></div>
+        <div class="modal-acts">
+          <button class="btn-mc" onclick="closeModal('modal-profile')">Cancel</button>
+          <button class="btn-mp" onclick="accountSignIn()">Sign In →</button>
+        </div>
+      </div>
+      <div id="acc-create" style="display:none">
+        <div class="fg"><label>Full Name</label><input type="text" id="acc-name" placeholder="Shukri Ali"></div>
+        <div class="fg"><label>Email</label><input type="email" id="acc-email2" placeholder="you@organization.ke"></div>
+        <div class="fg"><label>Phone</label><input type="tel" id="acc-phone" placeholder="+254 7XX XXX XXX"></div>
+        <div class="fg"><label>Organisation</label>
+          <select id="acc-org">
+            <option value="Individual">Individual / Consultant</option>
+            <option>County Government</option><option>NGO / Development Agency</option>
+            <option>Private Company</option><option>Research Institution</option>
+            <option>World Bank / UN Agency</option>
+          </select>
+        </div>
+        <div class="fg"><label>Password</label><input type="password" id="acc-pw2" placeholder="Min 8 characters"></div>
+        <div class="modal-acts">
+          <button class="btn-mc" onclick="closeModal('modal-profile')">Cancel</button>
+          <button class="btn-mp" onclick="accountCreate()">Create Account →</button>
+        </div>
+      </div>
+      <div style="margin-top:.88rem;padding:.72rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:var(--r-sm);font-size:.72rem;color:#FFD54F">
+        🚧 <b>MVP Note:</b> Full authentication with cloud sync is on the roadmap. Currently your data is stored in this browser session only.
+      </div>
+    </div>
+  </div>
+</div>
+
 <!-- M-Pesa Payment Modal -->
 <div class="modal-overlay" id="modal-mpesa">
   <div class="modal">
-    <h3>📱 M-Pesa Payment</h3>
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.88rem">
+      <h3>📱 M-Pesa Payment</h3>
+      <button onclick="closeModal('modal-mpesa')" class="modal-x">✕</button>
+    </div>
     <p id="modal-plan-label" style="color:rgba(255,255,255,.48)">Upgrading your plan</p>
     <div style="text-align:center;padding:1rem;background:rgba(0,166,81,.09);border:1px solid rgba(0,166,81,.2);border-radius:var(--r-sm);margin:.7rem 0">
       <div style="font-size:.67rem;color:rgba(255,255,255,.35)">Amount Due</div>
       <div style="font-family:'JetBrains Mono',monospace;font-size:1.75rem;font-weight:700;color:#69F0AE" id="modal-plan-amount">KES 0</div>
     </div>
-    <div class="fg"><label>M-Pesa Number</label><input type="tel" id="mpesa-phone" placeholder="+254 7XX XXX XXX" value="+254705366807"></div>
-    <p style="font-size:.75rem;color:rgba(255,255,255,.38);margin-bottom:0">An STK Push will be sent to your phone. Approve on your Safaricom line to complete payment.</p>
+    <div class="fg"><label>M-Pesa Number</label><input type="tel" id="mpesa-phone" placeholder="+254 7XX XXX XXX"></div>
+    <p style="font-size:.75rem;color:rgba(255,255,255,.38);margin-bottom:.62rem">An STK Push will be sent to your phone. Approve on your Safaricom line to complete payment.</p>
+    <div style="font-size:.7rem;color:rgba(245,166,35,.7);background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.18);border-radius:var(--r-sm);padding:.52rem .75rem;margin-bottom:.62rem">
+      🚧 MVP: M-Pesa STK Push integration is simulated. Live Safaricom Daraja API is on the development roadmap.
+    </div>
     <div class="modal-acts">
       <button class="btn-mc" onclick="closeModal('modal-mpesa')">Cancel</button>
       <button class="btn-mp" onclick="processMpesa()">📱 Send STK Push →</button>
@@ -1097,13 +1432,84 @@
   </div>
 </div>
 
+<!-- New KNCR Project Modal -->
+<div class="modal-overlay" id="modal-kncr-new">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3>🏛️ Register New KNCR Project</h3>
+      <button onclick="closeModal('modal-kncr-new')" class="modal-x">✕</button>
+    </div>
+    <p style="color:rgba(255,255,255,.48);font-size:.8rem;margin-bottom:.88rem">Add a project to your KNCR pipeline tracker.</p>
+    <div class="fg"><label>Project Name</label><input type="text" id="kn-name" placeholder="e.g. Laikipia Agroforestry Initiative"></div>
+    <div class="fg"><label>Sector</label>
+      <select id="kn-sector">
+        <option value="borehole">💧 Borehole</option>
+        <option value="livestock">🐄 Livestock</option>
+        <option value="transport">🚌 Transport</option>
+        <option value="forestry">🌳 Agroforestry</option>
+        <option value="solar">☀️ Renewable Energy</option>
+        <option value="biogas">🔥 Clean Cooking</option>
+      </select>
+    </div>
+    <div class="fg"><label>County</label>
+      <select id="kn-county">
+        <option>Turkana</option><option>Laikipia</option><option>Nakuru</option>
+        <option>Nairobi</option><option>Mombasa</option><option>Garissa</option>
+        <option>Isiolo</option><option>Kajiado</option><option>Narok</option>
+      </select>
+    </div>
+    <div class="fg"><label>Est. Credits (tCO₂e/yr)</label><input type="number" id="kn-credits" placeholder="850"></div>
+    <div class="fg"><label>Registry Standard</label>
+      <select id="kn-std">
+        <option>Verra VCS</option>
+        <option>Gold Standard</option>
+        <option>KNCR Domestic</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:.62rem;margin-top:.75rem">
+      <button class="btn-calc" onclick="addKNCRProject()" style="flex:1;justify-content:center;margin-top:0">✅ Add to Pipeline</button>
+      <button onclick="closeModal('modal-kncr-new')" style="flex:1;padding:.7rem;background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.52);border-radius:var(--r-sm);cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
 <!-- Toast Container -->
 <div id="toast-container"></div>
 
-<!-- ══════════════════════════════════════════════════
-     NETZERRA APP SCRIPT
-══════════════════════════════════════════════════ -->
-<script src="app.js"></script>
+<!-- ═══════════════════════════════════════════
+     SITE FOOTER — MVP Disclaimer
+═══════════════════════════════════════════ -->
+<footer id="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">N</div>
+      <div>
+        <div class="footer-name">Netzerra</div>
+        <div class="footer-tagline">Kenya's Carbon Intelligence Platform</div>
+      </div>
+    </div>
+    <div class="footer-mvp-badge">🚧 MVP v1.0 — Active Development</div>
+    <div class="footer-links">
+      <span onclick="showSection('methodology')">Methodology</span>
+      <span onclick="showSection('disclaimer')">Legal Disclaimer</span>
+      <span onclick="showSection('about')">About</span>
+      <a href="mailto:shukriali411@gmail.com">Contact</a>
+    </div>
+  </div>
+  <div class="footer-disclaimer">
+    <strong>Important Disclaimer:</strong> Netzerra is a Minimum Viable Product (MVP) currently in active development. 
+    All county government data, project pipelines, and community benefit figures shown are 
+    <strong>illustrative samples</strong> — no formal partnerships with any county government, 
+    NEMA, the Kenya National Carbon Registry, or any other government body have been established. 
+    Emission calculations are based on published IPCC 2006 / AR6 methodology and peer-reviewed emission factors, 
+    but <strong>results have not been independently verified</strong> and should not be submitted to regulatory bodies 
+    without review by a qualified carbon auditor. M-Pesa payment integration is simulated. 
+    This tool does not constitute legal, financial, or regulatory advice. 
+    © 2026 Netzerra · Shukri Ali · <a href="mailto:shukriali411@gmail.com">shukriali411@gmail.com</a>
+  </div>
+</footer>
 
+<!-- Netzerra App Script -->
+<script src="app.js"></script>
 </body>
 </html>
