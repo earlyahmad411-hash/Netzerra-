@@ -352,6 +352,7 @@ function saveProfile() {
   closeModal('modal-profile');
   toast('✅ Profile updated!', 'success');
   saveToStorage();
+}
 
 function openProfileModal() {
   document.getElementById('prof-name').value  = S.user.name;
