@@ -758,106 +758,213 @@ function calcManufacturing() {
 }
 
 // ── PDF REPORT (html2pdf.js) ──────────────────────────
+// Single authoritative version — no duplicate blocks
 async function generateAndDownloadPDF() {
   const c = S.lastCalc;
   if (!c) { toast('Run a calculation first!', 'error'); return; }
   toast('📄 Building PDF — please wait...', 'info');
 
-  const gs     = calcNTZScore(c.total_t, c.sector);
-  const now    = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
-  const ref    = c.ref || ('NTZ-' + Date.now());
+  const gs      = calcNTZScore(c.total_t, c.sector);
+  const now     = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
+  const ref     = c.ref || ('NTZ-' + Date.now());
   const dqsInfo = dqsLabel(c.dqs || 0);
-  const u      = calcUncertainty(c.total_t, c.sector);
+  const u       = calcUncertainty(c.total_t, c.sector);
 
-  // ── Safe PDF container: visible but off-viewport ────
+  // Container: position:absolute, full white bg, no z-index tricks
   const wrap = document.createElement('div');
-  wrap.style.cssText = 'position:absolute;left:0;top:0;width:760px;background:#fff;z-index:-9999;opacity:0;pointer-events:none;overflow:visible';
+  wrap.setAttribute('id', 'ntz-pdf-wrap');
+  wrap.style.cssText = 'position:absolute;left:-9999px;top:0;width:794px;background:#fff;overflow:visible;pointer-events:none;';
+
+  // Inner div: pure inline styles only — no CSS variables, no dark theme
   const div = document.createElement('div');
-  div.style.cssText = 'font-family:Arial,sans-serif;color:#1A3A2A;padding:32px;width:760px;background:#fff;box-sizing:border-box';
+  div.style.cssText = 'font-family:Arial,Helvetica,sans-serif;font-size:11px;color:#1A3A2A;background:#ffffff;width:754px;padding:20px;box-sizing:border-box;overflow:visible;line-height:1.5;';
 
   div.innerHTML = `
-    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:16px">
+      <tr><td style="background:#0D3320;padding:20px 24px;border-radius:8px">
+        <div style="font-size:20px;font-weight:800;color:#ffffff;font-family:Arial,Helvetica,sans-serif">Netzerra</div>
+        <div style="font-size:8px;color:#9DC9A8;letter-spacing:1.5px;text-transform:uppercase;margin:2px 0 10px;font-family:Arial,Helvetica,sans-serif">Kenya Carbon Intelligence Platform &middot; MVP v1.0</div>
+        <div style="font-size:15px;font-weight:700;color:#ffffff;margin-bottom:5px;font-family:Arial,Helvetica,sans-serif">Greenhouse Gas Emission Report</div>
+        <div style="font-size:10px;color:#9DC9A8;font-family:Arial,Helvetica,sans-serif">${S.user.name} &middot; ${S.user.org} &middot; ${now} &middot; Ref: ${ref}</div>
+      </td></tr>
+    </table>
+
+    <table width="100%" cellpadding="0" cellspacing="4" style="margin-bottom:12px">
       <tr>
-        <td style="background:#0D3320;padding:24px 28px;border-radius:10px">
-          <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:4px">Netzerra</div>
-          <div style="font-size:10px;color:#9DC9A8;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Kenya Carbon Intelligence Platform</div>
-          <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">Greenhouse Gas Emission Report</div>
-          <div style="font-size:11px;color:#9DC9A8">${S.user.name} &nbsp;|&nbsp; ${S.user.org} &nbsp;|&nbsp; ${now} &nbsp;|&nbsp; ${ref}</div>
+        <td width="24%" style="background:#F1F8E9;border:1px solid #C5E1A5;border-radius:5px;padding:10px 8px;text-align:center">
+          <div style="font-size:14px;font-weight:700;color:#1B5E20;font-family:Arial">${c.total_t.toFixed(2)}</div>
+          <div style="font-size:8px;text-transform:uppercase;color:#558B2F;margin-top:2px;font-family:Arial">tCO2e / year</div>
+        </td>
+        <td width="2%"></td>
+        <td width="24%" style="background:#F1F8E9;border:1px solid #C5E1A5;border-radius:5px;padding:10px 8px;text-align:center">
+          <div style="font-size:14px;font-weight:700;color:#1B5E20;font-family:Arial">${gs}/100</div>
+          <div style="font-size:8px;text-transform:uppercase;color:#558B2F;margin-top:2px;font-family:Arial">NTZ Score</div>
+        </td>
+        <td width="2%"></td>
+        <td width="24%" style="background:#F1F8E9;border:1px solid #C5E1A5;border-radius:5px;padding:10px 8px;text-align:center">
+          <div style="font-size:13px;font-weight:700;color:#1B5E20;font-family:Arial">${gradeFromScore(gs).split('·')[0].trim()}</div>
+          <div style="font-size:8px;text-transform:uppercase;color:#558B2F;margin-top:2px;font-family:Arial">Grade</div>
+        </td>
+        <td width="2%"></td>
+        <td width="24%" style="background:${c.dqs>=70?'#F1F8E9':'#FFEBEE'};border:1px solid ${c.dqs>=70?'#C5E1A5':'#FFCDD2'};border-radius:5px;padding:10px 8px;text-align:center">
+          <div style="font-size:14px;font-weight:700;color:${c.dqs>=70?'#1B5E20':'#B71C1C'};font-family:Arial">${c.dqs||0}/100</div>
+          <div style="font-size:8px;text-transform:uppercase;color:${c.dqs>=70?'#558B2F':'#C62828'};margin-top:2px;font-family:Arial">Data Quality</div>
         </td>
       </tr>
     </table>
-    <table width="100%" cellpadding="8" cellspacing="4" style="margin-bottom:16px">
+
+    ${c.flags && c.flags.length
+      ? `<div style="background:#FFF3E0;border-left:4px solid #FF6D00;padding:9px 13px;margin-bottom:10px;border-radius:0 5px 5px 0">
+           <div style="font-weight:700;color:#E65100;font-size:11px;margin-bottom:4px;font-family:Arial">Plausibility Flags (${c.flags.length}) - Auditor Review Required</div>
+           ${c.flags.map(f => `<div style="font-size:9.5px;color:#BF360C;padding:1px 0;font-family:Arial">- ${f}</div>`).join('')}
+         </div>`
+      : `<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:5px;padding:7px 12px;margin-bottom:10px;font-size:10px;color:#2E7D32;font-family:Arial">
+           No plausibility flags - all values within expected benchmark ranges.
+         </div>`}
+
+    <div style="font-size:12px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:3px;margin:10px 0 6px;font-family:Arial">Project Summary</div>
+    <table width="100%" cellpadding="3" cellspacing="0" style="font-size:10px;margin-bottom:4px;color:#333">
       <tr>
-        ${[
-          ['Total Emissions', c.total_t.toFixed(2)+' tCO2e/yr', '#1B5E20'],
-          ['NTZ Score', gs+'/100', '#1B5E20'],
-          ['Grade', gradeFromScore(gs).split('·')[0].trim(), '#1B5E20'],
-          ['Data Quality', `${c.dqs||0}/100 - ${dqsInfo.grade}`, c.dqs>=70?'#1B5E20':'#B71C1C'],
-        ].map(([l,val,col])=>`<td style="background:#F1F8E9;border:1px solid #C5E1A5;border-radius:8px;padding:10px;text-align:center;width:25%"><div style="font-size:13px;font-weight:700;color:${col}">${val}</div><div style="font-size:9px;text-transform:uppercase;color:#558B2F;margin-top:3px">${l}</div></td>`).join('')}
+        <td width="14%" style="color:#607D8B;font-weight:600;font-family:Arial">Project</td>
+        <td style="font-family:Arial">${c.name}</td>
+        <td width="12%" style="color:#607D8B;font-weight:600;font-family:Arial">Sector</td>
+        <td style="font-family:Arial">${c.sector}</td>
+        <td width="10%" style="color:#607D8B;font-weight:600;font-family:Arial">Date</td>
+        <td style="font-family:Arial">${c.date}</td>
       </tr>
     </table>
-    ${c.flags && c.flags.length ? `<div style="background:#FFF3E0;border-left:4px solid #FF6D00;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:12px"><div style="font-weight:700;color:#E65100;font-size:12px;margin-bottom:4px">Plausibility Flags (${c.flags.length}) - Auditor Review Required</div>${c.flags.map(f=>`<div style="font-size:11px;color:#BF360C;padding:2px 0">- ${f}</div>`).join('')}</div>` : `<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#2E7D32">No plausibility flags - all values within expected benchmark ranges.</div>`}
-    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Project Summary</div>
-    <p style="font-size:11px;margin:4px 0"><strong>Project:</strong> ${c.name} &nbsp;|&nbsp; <strong>Sector:</strong> ${c.sector} &nbsp;|&nbsp; <strong>Date:</strong> ${c.date}</p>
-    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Methodology &amp; GWP Version</div>
-    <p style="font-size:11px;margin:4px 0">IPCC 2006 Guidelines + <strong>${ACTIVE_GWP} GWP100</strong>: CH4=${EF.gwpCH4}, N2O=${EF.gwpN2O}, HFC-134a=${EF.gwpHFC134a.toLocaleString()}, R-404A=${EF.gwpR404A.toLocaleString()}. Kenya grid: <strong>0.070 kgCO2e/kWh</strong> (IEA 2024, ~90% renewable). GWP source: ${ACTIVE_GWP==='AR6'?'GHG Protocol Aug 2024 / IPCC AR6 WG1 Ch.7':'IPCC AR5 2013 / UNFCCC Paris Agreement'}. Config: v${KNCR_CONFIG.version}.</p>
-    <div style="background:#E3F2FD;border:1px solid #BBDEFB;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:11px;color:#1565C0"><strong>IPCC Tier 1 Uncertainty (+-${u.pct}%):</strong> ${u.low} - ${u.high} tCO2e/yr &nbsp;|&nbsp; ${u.basis}</div>
-    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Scope Breakdown</div>
-    <table width="100%" style="border-collapse:collapse;font-size:11px">
-      <tr style="background:#1B5E20;color:#fff"><th style="padding:6px 8px;text-align:left">Scope</th><th style="padding:6px 8px;text-align:right">tCO2e/yr</th><th style="padding:6px 8px;text-align:right">%</th><th style="padding:6px 8px;text-align:left">Source</th></tr>
-      <tr style="border-bottom:1px solid #E8F5E9"><td style="padding:5px 8px">Scope 1 - Direct combustion</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.s1_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">${c.total_t>0?(c.s1_t/c.total_t*100).toFixed(1):0}%</td><td style="padding:5px 8px;font-size:10px;color:#607D8B">IPCC 2006 Vol.2 / DEFRA 2023</td></tr>
-      <tr style="border-bottom:1px solid #E8F5E9;background:#F9FBF7"><td style="padding:5px 8px">Scope 2 - Purchased energy</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.s2_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">${c.total_t>0?(c.s2_t/c.total_t*100).toFixed(1):0}%</td><td style="padding:5px 8px;font-size:10px;color:#607D8B">IEA 2024 - 0.070 kgCO2e/kWh</td></tr>
-      <tr style="border-bottom:1px solid #E8F5E9"><td style="padding:5px 8px">Scope 3 - Embodied/upstream</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.s3_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">${c.total_t>0?(c.s3_t/c.total_t*100).toFixed(1):0}%</td><td style="padding:5px 8px;font-size:10px;color:#607D8B">Bath ICE v3.0 / World Steel 2023</td></tr>
-      <tr style="background:#E8F5E9;font-weight:700"><td style="padding:5px 8px">TOTAL</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.total_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">100%</td><td></td></tr>
+
+    <div style="font-size:12px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:3px;margin:10px 0 6px;font-family:Arial">Methodology and GWP Version</div>
+    <div style="font-size:10px;line-height:1.7;color:#333333;margin-bottom:5px;font-family:Arial">
+      IPCC 2006 Guidelines + <strong>${ACTIVE_GWP} GWP100</strong>:
+      CH4=${EF.gwpCH4}, N2O=${EF.gwpN2O}, HFC-134a=${EF.gwpHFC134a.toLocaleString()}, R-404A=${EF.gwpR404A.toLocaleString()}.
+      Kenya grid: <strong>0.070 kgCO2e/kWh</strong> (IEA 2024, ~90% renewable).
+      GWP source: ${ACTIVE_GWP==='AR6'?'GHG Protocol Aug 2024 / IPCC AR6 WG1 Ch.7':'IPCC AR5 2013 / UNFCCC Paris Agreement'}.
+      Regulatory config: v${KNCR_CONFIG.version}.
+    </div>
+    <div style="background:#E3F2FD;border:1px solid #BBDEFB;border-radius:4px;padding:6px 11px;margin-bottom:10px;font-size:10px;color:#1565C0;font-family:Arial">
+      IPCC Tier 1 Uncertainty (+-${u.pct}%): ${u.low} to ${u.high} tCO2e/yr &nbsp;|&nbsp; ${u.basis}
+    </div>
+
+    <div style="font-size:12px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:3px;margin:10px 0 6px;font-family:Arial">Scope Breakdown</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:10px;margin-bottom:10px">
+      <tr style="background:#1B5E20">
+        <th style="padding:5px 8px;text-align:left;font-weight:600;color:#ffffff;font-family:Arial">Scope</th>
+        <th style="padding:5px 8px;text-align:right;font-weight:600;color:#ffffff;font-family:Arial">tCO2e/yr</th>
+        <th style="padding:5px 8px;text-align:right;font-weight:600;color:#ffffff;font-family:Arial">%</th>
+        <th style="padding:5px 8px;text-align:left;font-weight:600;color:#ffffff;font-family:Arial">Primary Source</th>
+      </tr>
+      <tr style="border-bottom:1px solid #E8F5E9">
+        <td style="padding:5px 8px;color:#333;font-family:Arial">Scope 1 - Direct combustion</td>
+        <td style="padding:5px 8px;text-align:right;color:#333;font-family:Arial">${c.s1_t.toFixed(3)}</td>
+        <td style="padding:5px 8px;text-align:right;color:#333;font-family:Arial">${c.total_t>0?(c.s1_t/c.total_t*100).toFixed(1):0}%</td>
+        <td style="padding:5px 8px;color:#607D8B;font-size:9px;font-family:Arial">IPCC 2006 Vol.2 / DEFRA 2023</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E8F5E9;background:#F9FBF7">
+        <td style="padding:5px 8px;color:#333;font-family:Arial">Scope 2 - Purchased energy</td>
+        <td style="padding:5px 8px;text-align:right;color:#333;font-family:Arial">${c.s2_t.toFixed(3)}</td>
+        <td style="padding:5px 8px;text-align:right;color:#333;font-family:Arial">${c.total_t>0?(c.s2_t/c.total_t*100).toFixed(1):0}%</td>
+        <td style="padding:5px 8px;color:#607D8B;font-size:9px;font-family:Arial">IEA 2024 - 0.070 kgCO2e/kWh</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E8F5E9">
+        <td style="padding:5px 8px;color:#333;font-family:Arial">Scope 3 - Embodied / upstream</td>
+        <td style="padding:5px 8px;text-align:right;color:#333;font-family:Arial">${c.s3_t.toFixed(3)}</td>
+        <td style="padding:5px 8px;text-align:right;color:#333;font-family:Arial">${c.total_t>0?(c.s3_t/c.total_t*100).toFixed(1):0}%</td>
+        <td style="padding:5px 8px;color:#607D8B;font-size:9px;font-family:Arial">Bath ICE v3.0 / World Steel 2023</td>
+      </tr>
+      <tr style="background:#E8F5E9">
+        <td style="padding:5px 8px;font-weight:700;color:#1B5E20;font-family:Arial">TOTAL</td>
+        <td style="padding:5px 8px;text-align:right;font-weight:700;color:#1B5E20;font-family:Arial">${c.total_t.toFixed(3)}</td>
+        <td style="padding:5px 8px;text-align:right;font-weight:700;color:#1B5E20;font-family:Arial">100%</td>
+        <td style="padding:5px 8px;font-family:Arial"></td>
+      </tr>
     </table>
-    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Data Audit Trail</div>
-    <div style="background:#F3F9FF;border:1px solid #BBDEFB;border-radius:6px;padding:10px 12px;font-size:11px">
-      <div style="font-weight:700;color:#1565C0;margin-bottom:4px">${dqsInfo.icon} Data Quality Score: ${c.dqs||0}/100 - ${c.dqsGrade||'Not declared'}</div>
-      ${c.sources&&c.sources.filter(Boolean).length ? `Sources: ${[...new Set(c.sources.filter(Boolean))].join(', ')}` : 'No data sources declared - attach supporting documents before formal submission.'}
+
+    <div style="font-size:12px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:3px;margin:10px 0 6px;font-family:Arial">Data Audit Trail</div>
+    <div style="background:#F3F9FF;border:1px solid #BBDEFB;border-radius:4px;padding:8px 11px;margin-bottom:10px;font-size:10px;font-family:Arial;color:#333">
+      <div style="font-weight:700;color:#1565C0;margin-bottom:3px;font-family:Arial">${dqsInfo.icon} Data Quality Score: ${c.dqs||0}/100 - ${c.dqsGrade||'Not declared'}</div>
+      ${c.sources && c.sources.filter(Boolean).length
+        ? `<div style="color:#333;font-family:Arial">Sources: <strong>${[...new Set(c.sources.filter(Boolean))].join(', ')}</strong></div>`
+        : `<div style="color:#B71C1C;font-family:Arial">No data sources declared - attach supporting documents before formal submission.</div>`}
+      <div style="margin-top:3px;font-size:8.5px;color:#607D8B;font-family:Arial">DQS 90+ = Audit-Ready &nbsp;| DQS 70-89 = Verified &nbsp;| Below 70 = Supporting docs required</div>
     </div>
-    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Recommended Offsets</div>
-    <table width="100%" style="border-collapse:collapse;font-size:11px">
-      <tr style="background:#F1F8E9"><th style="padding:5px 8px;text-align:left">Strategy</th><th style="padding:5px 8px;text-align:left">Requirement</th><th style="padding:5px 8px;text-align:left">Source</th></tr>
-      <tr style="border-bottom:1px solid #E8F5E9"><td style="padding:5px 8px">Bamboo plantation</td><td style="padding:5px 8px">${(c.total_t/17).toFixed(2)} ha @ 17 tCO2e/ha/yr</td><td style="padding:5px 8px;color:#607D8B">Yuen et al. 2017</td></tr>
-      <tr style="border-bottom:1px solid #E8F5E9;background:#F9FBF7"><td style="padding:5px 8px">Casuarina trees</td><td style="padding:5px 8px">${(c.total_t/8).toFixed(2)} ha @ 8 tCO2e/ha/yr</td><td style="padding:5px 8px;color:#607D8B">KEFRI 2019</td></tr>
-      <tr><td style="padding:5px 8px">Biogas digesters</td><td style="padding:5px 8px">${Math.ceil(c.total_t/3.5)} units @ 3.5 tCO2e/unit/yr</td><td style="padding:5px 8px;color:#607D8B">SNV Kenya 2021</td></tr>
+
+    <div style="font-size:12px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:3px;margin:10px 0 6px;font-family:Arial">Recommended Offset Strategies</div>
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-collapse:collapse;font-size:10px;margin-bottom:12px">
+      <tr style="background:#F1F8E9">
+        <th style="padding:5px 8px;text-align:left;font-weight:600;color:#1B5E20;border-bottom:1px solid #C5E1A5;font-family:Arial">Strategy</th>
+        <th style="padding:5px 8px;text-align:left;font-weight:600;color:#1B5E20;border-bottom:1px solid #C5E1A5;font-family:Arial">Requirement</th>
+        <th style="padding:5px 8px;text-align:left;font-weight:600;color:#1B5E20;border-bottom:1px solid #C5E1A5;font-family:Arial">Source</th>
+      </tr>
+      <tr style="border-bottom:1px solid #E8F5E9">
+        <td style="padding:5px 8px;color:#333;font-family:Arial">Bamboo plantation</td>
+        <td style="padding:5px 8px;color:#333;font-family:Arial">${(c.total_t/17).toFixed(2)} ha at 17 tCO2e/ha/yr</td>
+        <td style="padding:5px 8px;color:#607D8B;font-family:Arial">Yuen et al. 2017</td>
+      </tr>
+      <tr style="border-bottom:1px solid #E8F5E9;background:#F9FBF7">
+        <td style="padding:5px 8px;color:#333;font-family:Arial">Casuarina equisetifolia</td>
+        <td style="padding:5px 8px;color:#333;font-family:Arial">${(c.total_t/8).toFixed(2)} ha at 8 tCO2e/ha/yr</td>
+        <td style="padding:5px 8px;color:#607D8B;font-family:Arial">KEFRI 2019</td>
+      </tr>
+      <tr>
+        <td style="padding:5px 8px;color:#333;font-family:Arial">Biogas digesters</td>
+        <td style="padding:5px 8px;color:#333;font-family:Arial">${Math.ceil(c.total_t/3.5)} units at 3.5 tCO2e/unit/yr</td>
+        <td style="padding:5px 8px;color:#607D8B;font-family:Arial">SNV Kenya 2021</td>
+      </tr>
     </table>
-    <div style="margin-top:16px;padding:10px 14px;background:#E3F2FD;border-left:4px solid #1565C0;border-radius:0 6px 6px 0;font-size:10px;color:#0D47A1">
-      Generated by Netzerra MVP v1.0 - Kenya Carbon Intelligence Platform. ${ACTIVE_GWP} GWP (GHG Protocol Aug 2024). ISO 14064-1:2018 aligned. Disclaimer: This report is generated from user-inputted data. Netzerra does not independently verify input data. Results should be reviewed by a qualified carbon auditor before formal regulatory submission.
+
+    <div style="padding:9px 13px;background:#E3F2FD;border-left:4px solid #1565C0;border-radius:0 5px 5px 0;font-size:9px;color:#0D47A1;margin-bottom:8px;font-family:Arial">
+      Generated by Netzerra MVP v1.0 - Kenya Carbon Intelligence Platform.
+      ${ACTIVE_GWP} GWP values (GHG Protocol Aug 2024). ISO 14064-1:2018 aligned.
+      This report is generated from user-inputted data and should be reviewed by a qualified
+      carbon auditor before formal submission to NEMA, KNCR, or any VCM verification body.
     </div>
-    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #E8F5E9;display:flex;justify-content:space-between;font-size:9px;color:#90A4AE">
-      <span>Netzerra - shukriali411@gmail.com - +254 705 366 807 - netzerrakenya.com</span>
-      <span>${ref} - ${now}</span>
-    </div>
-    <div style="margin-top:8px;font-size:9px;color:#BDBDBD;border-top:1px solid #F5F5F5;padding-top:6px">
-      MVP DISCLAIMER: Netzerra is a Minimum Viable Product in active development. County government data shown is illustrative. No formal partnerships with county governments have been established. Emission factors are sourced from published scientific literature but users are responsible for verification. This tool does not constitute legal or regulatory advice.
+    <table width="100%" cellpadding="0" cellspacing="0" style="border-top:1px solid #E8F5E9;padding-top:6px;margin-top:4px">
+      <tr>
+        <td style="font-size:8px;color:#90A4AE;font-family:Arial">Netzerra - shukriali411@gmail.com - +254 705 366 807 - netzerrakenya.com</td>
+        <td style="text-align:right;font-size:8px;color:#90A4AE;font-family:Arial">${ref} - ${now}</td>
+      </tr>
+    </table>
+    <div style="font-size:7.5px;color:#BDBDBD;margin-top:5px;padding-top:4px;border-top:1px solid #F5F5F5;font-family:Arial">
+      MVP DISCLAIMER: County data is illustrative. No formal partnerships established. Not legal or regulatory advice. (c) 2026 Netzerra - Shukri Ali.
     </div>`;
 
   wrap.appendChild(div);
   document.body.appendChild(wrap);
 
-  // Small delay to ensure DOM render
-  await new Promise(r => setTimeout(r, 200));
+  // Let browser fully paint the element
+  await new Promise(r => setTimeout(r, 400));
 
   try {
     await html2pdf().set({
-      margin:        [0.4, 0.4, 0.4, 0.4],
-      filename:      `Netzerra_${c.name.replace(/[^a-z0-9]/gi,'-')}_${c.date}.pdf`,
-      image:         { type:'jpeg', quality:0.96 },
-      html2canvas:   { scale:1.5, useCORS:true, logging:false, allowTaint:true,
-                       windowWidth:760, scrollX:0, scrollY:0,
-                       backgroundColor:'#ffffff' },
-      jsPDF:         { unit:'in', format:'a4', orientation:'portrait' },
-      pagebreak:     { mode:['avoid-all','css','legacy'] },
+      margin:      [10, 10, 10, 10],
+      filename:    `Netzerra_${c.name.replace(/[^a-z0-9]/gi, '-')}_${c.date}.pdf`,
+      image:       { type: 'jpeg', quality: 0.97 },
+      html2canvas: {
+        scale:           2,
+        useCORS:         true,
+        logging:         false,
+        allowTaint:      true,
+        backgroundColor: '#ffffff',
+        // No windowWidth restriction — let html2canvas measure the element naturally
+      },
+      jsPDF: {
+        unit:        'mm',
+        format:      'a4',
+        orientation: 'portrait',
+      },
+      pagebreak: { mode: ['css', 'legacy'], before: '.pdf-page-break' },
     }).from(div).save();
-    toast('✅ PDF downloaded successfully!', 'success');
-  } catch(err) {
+
+    toast('PDF downloaded!', 'success');
+  } catch (err) {
     console.error('PDF error:', err);
-    toast('PDF failed — try again or use browser Print → Save as PDF', 'error');
+    toast('PDF error — use the Print button as fallback', 'error');
   } finally {
-    document.body.removeChild(wrap);
+    if (document.body.contains(wrap)) document.body.removeChild(wrap);
   }
 }
+
 // ── COUNTY DASHBOARD ──────────────────────────────────
 const COUNTY_DATA = {
   'Turkana':  { projects:[{n:'Turkana Solar Borehole Cluster',s:'borehole',c:420,step:2,st:'PDD Submitted'},{n:'Turkana Rangeland Carbon',s:'livestock',c:850,step:1,st:'Draft'}], revenue:23800000, community:5950000, floca:'partial', wards:['Kanamkemer','Turkana West','Loima','Turkana East','Kibish'] },
