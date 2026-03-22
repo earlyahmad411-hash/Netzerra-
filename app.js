@@ -280,7 +280,7 @@ const OB = [
   { icon:'⚡', title:'Start with a Calculation', body:'Pick a sector: Borehole, Livestock, Transport, Construction, or Manufacturing. Enter your activity data and get an IPCC AR6-compliant result instantly.' },
   { icon:'🏢', title:'County Dashboard (New!)', body:'<strong style="color:var(--mint)">Dedicated to county officers.</strong> See all carbon projects, community benefit fund tracking, FLLoCA compliance status, and carbon levy revenue — by ward.' },
   { icon:'🏛️', title:'KNCR Gateway', body:"Kenya's National Carbon Registry launched February 2026. The KNCR Gateway helps you register projects, generate DNA submission packages, and calculate your 25% community benefit obligations." },
-  { icon:'📄', title:'True PDF Reports', body:'Every calculation generates a real ISO 14064-aligned PDF — accepted by county governments, World Bank Kenya, NEMA, and VCM verifiers. Click "Download PDF" after any calculation.' }
+  { icon:'📄', title:'True PDF Reports', body:'Every calculation generates a real ISO 14064-1:2018 aligned PDF — formatted for county government reporting, NEMA submissions, and VCM verification bodies. Click "Download PDF" after any calculation.' }
 ];
 let obStep = 0;
 
@@ -1244,7 +1244,7 @@ function generateFLoCAReport() {
   <button onclick="window.print()" style="background:#1A3A6B;color:#fff;border:none;padding:9px 22px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700">
     ⬇ Save as PDF / Print
   </button>
-  <span style="font-size:10px;color:#607D8B;margin-left:10px">Print → Save as PDF → Submit to World Bank FLLoCA</span>
+  <span style="font-size:10px;color:#607D8B;margin-left:10px">Print → Save as PDF → Use with official NTPIU / National Treasury FLLoCA templates</span>
 </div>
 
 <!-- HEADER -->
@@ -1255,13 +1255,16 @@ function generateFLoCAReport() {
   <div class="hdr-meta">${county} County &nbsp;·&nbsp; Period: ${quarter} &nbsp;·&nbsp; Generated: ${now} &nbsp;·&nbsp; Ref: ${ref}</div>
 </div>
 
-<!-- WORLD BANK BANNER -->
-<div class="wb-banner">
+<!-- FLOCA PROGRAMME BANNER -->
+<div class="wb-banner" style="background:#1A4A2E">
   <div>
-    <div class="wb-logo">World Bank — Forest and Landscape Livelihoods and Climate Adaptation (FLLoCA)</div>
-    <div style="font-size:9px;opacity:.8;margin-top:2px">Results-based financing for Kenya's 47 county governments &nbsp;·&nbsp; USD 82 million disbursed to date</div>
+    <div class="wb-logo">FLLoCA — Forest and Landscape Livelihoods and Climate Adaptation</div>
+    <div style="font-size:9px;opacity:.8;margin-top:2px">Results-based climate finance · Administered by the National Treasury &amp; State Department for Environment and Climate Change · USD 82M programme</div>
   </div>
   <div style="font-size:9px;opacity:.7">County: ${county} &nbsp;·&nbsp; ${quarter}</div>
+</div>
+<div style="background:#FFF8E1;border:1px solid #FFD54F;border-radius:4px;padding:6px 12px;margin-bottom:12px;font-size:9px;color:#795548">
+  ⚠️ DATA PREPARATION TOOL: This document is for internal county use only. All figures must be verified and entered into official National Treasury NTPIU templates before formal FLLoCA submission. Netzerra has no affiliation with the National Treasury, World Bank, or FLLoCA programme.
 </div>
 
 <!-- OVERALL COMPLIANCE STATUS -->
@@ -1396,7 +1399,7 @@ ${overallScore < 6
   </div>
   <div class="sign-block" style="margin-top:16px">
     <div class="sign-line"></div>
-    <div class="sign-label">FLLoCA County Liaison Officer (World Bank)</div>
+    <div class="sign-label">National Treasury NTPIU Representative</div>
   </div>
 </div>
 
@@ -1406,7 +1409,7 @@ ${overallScore < 6
   <span>${ref} &middot; ${now}</span>
 </div>
 <div class="disc">
-  MVP DISCLAIMER: Data shown is illustrative. Netzerra has no formal partnership with ${county} County Government, the World Bank, or FLLoCA.
+  IMPORTANT DISCLAIMER: All data in this document is illustrative and must be replaced with verified county figures before any official submission. Netzerra has no formal partnership with ${county} County Government, the National Treasury, or any FLLoCA programme administrator. This is a data preparation tool only — official FLLoCA reports must be submitted through the National Treasury NTPIU using approved templates.
   This report template is provided as a tool to assist county officers in preparing their own reports. Verify all figures before formal submission. © 2026 Netzerra.
 </div>
 
@@ -1607,7 +1610,7 @@ li{font-size:.82rem}
   <li><strong>KNCR Platform</strong> (kncr.go.ke) — launched 17 February 2026</li>
   <li><strong>Paris Agreement Article 6.2</strong> — governs ITMO transfers</li>
 </ul>
-<div class="info">Emission calculations prepared by Netzerra using IPCC 2006 methodology and IPCC AR6 GWP₁₀₀ values — compatible with Verra VCS, Gold Standard, and KNCR domestic standard without recalculation.</div>
+<div class="info">Emission calculations prepared by Netzerra using IPCC 2006 methodology and IPCC AR6 GWP₁₀₀ values — aligned with IPCC 2006 / AR6 methodology used by Verra VCS, Gold Standard, and KNCR domestic standard. Independent VVB verification required before formal registration.</div>
 
 <h2>3. Baseline &amp; Additionality</h2>
 ${c ? `<p>Baseline emissions (from Netzerra calculation): <strong>${c.total_t.toFixed(3)} tCO₂e/yr</strong></p>
@@ -1778,7 +1781,7 @@ function renderCommunity() {
   const posts = [
     { init:'AM', author:'Amina Mwangi',  time:'2h ago',  text:'Laikipia Water Authority completed our first IPCC Tier 1 borehole audit via Netzerra! Result: 48.2 tCO₂e/yr for BH-07 in Rumuruti. Proposing bamboo offset to county board next week. 🌿', likes:24, coms:8 },
     { init:'DO', author:'Dennis Ochieng', time:'5h ago',  text:'Pro tip: if you track fuel receipts, use the Fuel-Based method — far more accurate. DEFRA/BEIS 2023 = 2.68 kgCO₂e/L diesel. Most Kenya fleet managers have fuel cards, so data is usually available! 🚛', likes:18, coms:5 },
-    { init:'FK', author:'Fatuma Kamau',   time:'1d ago',  text:'World Bank Kenya confirmed they will accept Netzerra reports for KIHBS compliance reporting. Our PDF reports go directly into donor submissions now — huge step! 🎉', likes:47, coms:19 },
+    { init:'FK', author:'Fatuma Kamau',   time:'1d ago',  text:'Used Netzerra to prepare our county emission baseline data for the FLLoCA readiness assessment. The checklist format made it so much easier to organise everything before filling the official NTPIU templates. Recommended! 🌿', likes:47, coms:19 },
     { init:'JM', author:'James Mwenda',   time:'2d ago',  text:'For livestock operators: biggest emission reduction I\'ve found is switching from pit manure to biogas digesters. Cuts manure CH₄ by ~90% AND gives cooking fuel. SNV Kenya has subsidised digesters for qualifying farms.', likes:31, coms:12 },
   ];
   document.getElementById('community-feed').innerHTML = `
@@ -1958,7 +1961,7 @@ function handlePlanClick(btn) {
 function renderFAQs() {
   const faqs = [
     { q:'What emission factors does Netzerra use?', a:'IPCC 2006 Guidelines with selectable GWP values — AR6 (default, Kenya KNCR) or AR5 (UNFCCC Paris Agreement). AR6 values: CH₄ = 27.0, N₂O = 273, HFC-134a = 1,530 (GHG Protocol Aug 2024). Kenya grid: 0.070 kgCO₂e/kWh (IEA 2024, ~90% renewable). DEFRA/BEIS 2023 for transport. KEFRI 2019 for agroforestry.' },
-    { q:'Are Netzerra reports accepted by donors?', a:'Yes. Reports are formatted for ISO 14064-1:2018 compliance and have been accepted by World Bank Kenya, UN Environment Programme, and multiple county governments for NEMA and NDC reporting.' },
+    { q:'Are Netzerra reports accepted by donors?', a:'Netzerra reports follow ISO 14064-1:2018 format and IPCC AR6 methodology — the same standards required by most development finance institutions. Reports have not been formally endorsed by any specific organisation. Users should verify acceptance requirements with their specific donor or regulatory body before submission.' },
     { q:'How is the NTZ Score calculated?', a:'The NTZ Score (0–100) combines: emission intensity vs sector benchmark (40 pts), offset-to-emission ratio (30 pts), year-on-year reduction rate (20 pts), and platform engagement (10 pts).' },
     { q:'What is the Kenya Power grid emission factor?', a:"Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%). Netzerra uses 0.070 kgCO₂e/kWh (IEA 2024 / SEforAll Kenya). A figure of 0.497 kgCO₂e/kWh was previously incorrect — that value applies to fossil-heavy grids and has been corrected." },
     { q:'What is the County Dashboard for?', a:'County officers can use it to track all carbon projects in their county, verify community benefit fund distributions (40% for land-based, 25% for non-land — Carbon Markets Regulations 2024), check FLLoCA compliance status, and track carbon levy revenue by ward.' },
