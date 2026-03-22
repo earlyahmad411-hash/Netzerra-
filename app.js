@@ -355,6 +355,7 @@ function saveProfile() {
   closeModal('modal-profile');
   toast('✅ Profile updated!', 'success');
   saveToStorage();
+}
 
 function openProfileModal() {
   document.getElementById('prof-name').value  = S.user.name;
@@ -1437,6 +1438,14 @@ function advanceKNCR(i) {
 
 function generateKNCRPackage() {
   const name     = document.getElementById('kncr-proj-name').value.trim() || 'Unnamed Project';
+  // CDA pre-computation (avoids nested template literals)
+  const _ltype    = document.getElementById('kncr-land-type') ? document.getElementById('kncr-land-type').value : 'land';
+  const _cRate    = _ltype==='land' ? 0.40 : _ltype==='nonland' ? 0.25 : 0;
+  const _cRatePct = Math.round(_cRate*100);
+  const _devShare = 1 - _cRate;
+  const _devPct   = Math.round(_devShare*100);
+  const _netPct   = Math.round(_devShare*.85*100);
+  const _cLabel   = _ltype==='land' ? '40% — land-based on public/community land (Reg. 23E)' : _ltype==='nonland' ? '25% — non-land-based on public/community land (Reg. 23E)' : 'Exempt — private land (Reg. 23E(3))';
   const credits  = parseFloat(document.getElementById('kncr-credits').value) || 0;
   const county   = document.getElementById('kncr-county').value;
   const proponent= document.getElementById('kncr-proponent').value.trim() || S.user.org;
@@ -1513,22 +1522,15 @@ ${c ? `<p>Baseline emissions (from Netzerra calculation): <strong>${c.total_t.to
 </table>` : '<p>Run a Netzerra calculation first to populate this section with verified baseline data.</p>'}
 <p>Claimed annual reduction: <strong>${credits.toLocaleString()} tCO₂e/yr</strong>. Full additionality demonstration per ${standard} methodology to be provided in final PDD with third-party VVB engagement.</p>
 
-<h2>4. Community Benefit Plan (Reg. 23E Mandate)</h2>
-${(()=>{
-  const ltype = document.getElementById('kncr-land-type')?.value || 'land';
-  const cRate = ltype==='land' ? 0.40 : ltype==='nonland' ? 0.25 : 0;
-  const cLabel = ltype==='land' ? '40% — land-based on public/community land (Reg. 23E)' : ltype==='nonland' ? '25% — non-land-based on public/community land (Reg. 23E)' : 'Exempt — private land project (Reg. 23E(3))';
-  const devShare = 1 - cRate;
-  return \`
-<div class="info"><strong>Regulation 23E Rate Applied: ${cLabel}</strong></div>
+<h2>4. Community Benefit Plan (Reg. 23E)</h2>
+<div class=\"info\"><strong>Regulation 23E Rate Applied: ${_cLabel}</strong></div>
 <table>
   <tr><th>Revenue Stream</th><th>Annual (USD @ $12/t)</th><th>Annual (KES @ 130)</th><th>Share</th></tr>
-  <tr><td>Gross Credit Revenue</td><td>USD \${(credits*12).toLocaleString()}</td><td>KES \${(credits*12*130).toLocaleString()}</td><td>100%</td></tr>
-  <tr><td><strong>Community Fund (mandatory)</strong></td><td><strong>USD \${Math.round(credits*12*cRate).toLocaleString()}</strong></td><td><strong>KES \${Math.round(credits*12*130*cRate).toLocaleString()}</strong></td><td><strong>\${Math.round(cRate*100)}%</strong></td></tr>
-  <tr><td>Developer Share</td><td>USD \${Math.round(credits*12*devShare).toLocaleString()}</td><td>KES \${Math.round(credits*12*130*devShare).toLocaleString()}</td><td>\${Math.round(devShare*100)}%</td></tr>
-  <tr class="tot"><td>Net (after 15% preferential tax)</td><td>USD \${Math.round(credits*12*devShare*.85).toLocaleString()}</td><td>KES \${Math.round(credits*12*130*devShare*.85).toLocaleString()}</td><td>~\${Math.round(devShare*.85*100)}%</td></tr>
-</table>\`;
-})()}
+  <tr><td>Gross Credit Revenue</td><td>USD ${(credits*12).toLocaleString()}</td><td>KES ${(credits*12*130).toLocaleString()}</td><td>100%</td></tr>
+  <tr><td><strong>Community Fund (mandatory)</strong></td><td><strong>USD ${Math.round(credits*12*_cRate).toLocaleString()}</strong></td><td><strong>KES ${Math.round(credits*12*130*_cRate).toLocaleString()}</strong></td><td><strong>${_cRatePct}%</strong></td></tr>
+  <tr><td>Developer Share</td><td>USD ${Math.round(credits*12*_devShare).toLocaleString()}</td><td>KES ${Math.round(credits*12*130*_devShare).toLocaleString()}</td><td>${_devPct}%</td></tr>
+  <tr class=\"tot\"><td>Net (after 15% tax)</td><td>USD ${Math.round(credits*12*_devShare*.85).toLocaleString()}</td><td>KES ${Math.round(credits*12*130*_devShare*.85).toLocaleString()}</td><td>~${_netPct}%</td></tr>
+</table>
 
 <h2>5. Environmental &amp; Social Safeguards</h2>
 <ul>
