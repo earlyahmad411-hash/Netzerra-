@@ -6,7 +6,7 @@
   <meta name="description" content="Netzerra — Kenya's Carbon Intelligence Platform. IPCC AR6-compliant MRV for boreholes, livestock, transport, construction, and manufacturing. KNCR-native, county-ready, M-Pesa enabled.">
   <meta name="author" content="Shukri Ali — shukriali411@gmail.com">
   <meta property="og:title"       content="Netzerra — Kenya's Carbon Intelligence Platform">
-  <meta property="og:description" content="KNCR-native carbon compliance automation. IPCC AR6 calculators, CDA generation, county dashboards, real PDF reports.">
+  <meta property="og:description" content="KNCR-native carbon compliance automation. IPCC AR6 calculators, CDA Fourth Schedule generation, county dashboards, real PDF reports.">
   <meta property="og:type"        content="website">
   <title>Netzerra — Kenya's Carbon Intelligence Platform</title>
 
@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
   <!-- Netzerra Styles -->
-  <link rel="stylesheet" href="style.css?v=2.1">
+  <link rel="stylesheet" href="style.css?v=2.2">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -1015,7 +1015,7 @@
                 The late <strong>Mr. Tom Armstrong</strong>, then Chairman of KWIA, became my first mentor. He saw what I was doing and pushed me to think bigger — beyond boreholes, to every sector of Kenya's economy. His passing left a profound gap, and a profound responsibility to see this through.
               </p>
               <p style="color:rgba(255,255,255,.8)">
-                Three years later, that spreadsheet is Netzerra — covering five sectors, 47 counties, KNCR-native architecture, and the only platform in Kenya that automates Community Development Agreements under the Carbon Markets Regulations 2024. Built by one person, in Kenya, for Kenya.
+                Three years later, that spreadsheet is Netzerra — covering five sectors, 47 counties, KNCR-native architecture, and Community Development Agreement (CDA) generation under the Carbon Markets Regulations 2024 Fourth Schedule. Built by one person, in Kenya, for Kenya.
               </p>
             </div>
           </div>
@@ -1153,9 +1153,20 @@
               <option>Isiolo</option><option>Kajiado</option><option>Narok</option><option>Other</option>
             </select>
           </div>
+          <div class="inp" style="margin-bottom:.72rem"><label>Land Type <span class="ef-tip" title="CDA is required for public and community land projects only. Private land projects are exempt (Carbon Markets Regs 2024 Reg.23E).">ⓘ</span></label>
+            <select id="kncr-land-type">
+              <option value="community">Community Land (40% mandate — CDA required)</option>
+              <option value="public">Public Land (40% mandate — CDA required)</option>
+              <option value="private">Private Land (exempt from CDA requirement)</option>
+            </select>
+          </div>
+          <div class="inp" style="margin-bottom:.72rem"><label>Community Name</label><input type="text" id="kncr-community" placeholder="e.g. Turkana Pastoral Community"></div>
           <div class="inp" style="margin-bottom:1.05rem"><label>Est. Annual Credits <span class="unit">(tCO₂e/yr)</span></label><input type="number" id="kncr-credits" placeholder="e.g. 1500"><div class="hint">From your Netzerra calculation above</div></div>
-          <button class="btn-calc btn-calc w100" onclick="generateKNCRPackage()">📄 Generate Submission Package →</button>
-          <div class="kncr-info-box">Package includes: Project Design Document, Emission Baseline Report, IPCC methodology declaration, community benefit schedule, stakeholder engagement outline — pre-formatted for NEMA's DNA portal.</div>
+          <div style="display:flex;gap:.5rem">
+            <button class="btn-calc" style="flex:1;justify-content:center;font-size:.78rem" onclick="generateKNCRPackage()">📄 DNA Package</button>
+            <button class="btn-calc" style="flex:1;justify-content:center;font-size:.78rem;background:linear-gradient(135deg,#1A3A6B,#1565C0)" onclick="generateCDA()">📋 CDA Fourth Schedule</button>
+          </div>
+          <div class="kncr-info-box" style="margin-top:.62rem">DNA Package: PDD + baseline + methodology. CDA: legally formatted Fourth Schedule agreement per Carbon Markets Regulations 2024 — required for all public/community land projects.</div>
         </div>
 
         <!-- Community Benefit Calculator -->
@@ -1473,6 +1484,6 @@
 </footer>
 
 <!-- Netzerra App Script -->
-<script src="app.js?v=2.1"></script>
+<script src="app.js?v=2.2"></script>
 </body>
 </html>
