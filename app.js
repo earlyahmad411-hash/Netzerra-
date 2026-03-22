@@ -1895,51 +1895,65 @@ function renderMarketplace() {
 }
 
 function renderPricing() {
-  const DEMO_NOTICE = `
-    <div style="background:rgba(245,166,35,.12);border:2px solid rgba(245,166,35,.4);border-radius:var(--r);padding:1.1rem 1.4rem;margin-bottom:1.65rem;text-align:center">
-      <div style="font-size:1.15rem;margin-bottom:.35rem">🏔️ <b style="color:var(--gold)">Canopy Plan — Active for All Demo Users</b></div>
-      <p style="font-size:.82rem;color:rgba(255,255,255,.7);margin-bottom:.52rem">
-        During this demo period every user has full access to all Canopy-tier features — unlimited calculations,
-        all five sectors, County Dashboard, KNCR packages, FLLoCA reports, white-label PDFs, and everything else.
-        No payment required.
-      </p>
-      <div style="display:inline-block;background:rgba(245,166,35,.18);border:1px solid rgba(245,166,35,.35);color:var(--gold);font-size:.72rem;font-weight:600;padding:.3rem .9rem;border-radius:999px;letter-spacing:.04em">
-        🚧 Paid plans will activate when Netzerra launches commercially
-      </div>
-    </div>`;
+  const el = document.getElementById('pricing-grid');
+  if (!el) return;
 
   const plans = [
-    { icon:'🌱', name:'Seedling',  price:'Free',       period:'forever',  desc:'Individuals, students, small operators.', features:['3 calculations/month','Borehole + Livestock','Basic PDF reports','Community feed','Documentation downloads','NTZ Score'], featured:false },
-    { icon:'🌿', name:'Grower',   price:'KES 1,500',  period:'/month',   desc:'Active operators, NGO teams, SACCO managers.', features:['Unlimited calculations','All 5 sectors','ISO 14064 PDF reports','Carbon Passport','Offset planning','Leaderboard listing'], featured:false },
-    { icon:'🌲', name:'Forest',   price:'KES 8,000',  period:'/month',   desc:'County governments, factories, research institutions.', features:['Everything in Grower','Multi-user (10 seats)','County Dashboard','KNCR packages','FLLoCA reports','API access','Account manager'], featured:false },
-    { icon:'🏔️', name:'Canopy',  price:'KES 25,000', period:'/month',   desc:'Enterprises, carbon market participants, national programmes.', features:['Everything in Forest','Unlimited users','Verra VCS registration','White-label reports','On-site training 2 days/yr','4hr SLA','Executive climate briefings'], featured:true, demo:true },
+    { icon:'🌱', name:'Seedling', price:'Free',       period:'forever', isDemo:false, isCurrent:false,
+      desc:'Individuals, students, small operators.',
+      features:['3 calculations/month','Borehole + Livestock','Basic PDF reports','Community feed','Documentation downloads','NTZ Score'] },
+    { icon:'🌿', name:'Grower',  price:'KES 1,500', period:'/month',   isDemo:false, isCurrent:false,
+      desc:'Active operators, NGO teams, SACCO managers.',
+      features:['Unlimited calculations','All 5 sectors','ISO 14064 PDF reports','Carbon Passport','Offset planning','Leaderboard listing'] },
+    { icon:'🌲', name:'Forest',  price:'KES 8,000', period:'/month',   isDemo:false, isCurrent:false,
+      desc:'County governments, factories, research institutions.',
+      features:['Everything in Grower','Multi-user (10 seats)','County Dashboard','KNCR packages','FLLoCA reports','API access','Account manager'] },
+    { icon:'🏔️', name:'Canopy', price:'KES 25,000',period:'/month',   isDemo:true,  isCurrent:true,
+      desc:'Enterprises, carbon market participants, national programmes.',
+      features:['Everything in Forest','Unlimited users','Verra VCS registration','White-label reports','On-site training 2 days/yr','4hr SLA','Executive climate briefings'] },
   ];
 
-  const el = document.getElementById('pricing-grid');
-  el.innerHTML = DEMO_NOTICE + plans.map(p => {
-    const isCanopy = p.demo === true;
-    return `
-      <div class="pricing-card ${p.featured ? 'featured' : ''}">
-        ${isCanopy ? '<div class="pop-badge" style="background:var(--gold);color:var(--forest)">✅ Your Current Plan</div>' : ''}
-        <div class="plan-icon">${p.icon}</div>
-        <div class="plan-name">${p.name}</div>
-        <div class="plan-desc" style="font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:.88rem">${p.desc}</div>
-        <div class="plan-price" style="color:${isCanopy?'var(--gold)':''}">
-          ${isCanopy ? 'Demo' : p.price}
-          <small>${isCanopy ? ' — free during demo' : p.period !== 'forever' ? ' / mo' : ''}</small>
-        </div>
-        <div class="plan-period" style="margin-bottom:1.05rem">
-          ${isCanopy ? '🏔️ All features unlocked for demo' : p.period === 'forever' ? 'Free forever' : 'Billed monthly via M-Pesa when live'}
-        </div>
-        <ul class="plan-features">${p.features.map(f => `<li>${f}</li>`).join('')}</ul>
-        <button class="btn-plan ${isCanopy ? 'p' : 's'}"
-          onclick="${isCanopy ? 'toast(&quot;You already have full Canopy access during the demo!&quot;,&quot;success&quot;)' : 'toast(&quot;Paid plans activate at commercial launch. You have Canopy access now.&quot;,&quot;info&quot;)'}">
-          ${isCanopy ? '🏔️ Active — Canopy Demo' : 'Available at Launch'}
-        </button>
-        ${isCanopy ? `<div class="mpesa-note" style="color:var(--gold);opacity:.8">Becomes KES 25,000/mo at commercial launch</div>` : ''}
-      </div>`;
-  }).join('');
+  el.innerHTML = `
+    <div style="background:rgba(245,166,35,.12);border:2px solid rgba(245,166,35,.4);border-radius:var(--r);padding:1.1rem 1.4rem;margin-bottom:1.65rem;text-align:center;grid-column:1/-1">
+      <div style="font-size:1.1rem;font-weight:700;color:var(--gold);margin-bottom:.42rem">🏔️ Canopy Plan — Active for All Demo Users</div>
+      <p style="font-size:.8rem;color:rgba(255,255,255,.7);margin-bottom:.52rem;max-width:520px;margin-left:auto;margin-right:auto">
+        During this MVP demo period every visitor has full Canopy access — all 5 calculators, County Dashboard,
+        KNCR packages, FLLoCA reports, white-label PDFs, and everything else. No login or payment required.
+      </p>
+      <span style="display:inline-block;background:rgba(245,166,35,.18);border:1px solid rgba(245,166,35,.35);color:var(--gold);font-size:.7rem;font-weight:600;padding:.28rem .88rem;border-radius:999px">
+        🚧 Paid subscriptions will activate when Netzerra launches commercially
+      </span>
+    </div>
+    ${plans.map(p => `
+    <div class="pricing-card ${p.isCurrent ? 'featured' : ''}">
+      ${p.isCurrent ? '<div class="pop-badge" style="background:var(--gold);color:#0D3320">✅ Your Plan (Demo)</div>' : ''}
+      <div class="plan-icon">${p.icon}</div>
+      <div class="plan-name">${p.name}</div>
+      <div style="font-size:.72rem;color:rgba(255,255,255,.45);margin-bottom:.88rem">${p.desc}</div>
+      <div class="plan-price" style="${p.isCurrent ? 'color:var(--gold)' : ''}">${p.isCurrent ? 'Demo' : p.price}
+        <small>${p.isCurrent ? ' — free now' : p.period !== 'forever' ? ' / mo' : ''}</small>
+      </div>
+      <div class="plan-period" style="margin-bottom:1.05rem">
+        ${p.isCurrent ? '🏔️ All features unlocked' : p.period === 'forever' ? 'Free forever' : 'M-Pesa billing at launch'}
+      </div>
+      <ul class="plan-features">${p.features.map(f => '<li>' + f + '</li>').join('')}</ul>
+      <button class="btn-plan ${p.isCurrent ? 'p' : 's'}" data-plan="${p.name}" data-demo="${p.isCurrent}" onclick="handlePlanClick(this)">
+        ${p.isCurrent ? '🏔️ Active — Canopy Demo' : 'Available at Launch'}
+      </button>
+      ${p.isCurrent ? '<div class="mpesa-note" style="color:var(--gold);opacity:.8">Becomes KES 25,000/mo at launch</div>' : ''}
+    </div>`).join('')}`;
 }
+
+function handlePlanClick(btn) {
+  const isDemo = btn.getAttribute('data-demo') === 'true';
+  const name   = btn.getAttribute('data-plan');
+  if (isDemo) {
+    toast('You have full Canopy access during the demo! No login needed.', 'success');
+  } else {
+    toast(name + ' plan — will be available at commercial launch. You have Canopy access now.', 'info');
+  }
+}
+
 
 function renderFAQs() {
   const faqs = [
@@ -1967,7 +1981,7 @@ function toggleFAQ(el) {
 }
 
 // ══════════════════════════════════════════════════════
-// IMPROVEMENT 1 — localStorage Persistence
+// IMPROVEMENT 1 — sessionStorage Persistence (auto-clears when browser closes)
 // ══════════════════════════════════════════════════════
 const LS_KEY = 'ntz_v1';
 
@@ -1980,13 +1994,13 @@ function saveToStorage() {
       gwp:       ACTIVE_GWP,
       savedAt:   new Date().toISOString(),
     };
-    localStorage.setItem(LS_KEY, JSON.stringify(payload));
+    sessionStorage.setItem(LS_KEY, JSON.stringify(payload));
   } catch(e) { /* storage full or private mode — silent fail */ }
 }
 
 function loadFromStorage() {
   try {
-    const raw = localStorage.getItem(LS_KEY);
+    const raw = sessionStorage.getItem(LS_KEY);
     if (!raw) return false;
     const d = JSON.parse(raw);
     if (d.user)     Object.assign(S.user, d.user);
@@ -1998,7 +2012,7 @@ function loadFromStorage() {
 }
 
 function clearStorage() {
-  localStorage.removeItem(LS_KEY);
+  sessionStorage.removeItem(LS_KEY);
   toast('🗑️ Saved data cleared. Refresh to reset.', 'info');
 }
 
@@ -2165,7 +2179,7 @@ function shareTwitter() {
 
 // ── AUTO-LAUNCH on page load ──────────────────────────
 document.addEventListener('DOMContentLoaded', () => {
-  // Restore saved data from localStorage
+  // Restore saved data from sessionStorage (cleared automatically on tab close)
   const hadSaved = loadFromStorage();
 
   // Auto-start platform
