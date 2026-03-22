@@ -1055,6 +1055,299 @@ ${autoPrint ? '<script>window.onload = function(){ window.print(); }<\/script>' 
 </html>`;
 }
 
+// ── CDA — FOURTH SCHEDULE COMMUNITY DEVELOPMENT AGREEMENT ────────
+// Carbon Markets Regulations 2024, Fourth Schedule (Reg. 23E)
+// Required for all public and community land carbon projects in Kenya
+function generateCDA() {
+  const name      = document.getElementById('kncr-proj-name').value.trim()   || 'Unnamed Carbon Project';
+  const proponent = document.getElementById('kncr-proponent').value.trim()   || S.user.org;
+  const community = document.getElementById('kncr-community').value.trim()   || 'The Affected Community';
+  const county    = document.getElementById('kncr-county').value             || 'Kenya';
+  const landType  = document.getElementById('kncr-land-type').value          || 'community';
+  const credits   = parseFloat(document.getElementById('kncr-credits').value) || 0;
+  const standard  = document.getElementById('kncr-standard').value           || 'KNCR Domestic';
+  const projType  = document.getElementById('kncr-proj-type').value          || 'borehole';
+  const now       = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
+  const ref       = 'NTZ-CDA-' + Date.now();
+  const year      = new Date().getFullYear();
+
+  if (landType === 'private') {
+    toast('CDA not required for private land projects (Carbon Markets Regs 2024 Reg.23E).', 'info');
+    return;
+  }
+
+  // Community benefit rate: 40% for land-based (Reg.23E verified)
+  const rate       = 0.40;
+  const grossUSD   = credits * 12;
+  const commUSD    = grossUSD * rate;
+  const devUSD     = grossUSD * (1 - rate);
+  const netDevUSD  = devUSD * 0.85; // after 15% preferential tax
+  const grossKES   = grossUSD * 130;
+  const commKES    = commUSD * 130;
+
+  const PROJ_TYPE_NAMES = {
+    borehole:'Borehole / Water Infrastructure', livestock:'Livestock Management',
+    transport:'Transport Decarbonisation', construction:'Low-Carbon Construction',
+    forestry:'Agroforestry / Offset Planting', solar:'Renewable Energy',
+    biogas:'Clean Cooking / Biogas'
+  };
+
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>CDA — ${name} — Fourth Schedule</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family: "Times New Roman", Times, serif; font-size:11.5px; color:#111; background:#fff; padding:48px 56px; max-width:820px; margin:0 auto; line-height:1.7; }
+  .cover { text-align:center; padding:32px 0 24px; border-bottom:3px double #1B5E20; margin-bottom:28px; }
+  .cover-seal { font-size:48px; margin-bottom:8px; }
+  .cover-title { font-size:16px; font-weight:bold; text-transform:uppercase; letter-spacing:1.5px; margin-bottom:6px; }
+  .cover-sub { font-size:12px; font-weight:bold; margin-bottom:4px; }
+  .cover-meta { font-size:10px; color:#555; margin-top:10px; }
+  h1 { font-size:13px; font-weight:bold; text-transform:uppercase; letter-spacing:.8px; border-bottom:1.5px solid #1B5E20; padding-bottom:4px; margin:22px 0 10px; color:#1B5E20; }
+  h2 { font-size:11.5px; font-weight:bold; margin:14px 0 6px; }
+  p  { margin-bottom:8px; text-align:justify; }
+  .clause { margin:8px 0; padding-left:18px; }
+  .clause-num { font-weight:bold; }
+  table { width:100%; border-collapse:collapse; margin:10px 0 14px; font-size:10.5px; }
+  th { background:#1B5E20; color:#fff; padding:5px 8px; text-align:left; font-weight:bold; }
+  td { padding:5px 8px; border-bottom:1px solid #ccc; }
+  tr:nth-child(even) td { background:#F9FBF7; }
+  tr.tot td { background:#E8F5E9; font-weight:bold; color:#1B5E20; }
+  .schedule { background:#f8f8f8; border:1px solid #ccc; border-radius:4px; padding:12px 16px; margin:12px 0; }
+  .schedule h3 { font-size:11px; font-weight:bold; text-transform:uppercase; margin-bottom:8px; color:#1B5E20; }
+  .sign-grid { display:grid; grid-template-columns:1fr 1fr; gap:32px; margin-top:28px; }
+  .sign-block { padding-top:8px; }
+  .sign-line { border-top:1.5px solid #333; height:44px; margin-top:28px; }
+  .sign-label { font-size:9.5px; color:#555; margin-top:4px; }
+  .sign-name  { font-size:10px; font-weight:bold; }
+  .footer { margin-top:24px; padding-top:10px; border-top:2px solid #1B5E20; display:flex; justify-content:space-between; font-size:8.5px; color:#777; }
+  .warn-box { background:#FFF8E1; border:1px solid #F9A825; border-left:4px solid #F9A825; padding:8px 12px; margin:10px 0; font-size:10px; color:#795548; border-radius:0 4px 4px 0; }
+  .ref-box  { background:#E8F5E9; border:1px solid #A5D6A7; padding:6px 10px; margin:8px 0; font-size:9.5px; color:#2E7D32; border-radius:4px; }
+  .no-print { text-align:right; margin-bottom:18px; font-family:Arial,sans-serif; }
+  @media print { .no-print { display:none !important; } @page { margin:2cm; size:A4; } }
+</style>
+</head>
+<body>
+
+<div class="no-print">
+  <button onclick="window.print()" style="background:#1B5E20;color:#fff;border:none;padding:9px 22px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold;font-family:Arial">
+    ⬇ Save as PDF / Print
+  </button>
+  <span style="font-size:10px;color:#607D8B;margin-left:10px;font-family:Arial">In print dialog → Destination → Save as PDF</span>
+</div>
+
+<!-- COVER PAGE -->
+<div class="cover">
+  <div class="cover-seal">🌿</div>
+  <div class="cover-title">Community Development Agreement</div>
+  <div class="cover-sub">FOURTH SCHEDULE</div>
+  <div style="font-size:10.5px;margin:6px 0">Prepared pursuant to the Carbon Markets Regulations 2024, Regulation 23E<br>Climate Change Act 2016 (as amended 2023) — Republic of Kenya</div>
+  <div style="font-size:12px;font-weight:bold;margin:14px 0 6px">${name}</div>
+  <div style="font-size:10.5px;color:#333">${county} County &nbsp;|&nbsp; ${PROJ_TYPE_NAMES[projType]||projType} &nbsp;|&nbsp; ${now}</div>
+  <div class="cover-meta">
+    Proponent: ${proponent} &nbsp;·&nbsp; Community: ${community} &nbsp;·&nbsp; Ref: ${ref}
+  </div>
+</div>
+
+<div class="warn-box">
+  ⚠️ DRAFT DOCUMENT: This CDA has been generated by Netzerra as a preparation template. Before execution, it must be reviewed by a qualified Kenyan advocate and both parties' legal representatives. The executed agreement must be registered with NEMA's Climate Change Directorate.
+</div>
+
+<!-- PARTIES -->
+<h1>Section 1 — Parties to the Agreement</h1>
+<p>This Community Development Agreement ("Agreement") is entered into on <strong>____________</strong> day of <strong>____________</strong>, ${year} between:</p>
+
+<div class="clause">
+  <p><span class="clause-num">1.1 Project Proponent:</span><br>
+  <strong>${proponent}</strong>, duly registered/incorporated under the laws of Kenya, whose registered address is ______________________________ ("the Proponent").</p>
+
+  <p><span class="clause-num">1.2 Community Representative:</span><br>
+  <strong>${community}</strong>, a community group / registered organisation representing the affected communities of ${county} County, acting through its authorised representatives listed in Schedule A ("the Community").</p>
+
+  <p><span class="clause-num">1.3 Witness — County Government:</span><br>
+  <strong>${county} County Government</strong>, represented by the County Executive Committee Member responsible for Environment and Climate Change, as witness and facilitator to this Agreement ("the County").</p>
+</div>
+
+<!-- BACKGROUND -->
+<h1>Section 2 — Background and Purpose</h1>
+<p>WHEREAS the Proponent intends to develop a carbon project known as <strong>"${name}"</strong> on <strong>${landType} land</strong> within ${county} County, Republic of Kenya ("the Project");</p>
+<p>AND WHEREAS the Carbon Markets Regulations 2024, Regulation 23E requires that all carbon projects on public or community land must contribute a minimum of <strong>40% of aggregate net earnings</strong> to the community as a mandatory benefit-sharing arrangement;</p>
+<p>AND WHEREAS the Climate Change Act 2016 (Amended 2023) establishes the Kenya National Carbon Registry (KNCR) as the sovereign registry for all carbon projects in Kenya;</p>
+<p>NOW THEREFORE the parties agree as follows:</p>
+
+<!-- PROJECT DESCRIPTION -->
+<h1>Section 3 — Project Description</h1>
+<table>
+  <tr><th style="width:35%">Parameter</th><th>Details</th></tr>
+  <tr><td>Project Name</td><td><strong>${name}</strong></td></tr>
+  <tr><td>Project Type</td><td>${PROJ_TYPE_NAMES[projType]||projType}</td></tr>
+  <tr><td>Location</td><td>${county} County, Republic of Kenya</td></tr>
+  <tr><td>Land Classification</td><td>${landType === 'community' ? 'Community Land (Community Land Act 2016)' : 'Public Land (Land Act 2012)'}</td></tr>
+  <tr><td>Registry Standard</td><td>${standard}</td></tr>
+  <tr><td>Estimated Annual Credits</td><td><strong>${credits.toLocaleString()} tCO₂e per year</strong></td></tr>
+  <tr><td>Crediting Period</td><td>10 years, renewable upon mutual agreement and VVB verification</td></tr>
+  <tr><td>Applicable Law</td><td>Climate Change Act 2016 (Amended 2023); Carbon Markets Regulations 2024; Carbon Trading Regulations 2025; Land Act 2012; Community Land Act 2016</td></tr>
+</table>
+
+<!-- COMMUNITY BENEFIT SHARING -->
+<h1>Section 4 — Community Benefit Sharing Plan</h1>
+<p>In compliance with Carbon Markets Regulations 2024, Regulation 23E, the Proponent agrees to the following mandatory benefit-sharing arrangement:</p>
+
+<table>
+  <tr><th>Revenue Component</th><th>Annual Estimate (USD)</th><th>Annual Estimate (KES)</th><th>Percentage</th></tr>
+  <tr><td>Gross Carbon Credit Revenue (@ USD 12/tCO₂e)</td><td>USD ${grossUSD.toLocaleString()}</td><td>KES ${grossKES.toLocaleString()}</td><td>100%</td></tr>
+  <tr><td><strong>Community Development Fund (mandatory minimum)</strong></td><td><strong>USD ${commUSD.toLocaleString()}</strong></td><td><strong>KES ${commKES.toLocaleString()}</strong></td><td><strong>40%</strong></td></tr>
+  <tr><td>Proponent Revenue Share</td><td>USD ${devUSD.toLocaleString()}</td><td>KES ${(devUSD*130).toLocaleString()}</td><td>60%</td></tr>
+  <tr class="tot"><td>Proponent Net (after 15% preferential tax)</td><td>USD ${Math.round(netDevUSD).toLocaleString()}</td><td>KES ${Math.round(netDevUSD*130).toLocaleString()}</td><td>~51%</td></tr>
+</table>
+
+<div class="ref-box">Source: Carbon Markets Regulations 2024, Regulation 23E — "a project developer of a land-based carbon project on public or community land shall set aside at least 40% of aggregate earnings for the benefit of the local community."</div>
+
+<div class="clause">
+  <p><span class="clause-num">4.1 Disbursement Mechanism:</span> Community funds shall be disbursed quarterly to the <strong>${community} Community Development Account</strong>, a dedicated account held at a licensed Kenyan financial institution. Account details to be provided in Schedule B.</p>
+  <p><span class="clause-num">4.2 Community Fund Uses:</span> The Community Development Fund shall be used exclusively for: (a) education and scholarships; (b) health infrastructure; (c) water and sanitation; (d) climate resilience infrastructure; (e) livelihood diversification programmes — as prioritised by the community through a documented participatory process.</p>
+  <p><span class="clause-num">4.3 Fund Governance:</span> The Community shall establish a Fund Management Committee of not fewer than 7 members, comprising at least 30% women and 20% youth (persons under 35), to oversee disbursement and reporting.</p>
+  <p><span class="clause-num">4.4 Audit Rights:</span> The Community shall have the right to commission an independent audit of all benefit disbursements at any time, at the Proponent's expense, not more than once per year.</p>
+  <p><span class="clause-num">4.5 Price Adjustment:</span> The 40% community share applies to actual net credit sale proceeds. Where credits are sold above or below USD 12/tCO₂e, the community share shall be recalculated accordingly and disclosed in the annual benefit report.</p>
+</div>
+
+<!-- COMMUNITY RIGHTS AND OBLIGATIONS -->
+<h1>Section 5 — Community Rights and Obligations</h1>
+<div class="clause">
+  <p><span class="clause-num">5.1 Free, Prior and Informed Consent (FPIC):</span> The Proponent has conducted / shall conduct FPIC consultations in accordance with the UN Declaration on the Rights of Indigenous Peoples and the World Bank Environmental and Social Standard 7. Evidence of FPIC is attached as Schedule C.</p>
+  <p><span class="clause-num">5.2 Community Co-Benefits:</span> In addition to financial benefits, the Project shall deliver: (a) local employment — at least 60% of project jobs to community members; (b) skills training in carbon monitoring and MRV; (c) access to project data and emission reports.</p>
+  <p><span class="clause-num">5.3 Community Obligations:</span> The Community shall: (a) protect the project area from encroachment and land degradation; (b) participate in monitoring activities as agreed; (c) provide a designated community liaison officer.</p>
+  <p><span class="clause-num">5.4 Right to Information:</span> The Community shall receive an annual project performance report including tonnes verified, credits issued, revenue received, and community fund utilisation — within 60 days of each project year end.</p>
+</div>
+
+<!-- PROPONENT OBLIGATIONS -->
+<h1>Section 6 — Proponent Obligations</h1>
+<div class="clause">
+  <p><span class="clause-num">6.1 KNCR Registration:</span> The Proponent shall register this project on the Kenya National Carbon Registry (kncr.go.ke) within 90 days of executing this Agreement.</p>
+  <p><span class="clause-num">6.2 Verification:</span> The Proponent shall engage a NEMA-accredited Validation/Verification Body (VVB) for annual monitoring and verification of emission reductions.</p>
+  <p><span class="clause-num">6.3 Reporting:</span> The Proponent shall submit annual Monitoring Reports to KNCR and provide copies to the Community and ${county} County Government.</p>
+  <p><span class="clause-num">6.4 No Transfer Without Consent:</span> The Proponent shall not transfer, assign, or sell the project or its carbon credits to a third party without prior written consent of the Community Representative.</p>
+  <p><span class="clause-num">6.5 Additionality:</span> The Proponent declares that the emission reductions claimed are real, measurable, additional, and permanent per the applicable ${standard} methodology.</p>
+</div>
+
+<!-- ENVIRONMENTAL AND SOCIAL SAFEGUARDS -->
+<h1>Section 7 — Environmental and Social Safeguards</h1>
+<div class="clause">
+  <p><span class="clause-num">7.1</span> No involuntary displacement or restriction of community access to land, water, or livelihood resources shall result from project activities.</p>
+  <p><span class="clause-num">7.2</span> An Environmental and Social Impact Assessment (ESIA) shall be conducted by a NEMA-registered firm prior to project implementation.</p>
+  <p><span class="clause-num">7.3</span> A Gender Action Plan shall be prepared ensuring women's equal participation in governance and equitable benefit receipt.</p>
+  <p><span class="clause-num">7.4</span> Biodiversity and ecosystem services within the project area shall be maintained or enhanced.</p>
+</div>
+
+<!-- GRIEVANCE REDRESS -->
+<h1>Section 8 — Grievance Redress Mechanism</h1>
+<div class="clause">
+  <p><span class="clause-num">8.1</span> A community-level Grievance Redress Committee shall be established within 30 days of project commencement, comprising 3 community members (including 1 woman), 1 Proponent representative, and 1 ${county} County Government representative.</p>
+  <p><span class="clause-num">8.2</span> Grievances shall be acknowledged within 7 days and resolved within 30 days. Unresolved grievances shall be escalated to NEMA's Climate Change Directorate.</p>
+  <p><span class="clause-num">8.3</span> Nothing in this Agreement prevents any party from seeking recourse under Kenyan law.</p>
+</div>
+
+<!-- DISPUTE RESOLUTION -->
+<h1>Section 9 — Dispute Resolution</h1>
+<div class="clause">
+  <p><span class="clause-num">9.1</span> Disputes shall first be resolved through good-faith negotiation between the parties within 30 days of notice.</p>
+  <p><span class="clause-num">9.2</span> If unresolved, disputes shall be referred to mediation administered by the Nairobi Centre for International Arbitration (NCIA) under its Mediation Rules.</p>
+  <p><span class="clause-num">9.3</span> If mediation fails, disputes shall be finally resolved by arbitration under the NCIA Arbitration Rules, with the seat of arbitration in Nairobi, Kenya.</p>
+  <p><span class="clause-num">9.4</span> This Agreement shall be governed by and construed in accordance with the laws of the Republic of Kenya.</p>
+</div>
+
+<!-- TERM AND TERMINATION -->
+<h1>Section 10 — Term and Termination</h1>
+<div class="clause">
+  <p><span class="clause-num">10.1</span> This Agreement shall commence on the date of execution and continue for the duration of the crediting period (10 years), renewable by mutual written agreement.</p>
+  <p><span class="clause-num">10.2</span> Either party may terminate this Agreement by 90 days written notice if the other party commits a material breach and fails to remedy it within 60 days of notice.</p>
+  <p><span class="clause-num">10.3</span> Upon termination, all outstanding community benefit payments shall be disbursed within 30 days. Verified carbon credits already issued shall remain valid.</p>
+</div>
+
+<!-- SCHEDULES -->
+<h1>Section 11 — Schedules</h1>
+<div class="schedule">
+  <h3>Schedule A — Community Representatives</h3>
+  <table>
+    <tr><th>Name</th><th>Role</th><th>ID Number</th><th>Signature</th></tr>
+    <tr><td>1. _________________________</td><td>Chairperson</td><td>_____________</td><td>_____________</td></tr>
+    <tr><td>2. _________________________</td><td>Secretary</td><td>_____________</td><td>_____________</td></tr>
+    <tr><td>3. _________________________</td><td>Women Rep.</td><td>_____________</td><td>_____________</td></tr>
+    <tr><td>4. _________________________</td><td>Youth Rep.</td><td>_____________</td><td>_____________</td></tr>
+  </table>
+</div>
+
+<div class="schedule">
+  <h3>Schedule B — Community Fund Account Details</h3>
+  <table>
+    <tr><td style="width:35%">Account Name</td><td>${community} Community Development Fund</td></tr>
+    <tr><td>Bank Name</td><td>_______________________________________</td></tr>
+    <tr><td>Branch</td><td>_______________________________________</td></tr>
+    <tr><td>Account Number</td><td>_______________________________________</td></tr>
+    <tr><td>Bank Code</td><td>_______________________________________</td></tr>
+    <tr><td>Signatories</td><td>Any two of the representatives in Schedule A</td></tr>
+  </table>
+</div>
+
+<div class="schedule">
+  <h3>Schedule C — FPIC Evidence Checklist</h3>
+  <table>
+    <tr><th>Item</th><th>Date</th><th>Verified By</th></tr>
+    <tr><td>Initial community sensitisation meeting</td><td>_____________</td><td>_____________</td></tr>
+    <tr><td>Community information disclosure (Swahili/local language)</td><td>_____________</td><td>_____________</td></tr>
+    <tr><td>Q&amp;A sessions (min. 2 separate dates)</td><td>_____________</td><td>_____________</td></tr>
+    <tr><td>Community vote / resolution</td><td>_____________</td><td>_____________</td></tr>
+    <tr><td>Minutes of meetings filed with County Government</td><td>_____________</td><td>_____________</td></tr>
+  </table>
+</div>
+
+<!-- EXECUTION -->
+<h1>Section 12 — Execution</h1>
+<p>IN WITNESS WHEREOF the parties have executed this Community Development Agreement on the date first written above.</p>
+
+<div class="sign-grid">
+  <div class="sign-block">
+    <div class="sign-line"></div>
+    <div class="sign-name">${proponent}</div>
+    <div class="sign-label">Authorised Signatory — Project Proponent<br>Name: _______________________<br>Title: ________________________</div>
+  </div>
+  <div class="sign-block">
+    <div class="sign-line"></div>
+    <div class="sign-name">${community}</div>
+    <div class="sign-label">Chairperson — Community Representative<br>Name: _______________________<br>ID No: ________________________</div>
+  </div>
+  <div class="sign-block" style="margin-top:24px">
+    <div class="sign-line"></div>
+    <div class="sign-name">${county} County Government</div>
+    <div class="sign-label">CEC Member — Environment &amp; Climate Change<br>Name: _______________________<br>Official Stamp:</div>
+  </div>
+  <div class="sign-block" style="margin-top:24px">
+    <div class="sign-line"></div>
+    <div class="sign-name">NEMA — Climate Change Directorate</div>
+    <div class="sign-label">Receiving Officer<br>Name: _______________________<br>KNCR Registration No: ___________</div>
+  </div>
+</div>
+
+<div class="footer">
+  <span>🌿 Netzerra · CDA Fourth Schedule Template · shukriali411@gmail.com · netzerrakenya.com</span>
+  <span>${ref} · ${now}</span>
+</div>
+<div style="font-size:8px;color:#999;margin-top:6px;padding-top:5px;border-top:1px solid #eee;font-family:Arial,sans-serif">
+  TEMPLATE DISCLAIMER: This CDA template has been generated by Netzerra based on Carbon Markets Regulations 2024 (Fourth Schedule requirements). It is a draft preparation tool and does not constitute legal advice. Both parties must obtain independent legal counsel before execution. Netzerra has no formal relationship with NEMA, KNCR, or any government body. © 2026 Netzerra — Shukri Ali.
+</div>
+
+</body></html>`;
+
+  const win = window.open('', '_blank');
+  if (!win) { toast('Pop-up blocked — please allow pop-ups for this site', 'error'); return; }
+  win.document.open();
+  win.document.write(html);
+  win.document.close();
+  toast('📋 CDA Fourth Schedule opened — review, fill blanks, then Save as PDF', 'success');
+}
+
 // ── COUNTY DASHBOARD ──────────────────────────────────
 const COUNTY_DATA = {
   'Turkana':  { projects:[{n:'Turkana Solar Borehole Cluster',s:'borehole',c:420,step:2,st:'PDD Submitted'},{n:'Turkana Rangeland Carbon',s:'livestock',c:850,step:1,st:'Draft'}], revenue:23800000, community:5950000, floca:'partial', wards:['Kanamkemer','Turkana West','Loima','Turkana East','Kibish'] },
@@ -1623,14 +1916,22 @@ ${c ? `<p>Baseline emissions (from Netzerra calculation): <strong>${c.total_t.to
 </table>` : '<p>Run a Netzerra calculation first to populate this section with verified baseline data.</p>'}
 <p>Claimed annual reduction: <strong>${credits.toLocaleString()} tCO₂e/yr</strong>. Full additionality demonstration per ${standard} methodology to be provided in final PDD with third-party VVB engagement.</p>
 
-<h2>4. Community Benefit Plan (25% Mandate)</h2>
+<h2>4. Community Benefit Plan</h2>
+${(() => {
+  const landType = document.getElementById('kncr-land-type')?.value || 'community';
+  const rate = (landType === 'private') ? 0 : 0.40;
+  const rateLabel = (landType === 'private') ? '0% (private land — exempt)' : '40% (land-based mandate — Carbon Markets Regulations 2024 Reg.23E)';
+  const communityAmt = credits * 12 * rate;
+  const devAmt = credits * 12 * (1 - rate);
+  return `<p style="font-size:.82rem;color:#555;margin-bottom:.62rem">Land type: <strong>${landType}</strong> — Community contribution rate: <strong>${rateLabel}</strong></p>
 <table>
   <tr><th>Revenue Stream</th><th>Annual (USD @ $12/t)</th><th>Annual (KES @ 130)</th><th>Share</th></tr>
   <tr><td>Gross Credit Revenue</td><td>USD ${(credits*12).toLocaleString()}</td><td>KES ${(credits*12*130).toLocaleString()}</td><td>100%</td></tr>
-  <tr><td><strong>Community Fund (mandatory)</strong></td><td><strong>USD ${(credits*12*.25).toLocaleString()}</strong></td><td><strong>KES ${(credits*12*130*.25).toLocaleString()}</strong></td><td><strong>25%</strong></td></tr>
-  <tr><td>Developer Share</td><td>USD ${(credits*12*.75).toLocaleString()}</td><td>KES ${(credits*12*130*.75).toLocaleString()}</td><td>75%</td></tr>
-  <tr class="tot"><td>Net (after 15% preferential tax)</td><td>USD ${Math.round(credits*12*.75*.85).toLocaleString()}</td><td>KES ${Math.round(credits*12*130*.75*.85).toLocaleString()}</td><td>~64%</td></tr>
-</table>
+  <tr><td><strong>Community Fund (mandatory)</strong></td><td><strong>USD ${communityAmt.toLocaleString()}</strong></td><td><strong>KES ${(communityAmt*130).toLocaleString()}</strong></td><td><strong>${(rate*100).toFixed(0)}%</strong></td></tr>
+  <tr><td>Developer Share</td><td>USD ${devAmt.toLocaleString()}</td><td>KES ${(devAmt*130).toLocaleString()}</td><td>${((1-rate)*100).toFixed(0)}%</td></tr>
+  <tr class="tot"><td>Net (after 15% preferential tax)</td><td>USD ${Math.round(devAmt*.85).toLocaleString()}</td><td>KES ${Math.round(devAmt*130*.85).toLocaleString()}</td><td>~${((1-rate)*.85*100).toFixed(0)}%</td></tr>
+</table>`;
+})()}
 
 <h2>5. Environmental &amp; Social Safeguards</h2>
 <ul>
