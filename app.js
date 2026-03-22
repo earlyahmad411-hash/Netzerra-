@@ -278,9 +278,9 @@ function updateDQSPreview(prefix) {
 const OB = [
   { icon:'👋', title:'Welcome to Netzerra!', body:'Kenya\'s carbon intelligence platform — built for KNCR compliance, county governments, and community protection. Let\'s get you oriented in 30 seconds.' },
   { icon:'⚡', title:'Start with a Calculation', body:'Pick a sector: Borehole, Livestock, Transport, Construction, or Manufacturing. Enter your activity data and get an IPCC AR6-compliant result instantly.' },
-  { icon:'🏢', title:'County Dashboard (New!)', body:'<strong style="color:var(--mint)">Dedicated to county officers.</strong> See all carbon projects, community benefit fund tracking, FLLoCA compliance status, and carbon levy revenue — by ward.' },
-  { icon:'🏛️', title:'KNCR Gateway', body:"Kenya's National Carbon Registry launched February 2026. The KNCR Gateway helps you register projects, generate DNA submission packages, and calculate your 25% community benefit obligations." },
-  { icon:'📄', title:'True PDF Reports', body:'Every calculation generates a real ISO 14064-1:2018 aligned PDF — formatted for county government reporting, NEMA submissions, and VCM verification bodies. Click "Download PDF" after any calculation.' }
+  { icon:'🏢', title:'County Command Centre', body:'<strong style="color:var(--mint)">For County Governors and Climate Officers.</strong> Live visibility into every carbon project on county land. Automated 40% community benefit tracking. FLLoCA performance reports. Carbon levy revenue by ward. 40 of 47 counties currently use Excel — Netzerra is the upgrade.' },
+  { icon:'🏛️', title:'KNCR Gateway + CDA Engine', body:"Kenya's KNCR launched February 2026 with 80+ projects stalled at compliance. Netzerra automates the entire pipeline: IPCC-verified baseline → CDA Fourth Schedule (40% community mandate) → DNA submission package. The #1 cause of project rejection — eliminated." },
+  { icon:'📄', title:'Audit-Ready Reports', body:'Every calculation generates an ISO 14064-1:2018 report with IPCC Tier 1 uncertainty bands, data quality scores, and GWP version declaration. Formatted for NEMA DNA submissions and VCM verification bodies. Every formula timestamped — your defence against the KES 500M Regulation 37 penalty.' }
 ];
 let obStep = 0;
 
@@ -1055,6 +1055,643 @@ ${autoPrint ? '<script>window.onload = function(){ window.print(); }<\/script>' 
 </html>`;
 }
 
+// ── CALCULATOR → KNCR PIPELINE ───────────────────────
+// Carries calculation data directly into KNCR Gateway — no re-entry needed
+function registerAsKNCRProject() {
+  const c = S.lastCalc;
+  if (!c) {
+    toast('Run a calculation first — the results will pre-fill the KNCR form.', 'error');
+    return;
+  }
+
+  // ── Map sector names to KNCR project types ──
+  const SECTOR_TYPE_MAP = {
+    borehole:  'borehole',
+    livestock: 'livestock',
+    transport: 'transport',
+    construct: 'construction',
+    manufact:  'solar',   // closest match; user can change
+  };
+
+  // ── Extract county from the last-run calculator's county field ──
+  const countyField = document.getElementById('bh-county') ||
+                      document.getElementById('county-select');
+  const detectedCounty = countyField?.value || 'Nairobi';
+
+  // ── Navigate to KNCR section first ──
+  showSection('kncr');
+
+  // Give the DOM a moment to render, then fill fields
+  setTimeout(() => {
+    // Project name
+    const nameEl = document.getElementById('kncr-proj-name');
+    if (nameEl) nameEl.value = c.name || '';
+
+    // Project type
+    const typeEl = document.getElementById('kncr-proj-type');
+    if (typeEl) {
+      const mapped = SECTOR_TYPE_MAP[c.sector] || 'borehole';
+      const opt = typeEl.querySelector(`option[value="${mapped}"]`);
+      if (opt) typeEl.value = mapped;
+    }
+
+    // County
+    const countyEl = document.getElementById('kncr-county');
+    if (countyEl) {
+      const opts = Array.from(countyEl.options).map(o => o.value);
+      const match = opts.find(o => o === detectedCounty) || 'Nairobi';
+      countyEl.value = match;
+    }
+
+    // Proponent — use user's org
+    const propEl = document.getElementById('kncr-proponent');
+    if (propEl && !propEl.value) propEl.value = S.user.org || '';
+
+    // Credits — use total emission as baseline for the estimate
+    // (Developer will adjust based on their reduction target)
+    const creditsEl = document.getElementById('kncr-credits');
+    if (creditsEl) {
+      creditsEl.value = Math.round(c.total_t);
+      const hint = document.getElementById('kncr-credits-hint');
+      if (hint) hint.innerHTML =
+        `📊 Auto-filled from your calculation: <strong>${c.total_t.toFixed(2)} tCO₂e/yr baseline</strong>. Adjust to your estimated annual reduction.`;
+    }
+
+    // Show the pipeline arrival banner
+    const banner  = document.getElementById('kncr-pipeline-banner');
+    const summary = document.getElementById('kncr-pipeline-summary');
+    if (banner && summary) {
+      banner.style.display = 'block';
+      summary.innerHTML =
+        `📋 <strong>Project:</strong> ${c.name} &nbsp;·&nbsp; ` +
+        `<strong>Sector:</strong> ${c.sector} &nbsp;·&nbsp; ` +
+        `<strong>Date:</strong> ${c.date}<br>` +
+        `📊 <strong>Baseline:</strong> ${c.total_t.toFixed(3)} tCO₂e/yr &nbsp;|&nbsp; ` +
+        `S1: ${c.s1_t.toFixed(3)} t &nbsp;|&nbsp; S2: ${c.s2_t.toFixed(3)} t &nbsp;|&nbsp; S3: ${c.s3_t.toFixed(3)} t<br>` +
+        `🔬 <strong>GWP:</strong> ${c.gwp || ACTIVE_GWP} &nbsp;·&nbsp; ` +
+        `<strong>Data Quality:</strong> ${c.dqs || 0}/100 (${c.dqsGrade || 'Not declared'}) &nbsp;·&nbsp; ` +
+        `<strong>Ref:</strong> ${c.ref}`;
+    }
+
+    // Store the linked calculation ref in state so DNA/CDA generators can access it
+    S.kncr.linkedCalc = c;
+
+    toast('✅ Calculation data loaded into KNCR Gateway — complete the form below', 'success');
+    window.scrollTo(0, 0);
+  }, 200);
+}
+
+// ── DOCUMENT GENERATORS — KNCR FULL PIPELINE ─────────
+
+// Helper: get all shared KNCR fields
+function getKNCRFields() {
+  const c = S.kncr?.linkedCalc || S.lastCalc;
+  const now = new Date().toLocaleDateString('en-KE', {year:'numeric', month:'long', day:'numeric'});
+  const PTYPE = {
+    borehole:'Energy — Water Infrastructure (Borehole)',
+    livestock:'Agriculture, Forestry and Land Use (AFOLU) — Livestock',
+    transport:'Transport — Fleet Decarbonisation',
+    construction:'Industrial Processes — Low-Carbon Construction',
+    forestry:'Agriculture, Forestry and Land Use (AFOLU) — Agroforestry',
+    solar:'Energy — Renewable Energy',
+    biogas:'Energy — Clean Cooking / Biogas',
+  };
+  const KNCR_SECTOR = {
+    borehole:'(b) Energy',
+    livestock:'(c) Agriculture, Forestry, and Land Use (AFOLU)',
+    transport:'(b) Transport',
+    construction:'(d) Industrial Processes and Product Use (IPPU)',
+    forestry:'(c) Agriculture, Forestry, and Land Use (AFOLU)',
+    solar:'(a) Energy',
+    biogas:'(a) Energy',
+  };
+  const projType = document.getElementById('kncr-proj-type')?.value || 'borehole';
+  return {
+    name:      document.getElementById('kncr-proj-name')?.value.trim() || 'Unnamed Carbon Project',
+    proponent: document.getElementById('kncr-proponent')?.value.trim() || S.user.org || '',
+    community: document.getElementById('kncr-community')?.value.trim() || 'The Affected Community',
+    county:    document.getElementById('kncr-county')?.value || 'Kenya',
+    landType:  document.getElementById('kncr-land-type')?.value || 'community',
+    credits:   parseFloat(document.getElementById('kncr-credits')?.value) || 0,
+    standard:  document.getElementById('kncr-standard')?.value || 'kncr-domestic',
+    budget:    parseFloat(document.getElementById('kncr-budget')?.value) || 0,
+    startDate: document.getElementById('kncr-start-date')?.value || '',
+    projType, pTypeLabel: PTYPE[projType] || projType,
+    kncSector: KNCR_SECTOR[projType] || '(f) Others',
+    now, c,
+    ref:   'NTZ-' + Date.now(),
+    year:  new Date().getFullYear(),
+    linkedCalc: S.kncr?.linkedCalc || S.lastCalc,
+  };
+}
+
+function docOpen(html, filename) {
+  const win = window.open('', '_blank');
+  if (!win) { toast('Pop-up blocked — please allow pop-ups', 'error'); return; }
+  win.document.open(); win.document.write(html); win.document.close();
+}
+
+const DOC_STYLE = `
+  *{margin:0;padding:0;box-sizing:border-box}
+  body{font-family:"Times New Roman",Times,serif;font-size:11.5px;color:#111;background:#fff;padding:48px 56px;max-width:820px;margin:0 auto;line-height:1.7}
+  h1{font-size:13px;font-weight:bold;text-transform:uppercase;letter-spacing:.7px;border-bottom:1.5px solid #1B5E20;padding-bottom:4px;margin:22px 0 10px;color:#1B5E20}
+  h2{font-size:11.5px;font-weight:bold;margin:12px 0 5px}
+  p{margin-bottom:8px;text-align:justify}
+  table{width:100%;border-collapse:collapse;margin:8px 0 12px;font-size:10.5px}
+  th{background:#1B5E20;color:#fff;padding:5px 8px;text-align:left;font-weight:bold}
+  td{padding:5px 8px;border-bottom:1px solid #ccc}
+  tr:nth-child(even) td{background:#F9FBF7}
+  tr.tot td{background:#E8F5E9;font-weight:bold;color:#1B5E20}
+  .hdr{background:linear-gradient(135deg,#0D3320,#1A4A2E);color:#fff;padding:1.5rem;border-radius:8px;margin-bottom:1.5rem}
+  .tag{background:rgba(76,175,80,.2);border:1px solid rgba(76,175,80,.4);color:#A5D6A7;padding:.2rem .65rem;border-radius:12px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.06em;display:inline-block;margin-bottom:.6rem}
+  .warn{background:#FFF8E1;border-left:4px solid #F9A825;padding:7px 10px;border-radius:0 4px 4px 0;font-size:10px;color:#795548;margin:8px 0}
+  .info{background:#E3F2FD;border-left:4px solid #1565C0;padding:7px 10px;border-radius:0 4px 4px 0;font-size:10px;color:#0D47A1;margin:8px 0}
+  .sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:28px;margin-top:24px}
+  .sign-block{border-top:1.5px solid #ccc;padding-top:6px}
+  .sign-line{height:42px}
+  .sign-label{font-size:9px;color:#888;text-transform:uppercase;letter-spacing:.05em}
+  .footer{margin-top:20px;padding-top:8px;border-top:2px solid #1B5E20;display:flex;justify-content:space-between;font-size:8px;color:#999}
+  .no-print{text-align:right;margin-bottom:16px;font-family:Arial,sans-serif}
+  .checkbox-row{display:flex;gap:8px;align-items:flex-start;margin:4px 0;font-size:10.5px}
+  .cb-box{width:12px;height:12px;border:1.5px solid #555;flex-shrink:0;margin-top:2px}
+  @media print{.no-print{display:none!important}@page{margin:2cm;size:A4}}`;
+
+const PRINT_BTN = `<div class="no-print"><button onclick="window.print()" style="background:#1B5E20;color:#fff;border:none;padding:9px 22px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:bold">⬇ Save as PDF / Print</button><span style="font-size:10px;color:#607D8B;margin-left:10px">Print dialog → Save as PDF</span></div>`;
+
+// ──────────────────────────────────────────────────────
+// DOCUMENT 1: PROJECT CONCEPT NOTE (PCN)
+// Official First Schedule, Form PCN — Carbon Markets Regulations 2024
+// ──────────────────────────────────────────────────────
+function generatePCN() {
+  const f = getKNCRFields();
+  if (!f.name || f.name === 'Unnamed Carbon Project') {
+    toast('Enter a project name in the Project Details section above first', 'error'); return;
+  }
+  const sizeLabel = f.landType === 'private'
+    ? 'N/A — private land' 
+    : `${f.county} County — land area to be confirmed by ESIA`;
+  const stakeholders = [
+    `${f.proponent} — Project Proponent (Organisation)`,
+    `${f.community} — Community Representative`,
+    `${f.county} County Government — County Authority`,
+    'NEMA Climate Change Directorate — Designated National Authority (DNA)',
+    'Kenya National Carbon Registry (KNCR) — Registry Administrator',
+    'Accredited VVB (TBD) — Validation/Verification Body',
+  ];
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>PCN — ${f.name}</title><style>${DOC_STYLE}</style></head><body>
+${PRINT_BTN}
+<div class="hdr">
+  <div class="tag">🏛️ Kenya National Carbon Registry · Form PCN · First Schedule</div>
+  <h1 style="color:#fff;font-size:16px;margin:0 0 6px">PROJECT CONCEPT NOTE</h1>
+  <div style="font-size:9.5px;color:rgba(255,255,255,.6)">Carbon Markets Regulations 2024, Regulation 21(2)(a) · Legal Notice No. 84 of 17 May 2024</div>
+</div>
+<div class="warn">⚠️ DRAFT: This PCN was prepared using Netzerra. Review with a legal/carbon adviser before submission. The Application Reference Number will be inserted by the DNA/NEMA upon receipt.</div>
+
+<h1>1. General Information</h1>
+<table>
+  <tr><td style="width:40%"><strong>Title of Project</strong></td><td>${f.name}</td></tr>
+  <tr><td><strong>Project Application Reference Number</strong></td><td style="color:#888;font-style:italic">(To be inserted by the DNA/NEMA)</td></tr>
+  <tr><td><strong>Date of Application</strong></td><td>${f.now}</td></tr>
+  <tr><td><strong>Type of Project</strong></td><td>${f.kncSector}<br><small style="color:#555">(Tick as appropriate: (a) Energy (b) Transport (c) AFOLU (d) IPPU (e) Waste (f) Others)</small></td></tr>
+  <tr><td><strong>Size</strong></td><td>${sizeLabel}<br><small style="color:#555">Land area for land-based projects / No. of Units for non-land-based projects</small></td></tr>
+  <tr><td><strong>Project Proponent</strong></td><td>${f.proponent}</td></tr>
+  <tr><td><strong>County / Location</strong></td><td>${f.county} County, Republic of Kenya</td></tr>
+  <tr><td><strong>Registry Standard</strong></td><td>${f.standard === 'verra' ? 'Verra Verified Carbon Standard (VCS)' : f.standard === 'gs' ? 'Gold Standard' : f.standard === 'kncr-domestic' ? 'KNCR Domestic Standard' : 'CDM'}</td></tr>
+  ${f.linkedCalc ? `<tr><td><strong>Netzerra Baseline Reference</strong></td><td>${f.linkedCalc.ref} · ${f.linkedCalc.total_t.toFixed(3)} tCO₂e/yr · DQS: ${f.linkedCalc.dqs||0}/100 · GWP: ${f.linkedCalc.gwp||'AR6'}</td></tr>` : ''}
+</table>
+
+<h1>2. Objectives</h1>
+<p>The primary objective of this project is to reduce greenhouse gas (GHG) emissions ${f.projType === 'borehole' ? 'associated with water infrastructure operations in ' + f.county + ' County through the replacement of diesel-powered pumping with renewable/grid energy, reducing both direct combustion and embodied carbon from drilling operations.' : f.projType === 'livestock' ? 'from livestock operations in ' + f.county + ' County through improved manure management, feed efficiency, and rangeland restoration, addressing enteric fermentation and manure methane (CH₄) and nitrous oxide (N₂O) emissions.' : f.projType === 'transport' ? 'from the transport sector in ' + f.county + ' County through fleet electrification/CNG conversion and reduced fossil fuel consumption.' : f.projType === 'forestry' ? 'through agroforestry and carbon sequestration in ' + f.county + ' County, enhancing carbon stocks in soil and woody biomass while delivering community co-benefits.' : f.projType === 'solar' ? 'through renewable energy deployment in ' + f.county + ' County, displacing grid electricity (KPLC) or diesel generation.' : f.projType === 'biogas' ? 'through clean cooking technology deployment in ' + f.county + ' County, replacing biomass combustion with biogas, reducing CH₄ and black carbon emissions.' : 'in ' + f.county + ' County through the implementation of low-carbon practices.'}</p>
+<p>Secondary objectives include: contributing to Kenya's Nationally Determined Contribution (NDC) targets under the Paris Agreement; delivering measurable community development benefits per the Carbon Markets Regulations 2024 (Regulation 23E); supporting the Kenya National Carbon Registry (KNCR) with verified emission reduction data; and contributing to sustainable development goals relevant to ${f.county} County.</p>
+${f.linkedCalc ? `<p><strong>Estimated Annual Emission Reduction:</strong> ${f.credits.toLocaleString()} tCO₂e/yr (Baseline: ${f.linkedCalc.total_t.toFixed(3)} tCO₂e/yr — Netzerra Ref: ${f.linkedCalc.ref})</p>` : `<p><strong>Estimated Annual Emission Reduction:</strong> ${f.credits.toLocaleString()} tCO₂e/yr</p>`}
+
+<h1>3. Proposed Activities</h1>
+<table>
+  <tr><th>#</th><th>Activity</th><th>Expected GHG Impact</th><th>Timeline</th></tr>
+  ${f.projType === 'borehole' ? `
+  <tr><td>1</td><td>Replace diesel pump sets with solar/grid-powered pumps</td><td>Eliminate Scope 1 diesel combustion</td><td>Year 1</td></tr>
+  <tr><td>2</td><td>Install remote monitoring (IoT) on pump energy consumption</td><td>Continuous MRV data collection</td><td>Year 1</td></tr>
+  <tr><td>3</td><td>Community training on energy-efficient water use</td><td>Behaviour change co-benefits</td><td>Year 1–2</td></tr>
+  <tr><td>4</td><td>Annual third-party MRV and credit issuance</td><td>Ongoing verification</td><td>Annual</td></tr>` : f.projType === 'livestock' ? `
+  <tr><td>1</td><td>Improved manure management (anaerobic digester / biogas)</td><td>Reduce CH₄ from manure (IPCC Table 10A)</td><td>Year 1</td></tr>
+  <tr><td>2</td><td>Feed quality improvement programme (IUBS standards)</td><td>Reduce enteric fermentation CH₄</td><td>Year 1–2</td></tr>
+  <tr><td>3</td><td>Rangeland restoration and rotational grazing</td><td>Soil organic carbon sequestration</td><td>Year 1–5</td></tr>
+  <tr><td>4</td><td>Annual livestock census and emission monitoring</td><td>IPCC Tier 1/2 annual MRV</td><td>Annual</td></tr>` : f.projType === 'forestry' ? `
+  <tr><td>1</td><td>Agroforestry establishment (indigenous/commercial species)</td><td>Above-ground carbon sequestration</td><td>Year 1–2</td></tr>
+  <tr><td>2</td><td>Soil organic carbon enhancement</td><td>Below-ground carbon sequestration</td><td>Year 2–5</td></tr>
+  <tr><td>3</td><td>Reduced deforestation monitoring (satellite + ground)</td><td>Leakage prevention</td><td>Annual</td></tr>
+  <tr><td>4</td><td>Community nursery and seedling distribution</td><td>Reforestation co-benefits</td><td>Year 1–3</td></tr>` : `
+  <tr><td>1</td><td>Primary project activity implementation</td><td>GHG emission reduction per methodology</td><td>Year 1</td></tr>
+  <tr><td>2</td><td>Continuous monitoring and data collection</td><td>MRV data generation</td><td>Ongoing</td></tr>
+  <tr><td>3</td><td>Community engagement and benefit sharing</td><td>Social co-benefits</td><td>Year 1–10</td></tr>
+  <tr><td>4</td><td>Annual VVB verification and credit issuance</td><td>Verified carbon units</td><td>Annual</td></tr>`}
+</table>
+
+<h1>4. Stakeholders</h1>
+<table>
+  <tr><th>Full Name / Organisation</th><th>Type / Role</th></tr>
+  ${stakeholders.map(s => `<tr><td>${s.split(' — ')[0]}</td><td>${s.split(' — ')[1]||''}</td></tr>`).join('')}
+  <tr><td>Community Members — ${f.county} County (affected communities)</td><td>Beneficiary / Rights-holder</td></tr>
+</table>
+
+<h1>5. Timeline</h1>
+<table>
+  <tr><th>Milestone</th><th>Target Date</th></tr>
+  <tr><td>PCN submission to DNA/NEMA</td><td>${f.now}</td></tr>
+  <tr><td>Letter of No Objection (LoNO) from DNA</td><td>Within 14 days of PCN submission</td></tr>
+  <tr><td>Project Design Document (PDD) completed</td><td>Within 6 months of LoNO</td></tr>
+  <tr><td>VVB engagement and validation</td><td>Months 7–10 after LoNO</td></tr>
+  <tr><td>Letter of Approval (LoA) from DNA</td><td>Within 12 months of LoNO</td></tr>
+  <tr><td>Project commencement</td><td>Within 12 months of LoA (mandatory)</td></tr>
+  <tr><td>First monitoring period ends</td><td>12 months after commencement</td></tr>
+  <tr><td>First annual MRV report and credit issuance</td><td>Month 14–16 after commencement</td></tr>
+</table>
+
+<h1>6. Budget (Indicative)</h1>
+<table>
+  <tr><th>Item</th><th>Estimated Cost (KES)</th></tr>
+  <tr><td>Project preparation (PDD, ESIA, legal)</td><td>KES ${Math.round((f.budget||500000)*0.15).toLocaleString()}</td></tr>
+  <tr><td>VVB validation and verification (annual)</td><td>KES ${Math.round((f.budget||500000)*0.10).toLocaleString()}/yr</td></tr>
+  <tr><td>Community Development Agreement implementation</td><td>${f.landType !== 'private' ? 'USD ' + Math.round(f.credits*12*0.40).toLocaleString() + '/yr (40% mandate)' : 'Exempt — private land'}</td></tr>
+  <tr><td>Project implementation activities</td><td>${f.budget ? 'KES ' + f.budget.toLocaleString() : 'To be confirmed in PDD'}</td></tr>
+  <tr class="tot"><td>Total indicative project cost</td><td>${f.budget ? 'KES ' + f.budget.toLocaleString() : 'To be confirmed in full PDD'}</td></tr>
+</table>
+
+<h1>7. Attachments Required (to accompany this PCN)</h1>
+<div class="checkbox-row"><div class="cb-box"></div><span>Minutes of board/management meeting approving the project and authorising this application</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>Proof of legal entity registration (Certificate of Incorporation / County Government authorisation letter)</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>DNA Application Fee payment receipt</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>Land ownership or access documentation (for land-based projects)</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>Netzerra emission baseline report (Ref: ${f.linkedCalc?.ref || 'Run calculation first'})</span></div>
+
+<div class="sign-grid">
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Project Proponent — ${f.proponent}</div><div style="font-size:9px;color:#aaa">Name: _________________________ Title: _________________________</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Date of Submission</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">DNA Receiving Officer — NEMA</div><div style="font-size:9px;color:#aaa">Stamp &amp; Date: _________________________</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">PCN Reference No. (assigned by DNA)</div></div>
+</div>
+
+<div class="footer">
+  <span>🌿 Netzerra · PCN Template · shukriali411@gmail.com · netzerrakenya.com</span>
+  <span>${f.ref} · ${f.now}</span>
+</div>
+<div style="font-size:8px;color:#aaa;margin-top:6px;border-top:1px solid #eee;padding-top:4px;font-family:Arial,sans-serif">TEMPLATE DISCLAIMER: Generated by Netzerra based on the official First Schedule Form PCN, Kenya Carbon Markets Regulations 2024. Not legal advice. Review with a qualified carbon consultant before submission to NEMA. Netzerra has no formal relationship with NEMA or KNCR.</div>
+</body></html>`;
+  docOpen(html);
+  toast('📝 PCN (First Schedule Form) opened — complete the blanks and attach supporting documents', 'success');
+}
+
+// ──────────────────────────────────────────────────────
+// DOCUMENT 2: ESCP — ENVIRONMENTAL & SOCIAL COMMITMENT PLAN
+// World Bank ESS Framework / NEMA ESIA requirements
+// ──────────────────────────────────────────────────────
+function generateESCP() {
+  const f = getKNCRFields();
+  if (!f.name || f.name === 'Unnamed Carbon Project') {
+    toast('Enter a project name in the Project Details section above first', 'error'); return;
+  }
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>ESCP — ${f.name}</title><style>${DOC_STYLE}</style></head><body>
+${PRINT_BTN}
+<div class="hdr">
+  <div class="tag">🌿 Environmental & Social Commitment Plan</div>
+  <h1 style="color:#fff;font-size:15px;margin:0 0 6px">ESCP — ${f.name}</h1>
+  <div style="font-size:9.5px;color:rgba(255,255,255,.6)">${f.county} County, Kenya · ${f.proponent} · ${f.now}</div>
+</div>
+<div class="warn">⚠️ DRAFT TEMPLATE: This ESCP must be reviewed by a qualified environmental and social specialist before submission. An ESIA by a NEMA-registered firm is mandatory under the Environmental Management and Coordination Act (EMCA) for all carbon projects.</div>
+
+<h1>1. Project Overview</h1>
+<table>
+  <tr><td style="width:35%"><strong>Project Name</strong></td><td>${f.name}</td></tr>
+  <tr><td><strong>Project Proponent</strong></td><td>${f.proponent}</td></tr>
+  <tr><td><strong>Location</strong></td><td>${f.county} County, Republic of Kenya</td></tr>
+  <tr><td><strong>Project Type</strong></td><td>${f.pTypeLabel}</td></tr>
+  <tr><td><strong>ESCP Prepared By</strong></td><td>${f.proponent} with Netzerra support</td></tr>
+  <tr><td><strong>Date</strong></td><td>${f.now}</td></tr>
+  <tr><td><strong>Regulatory Basis</strong></td><td>Environmental Management and Coordination Act (EMCA) 1999; Climate Change Act 2016 (Amended 2023); Carbon Markets Regulations 2024; World Bank Environmental and Social Standards (ESS) 1–10</td></tr>
+</table>
+
+<h1>2. Commitment Overview</h1>
+<p>${f.proponent} commits to implementing the following environmental and social measures to ensure the project is carried out in accordance with Kenya's legal requirements and international best practice environmental and social standards. This ESCP sets out material measures, actions, and timelines.</p>
+
+<h1>3. ESS Commitments</h1>
+
+<h2>ESS1 — Assessment and Management of Environmental and Social Risks</h2>
+<table>
+  <tr><th>Commitment</th><th>Action Required</th><th>Timeline</th><th>Responsible</th></tr>
+  <tr><td>Environmental and Social Impact Assessment (ESIA)</td><td>Commission full ESIA from NEMA-registered firm. Disclose to public for minimum 21 days. Submit to NEMA for review.</td><td>Before PDD submission</td><td>${f.proponent}</td></tr>
+  <tr><td>Environmental and Social Management Plan (ESMP)</td><td>Develop site-specific ESMP based on ESIA findings. Implement mitigation measures.</td><td>Before project commencement</td><td>${f.proponent}</td></tr>
+  <tr><td>Annual Environmental Audit</td><td>Commission independent audit of project environmental performance annually.</td><td>Annual (within 6 months of year-end)</td><td>${f.proponent} + NEMA-registered auditor</td></tr>
+</table>
+
+<h2>ESS2 — Labour and Working Conditions</h2>
+<table>
+  <tr><th>Commitment</th><th>Action</th><th>Timeline</th></tr>
+  <tr><td>Labour Management Procedures (LMP)</td><td>Develop LMP covering: minimum wage compliance; health and safety (PPE, site safety); prohibition of child and forced labour; equal opportunity and non-discrimination; worker grievance mechanism.</td><td>Before commencement</td></tr>
+  <tr><td>Local Employment</td><td>Minimum 60% of project employment to be sourced from local communities in ${f.county} County per CDA commitment.</td><td>Ongoing</td></tr>
+  <tr><td>Contractor Requirements</td><td>All contractors must comply with LMP and provide evidence of compliance to project proponent.</td><td>At contract award</td></tr>
+</table>
+
+<h2>ESS3 — Resource Efficiency and Pollution Prevention</h2>
+<table>
+  <tr><th>Commitment</th><th>Action</th><th>Timeline</th></tr>
+  <tr><td>GHG Emissions Monitoring</td><td>Monitor and report GHG emissions per IPCC AR6 methodology using Netzerra platform. Annual MRV report submitted to DNA.</td><td>Annual</td></tr>
+  ${f.projType === 'borehole' ? '<tr><td>Water Resource Management</td><td>Borehole yield monitoring. No extraction beyond licensed abstraction rate. Groundwater level monitoring quarterly.</td><td>Ongoing</td></tr>' : ''}
+  ${f.projType === 'livestock' ? '<tr><td>Manure and Waste Management</td><td>Implement manure management plan to prevent waterway contamination. Biogas or composting for organic waste.</td><td>Year 1</td></tr>' : ''}
+  <tr><td>Waste Management</td><td>Solid waste segregation, minimisation and proper disposal. No open burning on project sites.</td><td>From commencement</td></tr>
+</table>
+
+<h2>ESS4 — Community Health, Safety, and Security</h2>
+<table>
+  <tr><th>Commitment</th><th>Action</th><th>Timeline</th></tr>
+  <tr><td>Community Health and Safety Plan</td><td>Develop plan covering: site access restrictions; emergency response procedures; community notification of hazardous activities; first aid provisions.</td><td>Before commencement</td></tr>
+  <tr><td>Road Safety</td><td>Traffic management plan for any project vehicles on community roads. Speed limits enforced.</td><td>Ongoing</td></tr>
+</table>
+
+<h2>ESS5 — Land Acquisition and Involuntary Resettlement</h2>
+<p>${f.landType === 'private' ? 'Project is on private land. No involuntary resettlement or displacement of community members is anticipated or permitted.' : 'Project is on ' + f.landType + ' land. The project commits to: (a) No involuntary displacement of community members; (b) No restriction of traditional resource access without community consent; (c) If temporary access restrictions are required, affected community members will be compensated as per the Resettlement Policy Framework prepared for this project.'}</p>
+
+<h2>ESS6 — Biodiversity and Natural Habitats</h2>
+<table>
+  <tr><th>Commitment</th><th>Action</th><th>Timeline</th></tr>
+  <tr><td>Biodiversity Assessment</td><td>Conduct biodiversity baseline survey as part of ESIA. Identify critical habitats, protected species within project area.</td><td>ESIA phase</td></tr>
+  <tr><td>No Net Loss</td><td>Project activities must not result in net loss of biodiversity. Any unavoidable impacts must be mitigated and offset.</td><td>Ongoing</td></tr>
+  ${f.projType === 'forestry' ? '<tr><td>Native Species Priority</td><td>Minimum 70% of planted species to be indigenous to the region. No invasive species.</td><td>Year 1</td></tr>' : ''}
+</table>
+
+<h2>ESS7 — Indigenous Peoples / Historically Underserved Communities</h2>
+<p>${['Turkana','Samburu','Marsabit','Isiolo','Mandera','Wajir','Garissa'].includes(f.county) ? 'The project area in ' + f.county + ' County is home to pastoralist communities who may qualify as historically underserved traditional local communities under ESS7. The project proponent commits to: Free, Prior and Informed Consent (FPIC) processes; culturally appropriate engagement; preservation of traditional land rights and livelihoods; representation of pastoralist community members on the CDA Fund Management Committee.' : 'Project area does not include communities classified as Indigenous Peoples under ESS7. Standard community engagement procedures under ESS1 and the CDA apply.'}</p>
+
+<h2>ESS8 — Cultural Heritage</h2>
+<p>If project activities encounter any cultural heritage sites (burial grounds, sacred sites, historical structures), work in that area must stop immediately and the National Museums of Kenya (NMK) must be notified. A Cultural Heritage Management Plan will be developed if cultural heritage is identified in the ESIA.</p>
+
+<h1>4. Grievance Redress Mechanism</h1>
+<table>
+  <tr><th>Step</th><th>Process</th><th>Timeline</th></tr>
+  <tr><td>1. Lodge complaint</td><td>Community member submits grievance in writing, verbally, or via designated community liaison officer to the Grievance Redress Committee (GRC).</td><td>Anytime</td></tr>
+  <tr><td>2. Acknowledgement</td><td>GRC acknowledges receipt of grievance in writing. Register grievance in the project grievance log.</td><td>Within 7 days</td></tr>
+  <tr><td>3. Investigation</td><td>GRC investigates and consults relevant parties. Community liaison officer facilitates communication.</td><td>Within 21 days</td></tr>
+  <tr><td>4. Resolution</td><td>GRC proposes resolution. Parties must agree in writing.</td><td>Within 30 days</td></tr>
+  <tr><td>5. Escalation</td><td>If unresolved, escalate to NEMA Climate Change Directorate. Legal recourse under Kenyan law is not restricted.</td><td>After 30 days</td></tr>
+</table>
+
+<h1>5. ESCP Monitoring and Reporting</h1>
+<table>
+  <tr><th>Report</th><th>Frequency</th><th>Submitted To</th></tr>
+  <tr><td>Environmental Audit Report</td><td>Annual</td><td>NEMA + DNA</td></tr>
+  <tr><td>Annual MRV Report (GHG)</td><td>Annual</td><td>DNA/KNCR + VVB</td></tr>
+  <tr><td>Community Benefit Disbursement Report</td><td>Quarterly</td><td>${f.community} + ${f.county} County</td></tr>
+  <tr><td>Grievance Log Summary</td><td>Semi-annual</td><td>DNA + Community</td></tr>
+  <tr><td>LMP Compliance Report</td><td>Annual</td><td>Internal + NEMA</td></tr>
+</table>
+
+<div class="sign-grid">
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Project Proponent — ${f.proponent}</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Environmental & Social Specialist (name)</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Community Representative — ${f.community}</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Date</div></div>
+</div>
+<div class="footer">
+  <span>🌿 Netzerra · ESCP Template · shukriali411@gmail.com · netzerrakenya.com</span>
+  <span>${f.ref} · ${f.now}</span>
+</div>
+</body></html>`;
+  docOpen(html);
+  toast('🌿 ESCP opened — review with an E&S specialist before PDD submission', 'success');
+}
+
+// ──────────────────────────────────────────────────────
+// DOCUMENT 3: STAKEHOLDER CONSULTATION REPORT + FPIC
+// ──────────────────────────────────────────────────────
+function generateStakeholderReport() {
+  const f = getKNCRFields();
+  if (!f.name || f.name === 'Unnamed Carbon Project') {
+    toast('Enter a project name in the Project Details section above first', 'error'); return;
+  }
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Stakeholder Consultation — ${f.name}</title><style>${DOC_STYLE}</style></head><body>
+${PRINT_BTN}
+<div class="hdr">
+  <div class="tag">👥 Stakeholder Consultation & FPIC Record</div>
+  <h1 style="color:#fff;font-size:15px;margin:0 0 6px">STAKEHOLDER CONSULTATION REPORT</h1>
+  <div style="font-size:9.5px;color:rgba(255,255,255,.6)">${f.name} · ${f.county} County · ${f.proponent} · ${f.now}</div>
+</div>
+<div class="warn">⚠️ TEMPLATE: Fill in actual meeting dates, attendance figures, and resolutions. FPIC must be documented with signatures from community representatives. This template follows Verra VCS Stakeholder Consultation requirements and Kenya's Climate Change Act.</div>
+
+<h1>1. Project Overview</h1>
+<table>
+  <tr><td style="width:35%"><strong>Project Name</strong></td><td>${f.name}</td></tr>
+  <tr><td><strong>Proponent</strong></td><td>${f.proponent}</td></tr>
+  <tr><td><strong>Location</strong></td><td>${f.county} County, Republic of Kenya</td></tr>
+  <tr><td><strong>Project Type</strong></td><td>${f.pTypeLabel}</td></tr>
+  <tr><td><strong>Land Type</strong></td><td>${f.landType === 'community' ? 'Community Land — CDA and FPIC mandatory' : f.landType === 'public' ? 'Public Land — CDA and FPIC mandatory' : 'Private Land'}</td></tr>
+  <tr><td><strong>Estimated Credits</strong></td><td>${f.credits.toLocaleString()} tCO₂e/yr</td></tr>
+  <tr><td><strong>Report Prepared</strong></td><td>${f.now}</td></tr>
+</table>
+
+<h1>2. Consultation Objectives</h1>
+<p>The consultation process was conducted to: (a) inform affected communities about the proposed carbon project, its activities, expected benefits, and potential risks; (b) obtain Free, Prior and Informed Consent (FPIC) from the affected community in ${f.county} County; (c) gather community input on the project design, benefit-sharing mechanisms, and environmental safeguards; (d) satisfy the requirements of the Carbon Markets Regulations 2024, the Climate Change Act 2016 (Amended 2023), and the Verra VCS Standard for stakeholder engagement.</p>
+
+<h1>3. Stakeholder Identification</h1>
+<table>
+  <tr><th>Stakeholder Group</th><th>Interest / Relevance</th><th>Engagement Method</th></tr>
+  <tr><td>Community members — ${f.community}</td><td>Directly affected — land use, livelihoods, benefits</td><td>Barazas, focus group discussions</td></tr>
+  <tr><td>Women's groups</td><td>Ensure gender-equitable benefit sharing</td><td>Separate focus group discussions</td></tr>
+  <tr><td>Youth representatives</td><td>Future generation interests</td><td>Baraza representation</td></tr>
+  <tr><td>Community elders and traditional leaders</td><td>Traditional land rights and authority</td><td>Direct consultation</td></tr>
+  <tr><td>${f.county} County Government</td><td>Regulatory oversight, Carbon Levy, FLLoCA</td><td>Formal meetings with CEC Environment</td></tr>
+  <tr><td>Local administration (Chief / Sub-Chief)</td><td>Community authority, facilitation</td><td>Direct briefings</td></tr>
+  <tr><td>NGOs / CBOs operating in area</td><td>Civil society oversight</td><td>Invitations to barazas</td></tr>
+  <tr><td>NEMA County Environment Officer</td><td>Regulatory compliance</td><td>Formal notification letter</td></tr>
+</table>
+
+<h1>4. Consultation Process Summary</h1>
+<table>
+  <tr><th>Session #</th><th>Date</th><th>Venue</th><th>No. of Participants</th><th>Women (%)</th><th>Key Issues Raised</th></tr>
+  <tr><td>1 — Initial sensitisation</td><td>____________</td><td>____________</td><td>____</td><td>_____%</td><td>General project awareness and questions</td></tr>
+  <tr><td>2 — Women's focus group</td><td>____________</td><td>____________</td><td>____</td><td>100%</td><td>Benefit sharing, employment for women</td></tr>
+  <tr><td>3 — Youth focus group</td><td>____________</td><td>____________</td><td>____</td><td>_____%</td><td>Youth employment, skills training</td></tr>
+  <tr><td>4 — Community baraza (full)</td><td>____________</td><td>____________</td><td>____</td><td>_____%</td><td>CDA terms, grievance mechanism</td></tr>
+  <tr><td>5 — Elders / traditional leaders</td><td>____________</td><td>____________</td><td>____</td><td>_____%</td><td>Traditional land rights, heritage</td></tr>
+  <tr><td>6 — Final FPIC vote / resolution</td><td>____________</td><td>____________</td><td>____</td><td>_____%</td><td>Community vote on project approval</td></tr>
+</table>
+
+<h1>5. Key Issues Raised and Responses</h1>
+<table>
+  <tr><th>Issue Raised</th><th>Community Concern</th><th>Proponent Response / Resolution</th></tr>
+  <tr><td>Land access and rights</td><td>Will the project restrict our use of the land?</td><td>No involuntary restrictions. CDA Section 5.1 protects community access rights. Any temporary operational restrictions subject to community consent and compensation.</td></tr>
+  <tr><td>Benefit sharing</td><td>How much will the community receive and how?</td><td>${f.landType !== 'private' ? 'Minimum 40% of gross credit revenue per Carbon Markets Regs 2024 Reg.23E. Disbursed quarterly to community fund account. Fund Management Committee of 7 members (min. 30% women, 20% youth).' : '25% non-mandatory contribution agreed in CDA.'}</td></tr>
+  <tr><td>Employment</td><td>Will community members be employed in the project?</td><td>Minimum 60% of project jobs to be sourced locally. Skills training programme included. CDA Section 5.2 commits to this legally.</td></tr>
+  <tr><td>Environment</td><td>Will the project damage our land or water?</td><td>Full ESIA by NEMA-registered firm. ESCP commits to no net loss of biodiversity. ${f.projType === 'borehole' ? 'Groundwater monitoring to protect aquifer.' : f.projType === 'livestock' ? 'Manure management plan to prevent waterway contamination.' : 'Environmental mitigation measures per ESCP.'}</td></tr>
+  <tr><td>Grievances</td><td>What if we have a complaint?</td><td>Grievance Redress Committee established per ESCP. 7-day acknowledgement, 30-day resolution, escalation to NEMA if unresolved.</td></tr>
+  <tr><td>Project transparency</td><td>How will we know what is happening?</td><td>Annual community meeting on project performance. Annual report shared with community. Community representative on KNCR project monitoring.</td></tr>
+</table>
+
+<h1>6. Changes Made to Project Design Based on Consultation</h1>
+<p>The following changes were made to the project design as a result of community consultation: (fill in any changes made, e.g., employment targets adjusted; benefit fund governance structure amended; project boundary modified to exclude sensitive cultural sites; additional activities added based on community priorities).</p>
+<p>If no changes were required, state: "The consultation process confirmed community support for the project design as presented. No material changes were required."</p>
+
+<h1>7. Free, Prior and Informed Consent (FPIC) Declaration</h1>
+<div class="info">FPIC means the community was consulted FREELY (without coercion), PRIOR to the project being implemented, and was given all necessary INFORMATION in a language and format accessible to them, before giving CONSENT.</div>
+<p>We, the undersigned representatives of <strong>${f.community}</strong>, confirm that:</p>
+<div class="checkbox-row"><div class="cb-box"></div><span>We were consulted freely and without coercion or undue influence</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>We were consulted prior to the commencement of project activities</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>We received full information about the project in Kiswahili / our local language</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>We had adequate time to consider and deliberate on the project</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>We understand the Community Development Agreement and its terms</span></div>
+<div class="checkbox-row"><div class="cb-box"></div><span>We give our CONSENT for this project to proceed on the agreed terms</span></div>
+
+<table style="margin-top:14px">
+  <tr><th>Representative Name</th><th>Role</th><th>ID No.</th><th>Signature</th><th>Date</th></tr>
+  <tr><td>1. _________________________</td><td>Chairperson</td><td>___________</td><td>___________</td><td>___________</td></tr>
+  <tr><td>2. _________________________</td><td>Secretary</td><td>___________</td><td>___________</td><td>___________</td></tr>
+  <tr><td>3. _________________________</td><td>Women Rep.</td><td>___________</td><td>___________</td><td>___________</td></tr>
+  <tr><td>4. _________________________</td><td>Youth Rep.</td><td>___________</td><td>___________</td><td>___________</td></tr>
+  <tr><td>5. _________________________</td><td>Elder</td><td>___________</td><td>___________</td><td>___________</td></tr>
+</table>
+
+<div class="sign-grid">
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Project Proponent — ${f.proponent}</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Witness — Local Administration (Chief/Sub-Chief)</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">${f.county} County Government Representative</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Date of Final FPIC</div></div>
+</div>
+<div class="footer">
+  <span>🌿 Netzerra · Stakeholder Consultation & FPIC Template · netzerrakenya.com</span>
+  <span>${f.ref} · ${f.now}</span>
+</div>
+</body></html>`;
+  docOpen(html);
+  toast('👥 Stakeholder Consultation Report opened — fill in actual meeting dates and attendance', 'success');
+}
+
+// ──────────────────────────────────────────────────────
+// DOCUMENT 4: ANNUAL MRV REPORT
+// ISO 14064-1 · VCS Monitoring Report v4.4 format · DNA Reg.25 annual submission
+// ──────────────────────────────────────────────────────
+function generateMRVReport() {
+  const f = getKNCRFields();
+  if (!f.name || f.name === 'Unnamed Carbon Project') {
+    toast('Enter a project name in the Project Details section above first', 'error'); return;
+  }
+  const c = f.linkedCalc;
+  const monYear = new Date().getFullYear() - 1;
+  const grossUSD = f.credits * 12;
+  const commRate = f.landType !== 'private' ? 0.40 : 0;
+  const commUSD  = grossUSD * commRate;
+  const devUSD   = grossUSD * (1 - commRate);
+
+  const html = `<!DOCTYPE html><html lang="en"><head><meta charset="UTF-8"><title>Annual MRV Report — ${f.name} — ${monYear}</title><style>${DOC_STYLE}</style></head><body>
+${PRINT_BTN}
+<div class="hdr">
+  <div class="tag">📊 Annual MRV Report · ISO 14064-1 · VCS Monitoring Report Format</div>
+  <h1 style="color:#fff;font-size:15px;margin:0 0 6px">ANNUAL MONITORING, REPORTING & VERIFICATION REPORT</h1>
+  <div style="font-size:10px;color:rgba(255,255,255,.7);margin-top:4px">${f.name} · Monitoring Period: 1 January ${monYear} – 31 December ${monYear}</div>
+  <div style="font-size:9px;color:rgba(255,255,255,.5)">Prepared: ${f.now} · ${f.proponent} · Ref: ${f.ref}</div>
+</div>
+<div class="warn">⚠️ DRAFT: Replace all estimated/baseline figures with actual monitored data for the reporting period. This report must be verified by a NEMA-accredited VVB before submission to DNA/KNCR for credit issuance.</div>
+
+<h1>1. Project Summary</h1>
+<table>
+  <tr><td style="width:35%"><strong>Project Name</strong></td><td>${f.name}</td></tr>
+  <tr><td><strong>Project Proponent</strong></td><td>${f.proponent}</td></tr>
+  <tr><td><strong>Location</strong></td><td>${f.county} County, Republic of Kenya</td></tr>
+  <tr><td><strong>Project Type</strong></td><td>${f.pTypeLabel}</td></tr>
+  <tr><td><strong>Registry Standard</strong></td><td>${f.standard === 'verra' ? 'Verra VCS' : f.standard === 'gs' ? 'Gold Standard' : f.standard === 'kncr-domestic' ? 'KNCR Domestic' : 'CDM'}</td></tr>
+  <tr><td><strong>Monitoring Period</strong></td><td>01 January ${monYear} — 31 December ${monYear} (12 months)</td></tr>
+  <tr><td><strong>Report Type</strong></td><td>Annual MRV Report — DNA Regulation 25 submission + VVB verification request</td></tr>
+  ${c ? `<tr><td><strong>Netzerra Baseline Ref</strong></td><td>${c.ref} · ${c.date} · DQS: ${c.dqs||0}/100 · GWP: ${c.gwp||'IPCC AR6'}</td></tr>` : ''}
+  <tr><td><strong>GHG Protocol</strong></td><td>IPCC 2006 Guidelines · IPCC AR6 GWP₁₀₀ values · ISO 14064-1:2018</td></tr>
+</table>
+
+<h1>2. Emission Reductions Achieved — Monitoring Period ${monYear}</h1>
+<table>
+  <tr><th>Parameter</th><th>Baseline (tCO₂e/yr)</th><th>Actual — ${monYear} (tCO₂e)</th><th>Reduction (tCO₂e)</th><th>Method</th></tr>
+  <tr><td>Scope 1 — Direct Emissions</td><td>${c ? c.s1_t.toFixed(3) : '____'}</td><td>______________</td><td>______________</td><td>Meter reading / activity log</td></tr>
+  <tr><td>Scope 2 — Grid Electricity</td><td>${c ? c.s2_t.toFixed(3) : '____'}</td><td>______________</td><td>______________</td><td>KPLC bill / smart meter</td></tr>
+  <tr><td>Scope 3 — Embodied / Indirect</td><td>${c ? c.s3_t.toFixed(3) : '____'}</td><td>______________</td><td>______________</td><td>Procurement records</td></tr>
+  <tr class="tot"><td><strong>TOTAL</strong></td><td><strong>${c ? c.total_t.toFixed(3) : '____'}</strong></td><td><strong>______________</strong></td><td><strong>______________</strong></td><td></td></tr>
+</table>
+<div class="info">Note: Actual figures must be measured and recorded from primary data sources (meters, receipts, logs) during the monitoring period. Do not estimate actual figures — this creates "false data" risk under Regulation 37.</div>
+
+<h1>3. Monitoring Parameters</h1>
+<table>
+  <tr><th>Parameter ID</th><th>Description</th><th>Unit</th><th>Frequency</th><th>Data Source</th><th>Uncertainty</th></tr>
+  ${f.projType === 'borehole' ? `
+  <tr><td>MP-01</td><td>Pump electricity consumption (KPLC/solar)</td><td>kWh/yr</td><td>Monthly</td><td>Smart meter / KPLC bill</td><td>±2%</td></tr>
+  <tr><td>MP-02</td><td>Diesel consumption (backup generator)</td><td>Litres/yr</td><td>Monthly</td><td>Fuel receipts</td><td>±3%</td></tr>
+  <tr><td>MP-03</td><td>Water pumped volume</td><td>m³/yr</td><td>Monthly</td><td>Flow meter</td><td>±5%</td></tr>
+  <tr><td>MP-04</td><td>Borehole depth and static water level</td><td>Metres</td><td>Quarterly</td><td>Water level logger</td><td>±1%</td></tr>` : f.projType === 'livestock' ? `
+  <tr><td>MP-01</td><td>Livestock headcount by species</td><td>Head/yr</td><td>Semi-annual</td><td>Farm census / county records</td><td>±5%</td></tr>
+  <tr><td>MP-02</td><td>Manure management system</td><td>m³/yr</td><td>Monthly</td><td>Direct measurement</td><td>±10%</td></tr>
+  <tr><td>MP-03</td><td>Average live weight by species</td><td>kg/head</td><td>Annual</td><td>Weighbridge records</td><td>±8%</td></tr>
+  <tr><td>MP-04</td><td>Feed type and quantity</td><td>kg DM/yr</td><td>Monthly</td><td>Feed purchase records</td><td>±10%</td></tr>` : `
+  <tr><td>MP-01</td><td>Primary energy/activity parameter</td><td>Units/yr</td><td>Monthly</td><td>Meter / receipts</td><td>±5%</td></tr>
+  <tr><td>MP-02</td><td>Secondary monitoring parameter</td><td>Units/yr</td><td>Quarterly</td><td>Records / logs</td><td>±10%</td></tr>
+  <tr><td>MP-03</td><td>Leakage monitoring</td><td>tCO₂e/yr</td><td>Annual</td><td>Calculation</td><td>±15%</td></tr>`}
+</table>
+
+<h1>4. Data Quality and Uncertainty Assessment</h1>
+<table>
+  <tr><th>Data Category</th><th>Source Type</th><th>DQS Score</th><th>Uncertainty (IPCC Tier)</th></tr>
+  ${c ? `<tr><td>Emission baseline (Netzerra)</td><td>Platform calculation (Ref: ${c.ref})</td><td>${c.dqs||0}/100</td><td>${c.dqsGrade||'Not declared'}</td></tr>` : ''}
+  <tr><td>Actual activity data</td><td>Primary metered / receipts</td><td>____/100</td><td>±_____%</td></tr>
+  <tr><td>Emission factors applied</td><td>IPCC AR6 / IEA 2024 / KPLC verified</td><td>95/100</td><td>±5–10% (Tier 1/2)</td></tr>
+  <tr class="tot"><td>Overall MRV Confidence</td><td></td><td>____/100</td><td>±_____%</td></tr>
+</table>
+
+<h1>5. Deviations from PDD</h1>
+<p>List any deviations from the approved Project Design Document during this monitoring period. If none, state: "No material deviations from the approved PDD were observed during the monitoring period ended 31 December ${monYear}."</p>
+<table>
+  <tr><th>Deviation #</th><th>Description</th><th>Impact on GHG Calculations</th><th>DNA Notification Required?</th></tr>
+  <tr><td>1</td><td>_________________________</td><td>_________________________</td><td>Yes / No</td></tr>
+  <tr><td>2</td><td>_________________________</td><td>_________________________</td><td>Yes / No</td></tr>
+</table>
+
+<h1>6. Credit Issuance Request</h1>
+<table>
+  <tr><td style="width:40%"><strong>Monitoring Period</strong></td><td>01 January ${monYear} — 31 December ${monYear}</td></tr>
+  <tr><td><strong>Baseline Emissions</strong></td><td>${c ? c.total_t.toFixed(3) + ' tCO₂e/yr (Netzerra Ref: ' + c.ref + ')' : '____ tCO₂e/yr'}</td></tr>
+  <tr><td><strong>Actual Emissions (monitored)</strong></td><td>______________________ tCO₂e (to be filled after monitoring)</td></tr>
+  <tr><td><strong>Net Emission Reductions</strong></td><td>______________________ tCO₂e (baseline minus actual)</td></tr>
+  <tr><td><strong>Leakage Deduction</strong></td><td>______________________ tCO₂e (if applicable)</td></tr>
+  <tr class="tot"><td><strong>Credits Requested for Issuance</strong></td><td><strong>______________________ tCO₂e (verified)</strong></td></tr>
+  <tr><td><strong>Estimated Revenue</strong></td><td>USD ${grossUSD.toLocaleString()} @ $12/t (indicative)</td></tr>
+</table>
+
+<h1>7. Community Benefit Disbursement — Period ${monYear}</h1>
+<table>
+  <tr><th>Quarter</th><th>Credits Verified</th><th>Revenue (USD)</th><th>Community Share (${(commRate*100).toFixed(0)}%)</th><th>Disbursement Date</th><th>Evidence</th></tr>
+  <tr><td>Q1 (Jan–Mar)</td><td>______</td><td>______</td><td>______</td><td>__________</td><td>Bank transfer ref.</td></tr>
+  <tr><td>Q2 (Apr–Jun)</td><td>______</td><td>______</td><td>______</td><td>__________</td><td>Bank transfer ref.</td></tr>
+  <tr><td>Q3 (Jul–Sep)</td><td>______</td><td>______</td><td>______</td><td>__________</td><td>Bank transfer ref.</td></tr>
+  <tr><td>Q4 (Oct–Dec)</td><td>______</td><td>______</td><td>______</td><td>__________</td><td>Bank transfer ref.</td></tr>
+  <tr class="tot"><td><strong>Annual Total</strong></td><td></td><td></td><td><strong>USD ${commUSD.toLocaleString()} indicative</strong></td><td></td><td></td></tr>
+</table>
+
+<h1>8. VVB Verification Statement (placeholder)</h1>
+<div style="border:1.5px dashed #ccc;padding:14px;border-radius:4px;font-size:10px;color:#888;margin:10px 0">
+  [TO BE COMPLETED BY ACCREDITED VVB]<br><br>
+  We, ________________________ [VVB name], accredited by ________________________, have verified the above Annual MRV Report for ${f.name} covering the period 01 January ${monYear} – 31 December ${monYear}.<br><br>
+  We confirm that the monitoring methodology, data collection, calculations, and community benefit disbursements are in accordance with the approved Project Design Document and the applicable standard.<br><br>
+  Net emission reductions verified: ____________ tCO₂e<br>
+  Verification opinion: ◻ Positive ◻ Qualified ◻ Adverse<br><br>
+  VVB Authorised Signatory: ________________________ Date: ____________
+</div>
+
+<div class="sign-grid">
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Project Proponent — ${f.proponent}</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">Date of Submission to DNA</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">DNA Receiving Officer — NEMA/KNCR</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-label">KNCR Project Reference No.</div></div>
+</div>
+<div class="footer">
+  <span>🌿 Netzerra · Annual MRV Report · ISO 14064-1 · shukriali411@gmail.com</span>
+  <span>${f.ref} · ${f.now}</span>
+</div>
+</body></html>`;
+  docOpen(html);
+  toast('📊 Annual MRV Report opened — replace estimated figures with actual monitored data', 'success');
+}
+
 // ── CDA — FOURTH SCHEDULE COMMUNITY DEVELOPMENT AGREEMENT ────────
 // Carbon Markets Regulations 2024, Fourth Schedule (Reg. 23E)
 // Required for all public and community land carbon projects in Kenya
@@ -1070,6 +1707,8 @@ function generateCDA() {
   const now       = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
   const ref       = 'NTZ-CDA-' + Date.now();
   const year      = new Date().getFullYear();
+  // Linked baseline from calculator pipeline
+  const linkedCalc = S.kncr?.linkedCalc || S.lastCalc;
 
   if (landType === 'private') {
     toast('CDA not required for private land projects (Carbon Markets Regs 2024 Reg.23E).', 'info');
@@ -1187,6 +1826,9 @@ function generateCDA() {
   <tr><td>Land Classification</td><td>${landType === 'community' ? 'Community Land (Community Land Act 2016)' : 'Public Land (Land Act 2012)'}</td></tr>
   <tr><td>Registry Standard</td><td>${standard}</td></tr>
   <tr><td>Estimated Annual Credits</td><td><strong>${credits.toLocaleString()} tCO₂e per year</strong></td></tr>
+  <tr><td>Verified Emission Baseline</td><td>${linkedCalc
+    ? `<strong>${linkedCalc.total_t.toFixed(3)} tCO₂e/yr</strong> — Netzerra calculation Ref: ${linkedCalc.ref} · Date: ${linkedCalc.date} · Data Quality: ${linkedCalc.dqs||0}/100 · GWP: ${linkedCalc.gwp||'AR6'}`
+    : 'To be established by NEMA-accredited VVB prior to KNCR registration'}</td></tr>
   <tr><td>Crediting Period</td><td>10 years, renewable upon mutual agreement and VVB verification</td></tr>
   <tr><td>Applicable Law</td><td>Climate Change Act 2016 (Amended 2023); Carbon Markets Regulations 2024; Carbon Trading Regulations 2025; Land Act 2012; Community Land Act 2016</td></tr>
 </table>
@@ -1844,7 +2486,8 @@ function generateKNCRPackage() {
   const county   = document.getElementById('kncr-county').value;
   const proponent= document.getElementById('kncr-proponent').value.trim() || S.user.org;
   const standard = document.getElementById('kncr-standard').value;
-  const c        = S.lastCalc;
+  // Prefer linked calc from pipeline; fall back to last calc
+  const c        = S.kncr?.linkedCalc || S.lastCalc;
   const now      = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
   const ref      = 'NTZ-PDD-' + Date.now();
 
