@@ -16,6 +16,8 @@ const S = {
   lastCalc: null,
   charts: {},
   isFirstLogin: true,
+  calcHistory: [],
+  itmos: [],
   kncr: {
     projects: [
       { id:'NTZ-001', name:'Turkana Solar Borehole Cluster', sector:'borehole', county:'Turkana', credits:420, standard:'Verra VCS', step:2, created:'2026-01-15' },
@@ -25,12 +27,13 @@ const S = {
 };
 
 // ── EMISSION FACTORS (Kenya-calibrated, IPCC AR6) ─────
-// KPLC grid EF: Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%).
-// IEA grid average: 56.81 gCO2/kWh (2020), ~70 gCO2/kWh (2022-2023 including peak thermal).
-// Source: SEforAll Country Brief Kenya / IEA Emissions Factors 2024.
-// NOTE: 0.497 (formerly used) is incorrect — that figure applies to fossil-heavy grids.
+// KPLC grid EF: UNFCCC CDM Standardised Baseline ASB0050-2020, Combined Margin = 0.3174 tCO₂/MWh.
+// Source: UNFCCC CDM Executive Board, adopted 29 December 2020, based on 2017–2019 data vintage.
+// This is the correct figure for KNCR carbon credit calculations (counterfactual grid, not actual mix).
+// NOTE: IEA 2024 actual mix (~0.070) applies only to GHG Protocol Scope 2 market-based reporting —
+// NOT for KNCR project credit calculations. Using 0.070 would understate credits by ~4.5×.
 const EF = {
-  diesel:2.68, petrol:2.31, hfo:3.17, lpg:2.98, cng:1.99, kplc:0.070,
+  diesel:2.68, petrol:2.31, hfo:3.17, lpg:2.98, cng:1.99, kplc:0.3174,
   steel:1.85, pvc:2.41, cement:0.83, rebar:1.99, concrete:0.159,
   asphalt:0.045, timber:0.72, glass:0.91,
   // GWP values set dynamically from GWP_SETS — defaults to AR6
@@ -352,7 +355,6 @@ function saveProfile() {
   closeModal('modal-profile');
   toast('✅ Profile updated!', 'success');
   saveToStorage();
-}
 
 function openProfileModal() {
   document.getElementById('prof-name').value  = S.user.name;
@@ -368,6 +370,12 @@ function updateSidebar() {
   document.getElementById('sb-avatar').textContent   = ini;
   document.getElementById('sb-name').textContent     = S.user.name;
   document.getElementById('sb-plan').textContent     = '🌱 ' + S.user.plan + ' Plan';
+  // Show remaining calcs for Seedling
+  const rem = getRemainingCalcs();
+  const planEl = document.getElementById('sb-plan');
+  if (planEl && rem !== Infinity) {
+    planEl.textContent = '🌱 ' + S.user.plan + ' · ' + rem + ' calcs left';
+  }
   document.getElementById('sb-score').textContent    = S.user.score;
   document.getElementById('pp-name').textContent     = S.user.name;
   document.getElementById('pp-org').textContent      = S.user.org + ' · Carbon Intelligence';
@@ -399,7 +407,8 @@ function showSection(id) {
   document.getElementById('breadcrumb').innerHTML = '<b>' + (LABELS[id] || id) + '</b>';
   window.scrollTo(0, 0);
   if (id === 'leaderboard' && !S.charts.county) initLeaderboardCharts();
-  if (id === 'kncr') { renderKNCRPipeline(); renderKNCRProjects(); }
+  if (id === 'dashboard') renderCalcHistory();
+  if (id === 'kncr') { renderKNCRPipeline(); renderKNCRProjects(); renderITMOs(); populateITMOProjectSelect(); }
   if (id === 'county' && document.getElementById('county-select').value) loadCountyData();
 }
 
@@ -477,6 +486,10 @@ function showResults(name, sector, total_t, s1_t, s2_t, s3_t, breakdown, offsets
   };
   S.user.totalEmissions = Math.round(S.user.totalEmissions + total_t);
   S.user.projects++;
+  // Add to history and count usage
+  addToHistory(S.lastCalc);
+  countCalcUsage();
+  renderCalcHistory();
   const gs = calcNTZScore(total_t, sector);
   S.user.score = Math.round((S.user.score * (S.user.projects - 1) + gs) / S.user.projects);
 
@@ -648,6 +661,7 @@ function setHint(id, text) {
 
 // ── CALCULATORS ───────────────────────────────────────
 function calcBorehole() {
+  if (!gateCalc('borehole')) return;
   const lt = v('bh-lifetime') || 20;
   const sp = v('bh-solar') / 100;
   const s1_kg = (v('bh-diesel-drill') * EF.diesel / lt) +
@@ -668,6 +682,7 @@ function calcBorehole() {
 }
 
 function calcLivestock() {
+  if (!gateCalc('livestock')) return;
   const sys = t('ls-manure');
   const ef3 = sys === 'biogas' ? 0.001 : EF.ef3pasture;
   const heads = {
@@ -697,6 +712,7 @@ function calcLivestock() {
 }
 
 function calcTransport() {
+  if (!gateCalc('transport')) return;
   const s1_kg = (v('tr-heavy') + v('tr-matatu') + v('tr-bus') + v('tr-light')) * EF.diesel +
                 (v('tr-moto') + v('tr-car')) * EF.petrol;
   const s3_kg = v('tr-hfc') * EF.gwpHFC134a + v('tr-r404') * EF.gwpR404A;
@@ -713,6 +729,7 @@ function calcTransport() {
 }
 
 function calcConstruction() {
+  if (!gateCalc('construction')) return;
   const mo = v('con-months') || 12;
   const s3_kg = v('con-cement') * 830 + v('con-concrete') * 159 +
                 v('con-steel') * 1850 + v('con-rebar') * 1990 +
@@ -740,6 +757,7 @@ function calcConstruction() {
 }
 
 function calcManufacturing() {
+  if (!gateCalc('manufacturing')) return;
   const s1_kg = v('mfg-diesel') * EF.diesel + v('mfg-hfo') * EF.hfo +
                 v('mfg-lpg') * EF.lpg + v('mfg-pco2') * 1000;
   const s2_kg = Math.max(0, v('mfg-kwh') - v('mfg-solar')) * EF.kplc;
@@ -757,304 +775,113 @@ function calcManufacturing() {
     flags, sources);
 }
 
-// ── PDF REPORT ────────────────────────────────────────
-// Strategy: open report in new tab then auto-print (Save as PDF).
-// This is 100% reliable on all browsers and GitHub Pages — no html2canvas blank-page issues.
+// ── PDF REPORT (html2pdf.js) ──────────────────────────
 async function generateAndDownloadPDF() {
   const c = S.lastCalc;
   if (!c) { toast('Run a calculation first!', 'error'); return; }
-
-  const gs      = calcNTZScore(c.total_t, c.sector);
-  const now     = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
-  const ref     = c.ref || ('NTZ-' + Date.now());
-  const dqsInfo = dqsLabel(c.dqs || 0);
-  const u       = calcUncertainty(c.total_t, c.sector);
-
-  const html = buildReportHTML(c, gs, now, ref, dqsInfo, u, true /* auto-print */);
-
-  const win = window.open('', '_blank');
-  if (!win) {
-    toast('Pop-up blocked — use the Print button instead', 'error');
+  // ISO 14064 PDF requires Grower plan or higher
+  if (!planAllows('iso_pdf')) {
+    toast('🔒 ISO 14064 PDF reports require Grower plan. Upgrading to Grower unlocks unlimited calculations, all 5 sectors, and full PDF reports.', 'error');
+    setTimeout(() => showSection('membership'), 1800);
     return;
   }
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
-  toast('📄 Report opened — choose "Save as PDF" in the print dialog', 'success');
-}
+  toast('📄 Building PDF — please wait...', 'info');
 
-// Print-only version (no auto-print trigger)
-function printReport() {
-  const c = S.lastCalc;
-  if (!c) { toast('Run a calculation first!', 'error'); return; }
-
-  const gs      = calcNTZScore(c.total_t, c.sector);
-  const now     = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
-  const ref     = c.ref || ('NTZ-' + Date.now());
+  const gs     = calcNTZScore(c.total_t, c.sector);
+  const now    = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
+  const ref    = c.ref || ('NTZ-' + Date.now());
   const dqsInfo = dqsLabel(c.dqs || 0);
-  const u       = calcUncertainty(c.total_t, c.sector);
+  const u      = calcUncertainty(c.total_t, c.sector);
 
-  const html = buildReportHTML(c, gs, now, ref, dqsInfo, u, false /* manual print */);
+  // ── Safe PDF container: visible but off-viewport ────
+  const wrap = document.createElement('div');
+  wrap.style.cssText = 'position:fixed;left:-9999px;top:0;width:760px;background:#fff;z-index:99999;pointer-events:none;overflow:visible';
+  const div = document.createElement('div');
+  div.style.cssText = 'font-family:Arial,sans-serif;color:#1A3A2A;padding:32px;width:760px;background:#fff;box-sizing:border-box';
 
-  const win = window.open('', '_blank');
-  if (!win) { toast('Pop-up blocked — please allow pop-ups for this site', 'error'); return; }
-  win.document.open();
-  win.document.write(html);
-  win.document.close();
+  div.innerHTML = `
+    <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
+      <tr>
+        <td style="background:#0D3320;padding:24px 28px;border-radius:10px">
+          <div style="font-size:20px;font-weight:800;color:#fff;margin-bottom:4px">Netzerra</div>
+          <div style="font-size:10px;color:#9DC9A8;letter-spacing:1px;text-transform:uppercase;margin-bottom:14px">Kenya Carbon Intelligence Platform</div>
+          <div style="font-size:18px;font-weight:700;color:#fff;margin-bottom:8px">Greenhouse Gas Emission Report</div>
+          <div style="font-size:11px;color:#9DC9A8">${S.user.name} &nbsp;|&nbsp; ${S.user.org} &nbsp;|&nbsp; ${now} &nbsp;|&nbsp; ${ref}</div>
+        </td>
+      </tr>
+    </table>
+    <table width="100%" cellpadding="8" cellspacing="4" style="margin-bottom:16px">
+      <tr>
+        ${[
+          ['Total Emissions', c.total_t.toFixed(2)+' tCO2e/yr', '#1B5E20'],
+          ['NTZ Score', gs+'/100', '#1B5E20'],
+          ['Grade', gradeFromScore(gs).split('·')[0].trim(), '#1B5E20'],
+          ['Data Quality', `${c.dqs||0}/100 - ${dqsInfo.grade}`, c.dqs>=70?'#1B5E20':'#B71C1C'],
+        ].map(([l,val,col])=>`<td style="background:#F1F8E9;border:1px solid #C5E1A5;border-radius:8px;padding:10px;text-align:center;width:25%"><div style="font-size:13px;font-weight:700;color:${col}">${val}</div><div style="font-size:9px;text-transform:uppercase;color:#558B2F;margin-top:3px">${l}</div></td>`).join('')}
+      </tr>
+    </table>
+    ${c.flags && c.flags.length ? `<div style="background:#FFF3E0;border-left:4px solid #FF6D00;border-radius:0 6px 6px 0;padding:10px 14px;margin-bottom:12px"><div style="font-weight:700;color:#E65100;font-size:12px;margin-bottom:4px">Plausibility Flags (${c.flags.length}) - Auditor Review Required</div>${c.flags.map(f=>`<div style="font-size:11px;color:#BF360C;padding:2px 0">- ${f}</div>`).join('')}</div>` : `<div style="background:#E8F5E9;border:1px solid #A5D6A7;border-radius:6px;padding:8px 14px;margin-bottom:12px;font-size:11px;color:#2E7D32">No plausibility flags - all values within expected benchmark ranges.</div>`}
+    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Project Summary</div>
+    <p style="font-size:11px;margin:4px 0"><strong>Project:</strong> ${c.name} &nbsp;|&nbsp; <strong>Sector:</strong> ${c.sector} &nbsp;|&nbsp; <strong>Date:</strong> ${c.date}</p>
+    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Methodology &amp; GWP Version</div>
+    <p style="font-size:11px;margin:4px 0">IPCC 2006 Guidelines + <strong>${ACTIVE_GWP} GWP100</strong>: CH4=${EF.gwpCH4}, N2O=${EF.gwpN2O}, HFC-134a=${EF.gwpHFC134a.toLocaleString()}, R-404A=${EF.gwpR404A.toLocaleString()}. Kenya grid: <strong>0.3174 kgCO₂/kWh (KNCR)</strong> (IEA 2024, ~90% renewable). GWP source: ${ACTIVE_GWP==='AR6'?'GHG Protocol Aug 2024 / IPCC AR6 WG1 Ch.7':'IPCC AR5 2013 / UNFCCC Paris Agreement'}. Config: v${KNCR_CONFIG.version}.</p>
+    <div style="background:#E3F2FD;border:1px solid #BBDEFB;border-radius:6px;padding:8px 12px;margin:8px 0;font-size:11px;color:#1565C0"><strong>IPCC Tier 1 Uncertainty (+-${u.pct}%):</strong> ${u.low} - ${u.high} tCO2e/yr &nbsp;|&nbsp; ${u.basis}</div>
+    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Scope Breakdown</div>
+    <table width="100%" style="border-collapse:collapse;font-size:11px">
+      <tr style="background:#1B5E20;color:#fff"><th style="padding:6px 8px;text-align:left">Scope</th><th style="padding:6px 8px;text-align:right">tCO2e/yr</th><th style="padding:6px 8px;text-align:right">%</th><th style="padding:6px 8px;text-align:left">Source</th></tr>
+      <tr style="border-bottom:1px solid #E8F5E9"><td style="padding:5px 8px">Scope 1 - Direct combustion</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.s1_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">${c.total_t>0?(c.s1_t/c.total_t*100).toFixed(1):0}%</td><td style="padding:5px 8px;font-size:10px;color:#607D8B">IPCC 2006 Vol.2 / DEFRA 2023</td></tr>
+      <tr style="border-bottom:1px solid #E8F5E9;background:#F9FBF7"><td style="padding:5px 8px">Scope 2 - Purchased energy</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.s2_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">${c.total_t>0?(c.s2_t/c.total_t*100).toFixed(1):0}%</td><td style="padding:5px 8px;font-size:10px;color:#607D8B">IEA 2024 - 0.3174 kgCO₂/kWh (KNCR)</td></tr>
+      <tr style="border-bottom:1px solid #E8F5E9"><td style="padding:5px 8px">Scope 3 - Embodied/upstream</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.s3_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">${c.total_t>0?(c.s3_t/c.total_t*100).toFixed(1):0}%</td><td style="padding:5px 8px;font-size:10px;color:#607D8B">Bath ICE v3.0 / World Steel 2023</td></tr>
+      <tr style="background:#E8F5E9;font-weight:700"><td style="padding:5px 8px">TOTAL</td><td style="padding:5px 8px;text-align:right;font-family:monospace">${c.total_t.toFixed(3)}</td><td style="padding:5px 8px;text-align:right">100%</td><td></td></tr>
+    </table>
+    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Data Audit Trail</div>
+    <div style="background:#F3F9FF;border:1px solid #BBDEFB;border-radius:6px;padding:10px 12px;font-size:11px">
+      <div style="font-weight:700;color:#1565C0;margin-bottom:4px">${dqsInfo.icon} Data Quality Score: ${c.dqs||0}/100 - ${c.dqsGrade||'Not declared'}</div>
+      ${c.sources&&c.sources.filter(Boolean).length ? `Sources: ${[...new Set(c.sources.filter(Boolean))].join(', ')}` : 'No data sources declared - attach supporting documents before formal submission.'}
+    </div>
+    <div style="font-size:13px;font-weight:700;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:5px;margin:14px 0 8px">Recommended Offsets</div>
+    <table width="100%" style="border-collapse:collapse;font-size:11px">
+      <tr style="background:#F1F8E9"><th style="padding:5px 8px;text-align:left">Strategy</th><th style="padding:5px 8px;text-align:left">Requirement</th><th style="padding:5px 8px;text-align:left">Source</th></tr>
+      <tr style="border-bottom:1px solid #E8F5E9"><td style="padding:5px 8px">Bamboo plantation</td><td style="padding:5px 8px">${(c.total_t/17).toFixed(2)} ha @ 17 tCO2e/ha/yr</td><td style="padding:5px 8px;color:#607D8B">Yuen et al. 2017</td></tr>
+      <tr style="border-bottom:1px solid #E8F5E9;background:#F9FBF7"><td style="padding:5px 8px">Casuarina trees</td><td style="padding:5px 8px">${(c.total_t/8).toFixed(2)} ha @ 8 tCO2e/ha/yr</td><td style="padding:5px 8px;color:#607D8B">KEFRI 2019</td></tr>
+      <tr><td style="padding:5px 8px">Biogas digesters</td><td style="padding:5px 8px">${Math.ceil(c.total_t/3.5)} units @ 3.5 tCO2e/unit/yr</td><td style="padding:5px 8px;color:#607D8B">SNV Kenya 2021</td></tr>
+    </table>
+    <div style="margin-top:16px;padding:10px 14px;background:#E3F2FD;border-left:4px solid #1565C0;border-radius:0 6px 6px 0;font-size:10px;color:#0D47A1">
+      Generated by Netzerra MVP v1.0 - Kenya Carbon Intelligence Platform. ${ACTIVE_GWP} GWP (GHG Protocol Aug 2024). ISO 14064-1:2018 aligned. Disclaimer: This report is generated from user-inputted data. Netzerra does not independently verify input data. Results should be reviewed by a qualified carbon auditor before formal regulatory submission.
+    </div>
+    <div style="margin-top:12px;padding-top:10px;border-top:1px solid #E8F5E9;display:flex;justify-content:space-between;font-size:9px;color:#90A4AE">
+      <span>Netzerra - shukriali411@gmail.com - +254 705 366 807 - netzerrakenya.com</span>
+      <span>${ref} - ${now}</span>
+    </div>
+    <div style="margin-top:8px;font-size:9px;color:#BDBDBD;border-top:1px solid #F5F5F5;padding-top:6px">
+      MVP DISCLAIMER: Netzerra is a Minimum Viable Product in active development. County government data shown is illustrative. No formal partnerships with county governments have been established. Emission factors are sourced from published scientific literature but users are responsible for verification. This tool does not constitute legal or regulatory advice.
+    </div>`;
+
+  wrap.appendChild(div);
+  document.body.appendChild(wrap);
+
+  // Small delay to ensure DOM render
+  await new Promise(r => setTimeout(r, 200));
+
+  try {
+    await html2pdf().set({
+      margin:        [0.4, 0.4, 0.4, 0.4],
+      filename:      `Netzerra_${c.name.replace(/[^a-z0-9]/gi,'-')}_${c.date}.pdf`,
+      image:         { type:'jpeg', quality:0.96 },
+      html2canvas:   { scale:2, useCORS:true, logging:false, allowTaint:true,
+                       windowWidth:760, scrollX:0, scrollY:0,
+                       backgroundColor:'#ffffff', removeContainer:false },
+      jsPDF:         { unit:'in', format:'a4', orientation:'portrait' },
+      pagebreak:     { mode:['avoid-all','css','legacy'] },
+    }).from(div).save();
+    toast('✅ PDF downloaded successfully!', 'success');
+  } catch(err) {
+    console.error('PDF error:', err);
+    toast('PDF failed — try again or use browser Print → Save as PDF', 'error');
+  } finally {
+    document.body.removeChild(wrap);
+  }
 }
-
-// ── SHARED REPORT HTML BUILDER ────────────────────────
-function buildReportHTML(c, gs, now, ref, dqsInfo, u, autoPrint) {
-  const grade = gradeFromScore(gs).split('·')[0].trim();
-  const flagsHTML = c.flags && c.flags.length
-    ? `<div class="box-warn">
-         <div class="box-title">⚠ Plausibility Flags (${c.flags.length}) — Auditor Review Required</div>
-         ${c.flags.map(f => `<div class="flag-row">• ${f}</div>`).join('')}
-       </div>`
-    : `<div class="box-ok">✓ No plausibility flags — all values within expected benchmark ranges.</div>`;
-
-  const sourcesHTML = c.sources && c.sources.filter(Boolean).length
-    ? `Sources declared: <strong>${[...new Set(c.sources.filter(Boolean))].join(', ')}</strong>`
-    : `<span style="color:#B71C1C">No data sources declared — attach supporting documents before formal submission.</span>`;
-
-  return `<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Netzerra Report — ${c.name}</title>
-<style>
-  * { margin:0; padding:0; box-sizing:border-box; }
-  body {
-    font-family: Arial, Helvetica, sans-serif;
-    font-size: 11px;
-    color: #1A3A2A;
-    background: #fff;
-    padding: 28px 32px;
-    max-width: 780px;
-    margin: 0 auto;
-    line-height: 1.5;
-  }
-
-  /* Header */
-  .hdr { background:#0D3320; color:#fff; padding:20px 24px; border-radius:8px; margin-bottom:16px; }
-  .hdr-brand { font-size:20px; font-weight:800; margin-bottom:2px; }
-  .hdr-sub   { font-size:8px; letter-spacing:1.5px; text-transform:uppercase; color:#9DC9A8; margin-bottom:10px; }
-  .hdr-title { font-size:16px; font-weight:700; margin-bottom:5px; }
-  .hdr-meta  { font-size:10px; color:#9DC9A8; }
-
-  /* KPI row */
-  .kpi-row { display:flex; gap:8px; margin-bottom:12px; }
-  .kpi {
-    flex:1; border-radius:5px; padding:10px 8px; text-align:center;
-    border:1px solid #C5E1A5; background:#F1F8E9;
-  }
-  .kpi-bad { border-color:#FFCDD2; background:#FFEBEE; }
-  .kpi-val { font-size:15px; font-weight:700; color:#1B5E20; }
-  .kpi-bad .kpi-val { color:#B71C1C; }
-  .kpi-lbl { font-size:7.5px; text-transform:uppercase; color:#558B2F; margin-top:2px; }
-  .kpi-bad .kpi-lbl { color:#C62828; }
-
-  /* Section headings */
-  .sec-h { font-size:12px; font-weight:700; color:#1B5E20; border-bottom:2px solid #E8F5E9; padding-bottom:3px; margin:12px 0 7px; }
-
-  /* Boxes */
-  .box-ok   { background:#E8F5E9; border:1px solid #A5D6A7; border-radius:5px; padding:7px 12px; margin-bottom:10px; font-size:10px; color:#2E7D32; }
-  .box-warn { background:#FFF3E0; border-left:4px solid #FF6D00; padding:9px 13px; margin-bottom:10px; border-radius:0 5px 5px 0; }
-  .box-title { font-weight:700; color:#E65100; font-size:11px; margin-bottom:4px; }
-  .flag-row  { font-size:9.5px; color:#BF360C; padding:1px 0; }
-  .box-blue  { background:#E3F2FD; border:1px solid #BBDEFB; border-radius:4px; padding:7px 11px; margin-bottom:10px; font-size:10px; color:#1565C0; }
-  .box-dq    { background:#F3F9FF; border:1px solid #BBDEFB; border-radius:4px; padding:8px 11px; margin-bottom:10px; font-size:10px; }
-  .box-dq-t  { font-weight:700; color:#1565C0; margin-bottom:3px; }
-  .box-dq-s  { font-size:8.5px; color:#607D8B; margin-top:3px; }
-  .box-disc  { background:#E3F2FD; border-left:4px solid #1565C0; border-radius:0 5px 5px 0; padding:9px 13px; font-size:9px; color:#0D47A1; margin-bottom:8px; }
-  .box-mvp   { font-size:7.5px; color:#BDBDBD; margin-top:5px; padding-top:4px; border-top:1px solid #F5F5F5; }
-
-  /* Tables */
-  table { width:100%; border-collapse:collapse; }
-  .tbl-scope th { background:#1B5E20; color:#fff; padding:5px 8px; text-align:left; font-weight:600; }
-  .tbl-scope td { padding:5px 8px; border-bottom:1px solid #E8F5E9; color:#333; }
-  .tbl-scope .alt { background:#F9FBF7; }
-  .tbl-scope .tot { background:#E8F5E9; font-weight:700; color:#1B5E20; }
-  .tbl-scope .src { font-size:9px; color:#607D8B; }
-  .tbl-off th { background:#F1F8E9; color:#1B5E20; padding:5px 8px; text-align:left; font-weight:600; border-bottom:1px solid #C5E1A5; }
-  .tbl-off td { padding:5px 8px; border-bottom:1px solid #E8F5E9; color:#333; }
-  .tbl-off .alt { background:#F9FBF7; }
-  .tbl-sum td { padding:3px 0; font-size:10.5px; }
-  .tbl-sum .lbl { color:#607D8B; font-weight:600; width:20%; }
-  .foot { border-top:1px solid #E8F5E9; padding-top:6px; margin-top:8px; display:flex; justify-content:space-between; font-size:8px; color:#90A4AE; }
-
-  @media print {
-    body { padding:16px 20px; }
-    @page { margin:1.2cm; size:A4; }
-    .no-print { display:none !important; }
-  }
-</style>
-</head>
-<body>
-
-<!-- PRINT BUTTON — hidden when printing -->
-<div class="no-print" style="text-align:right;margin-bottom:14px">
-  <button onclick="window.print()"
-    style="background:#1B5E20;color:#fff;border:none;padding:9px 22px;border-radius:5px;cursor:pointer;font-size:12px;font-weight:700">
-    ⬇ Save as PDF / Print
-  </button>
-  <span style="font-size:10px;color:#607D8B;margin-left:10px">In print dialog → Destination → Save as PDF</span>
-</div>
-
-<!-- HEADER -->
-<div class="hdr">
-  <div class="hdr-brand">Netzerra</div>
-  <div class="hdr-sub">Kenya Carbon Intelligence Platform &middot; MVP v1.0</div>
-  <div class="hdr-title">Greenhouse Gas Emission Report</div>
-  <div class="hdr-meta">${S.user.name} &middot; ${S.user.org} &middot; ${now} &middot; Ref: ${ref}</div>
-</div>
-
-<!-- KPI ROW -->
-<div class="kpi-row">
-  <div class="kpi">
-    <div class="kpi-val">${c.total_t.toFixed(2)}</div>
-    <div class="kpi-lbl">tCO2e / year</div>
-  </div>
-  <div class="kpi">
-    <div class="kpi-val">${gs}/100</div>
-    <div class="kpi-lbl">NTZ Score</div>
-  </div>
-  <div class="kpi">
-    <div class="kpi-val">${grade}</div>
-    <div class="kpi-lbl">Grade</div>
-  </div>
-  <div class="kpi ${c.dqs>=70 ? '' : 'kpi-bad'}">
-    <div class="kpi-val">${c.dqs||0}/100</div>
-    <div class="kpi-lbl">Data Quality</div>
-  </div>
-</div>
-
-${flagsHTML}
-
-<!-- PROJECT SUMMARY -->
-<div class="sec-h">Project Summary</div>
-<table class="tbl-sum">
-  <tr>
-    <td class="lbl">Project</td><td>${c.name}</td>
-    <td class="lbl">Sector</td><td>${c.sector}</td>
-    <td class="lbl">Date</td><td>${c.date}</td>
-  </tr>
-</table>
-
-<!-- METHODOLOGY -->
-<div class="sec-h">Methodology &amp; GWP Version</div>
-<p style="font-size:10.5px;color:#333;line-height:1.7;margin-bottom:6px">
-  IPCC 2006 Guidelines + <strong>${ACTIVE_GWP} GWP100</strong>:
-  CH4=${EF.gwpCH4}, N2O=${EF.gwpN2O},
-  HFC-134a=${EF.gwpHFC134a.toLocaleString()}, R-404A=${EF.gwpR404A.toLocaleString()}.
-  Kenya grid: <strong>0.070 kgCO2e/kWh</strong> (IEA 2024, ~90% renewable).
-  GWP source: ${ACTIVE_GWP==='AR6'?'GHG Protocol Aug 2024 / IPCC AR6 WG1 Ch.7':'IPCC AR5 2013 / UNFCCC Paris Agreement'}.
-  Regulatory config: v${KNCR_CONFIG.version}.
-</p>
-<div class="box-blue">
-  <strong>IPCC Tier 1 Uncertainty (±${u.pct}%):</strong>
-  ${u.low} to ${u.high} tCO2e/yr &nbsp;|&nbsp; ${u.basis}
-</div>
-
-<!-- SCOPE BREAKDOWN -->
-<div class="sec-h">Scope Breakdown</div>
-<table class="tbl-scope" style="margin-bottom:10px">
-  <thead>
-    <tr>
-      <th style="width:38%">Scope</th>
-      <th style="text-align:right;width:13%">tCO2e/yr</th>
-      <th style="text-align:right;width:8%">%</th>
-      <th>Primary Source</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Scope 1 — Direct combustion</td>
-      <td style="text-align:right">${c.s1_t.toFixed(3)}</td>
-      <td style="text-align:right">${c.total_t>0?(c.s1_t/c.total_t*100).toFixed(1):0}%</td>
-      <td class="src">IPCC 2006 Vol.2 / DEFRA 2023</td>
-    </tr>
-    <tr class="alt">
-      <td>Scope 2 — Purchased energy</td>
-      <td style="text-align:right">${c.s2_t.toFixed(3)}</td>
-      <td style="text-align:right">${c.total_t>0?(c.s2_t/c.total_t*100).toFixed(1):0}%</td>
-      <td class="src">IEA 2024 — 0.070 kgCO2e/kWh</td>
-    </tr>
-    <tr>
-      <td>Scope 3 — Embodied / upstream</td>
-      <td style="text-align:right">${c.s3_t.toFixed(3)}</td>
-      <td style="text-align:right">${c.total_t>0?(c.s3_t/c.total_t*100).toFixed(1):0}%</td>
-      <td class="src">Bath ICE v3.0 / World Steel 2023</td>
-    </tr>
-    <tr class="tot">
-      <td><strong>TOTAL</strong></td>
-      <td style="text-align:right"><strong>${c.total_t.toFixed(3)}</strong></td>
-      <td style="text-align:right"><strong>100%</strong></td>
-      <td></td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- DATA AUDIT TRAIL -->
-<div class="sec-h">Data Audit Trail</div>
-<div class="box-dq">
-  <div class="box-dq-t">${dqsInfo.icon} Data Quality Score: ${c.dqs||0}/100 — ${c.dqsGrade||'Not declared'}</div>
-  <div>${sourcesHTML}</div>
-  <div class="box-dq-s">DQS 90+ = Audit-Ready &nbsp;|&nbsp; DQS 70–89 = Verified &nbsp;|&nbsp; Below 70 = Supporting docs required</div>
-</div>
-
-<!-- RECOMMENDED OFFSETS -->
-<div class="sec-h">Recommended Offset Strategies</div>
-<table class="tbl-off" style="margin-bottom:12px">
-  <thead>
-    <tr>
-      <th style="width:30%">Strategy</th>
-      <th style="width:40%">Requirement to Neutralise</th>
-      <th>Source</th>
-    </tr>
-  </thead>
-  <tbody>
-    <tr>
-      <td>Bamboo plantation</td>
-      <td>${(c.total_t/17).toFixed(2)} ha at 17 tCO2e/ha/yr</td>
-      <td>Yuen et al. 2017</td>
-    </tr>
-    <tr class="alt">
-      <td>Casuarina equisetifolia</td>
-      <td>${(c.total_t/8).toFixed(2)} ha at 8 tCO2e/ha/yr</td>
-      <td>KEFRI 2019</td>
-    </tr>
-    <tr>
-      <td>Biogas digesters</td>
-      <td>${Math.ceil(c.total_t/3.5)} units at 3.5 tCO2e/unit/yr</td>
-      <td>SNV Kenya 2021</td>
-    </tr>
-  </tbody>
-</table>
-
-<!-- DISCLAIMER -->
-<div class="box-disc">
-  Generated by Netzerra MVP v1.0 — Kenya Carbon Intelligence Platform.
-  ${ACTIVE_GWP} GWP values (GHG Protocol Aug 2024). ISO 14064-1:2018 aligned.
-  This report is generated from user-inputted data and should be reviewed by a qualified
-  carbon auditor before formal submission to NEMA, KNCR, or any VCM verification body.
-</div>
-
-<!-- FOOTER -->
-<div class="foot">
-  <span>Netzerra &middot; shukriali411@gmail.com &middot; +254 705 366 807 &middot; netzerrakenya.com</span>
-  <span>${ref} &middot; ${now}</span>
-</div>
-<div class="box-mvp">
-  MVP DISCLAIMER: County data shown is illustrative. No formal partnerships established with county governments, NEMA, or KNCR.
-  This tool does not constitute legal or regulatory advice. © 2026 Netzerra · Shukri Ali.
-</div>
-
-${autoPrint ? '<script>window.onload = function(){ window.print(); }<\/script>' : ''}
-</body>
-</html>`;
-}
-
 // ── COUNTY DASHBOARD ──────────────────────────────────
 const COUNTY_DATA = {
   'Turkana':  { projects:[{n:'Turkana Solar Borehole Cluster',s:'borehole',c:420,step:2,st:'PDD Submitted'},{n:'Turkana Rangeland Carbon',s:'livestock',c:850,step:1,st:'Draft'}], revenue:23800000, community:5950000, floca:'partial', wards:['Kanamkemer','Turkana West','Loima','Turkana East','Kibish'] },
@@ -1069,6 +896,10 @@ const COUNTY_DATA = {
 
 function loadCountyData() {
   const county = document.getElementById('county-select').value;
+  if (county && !gateFeature('county', 'County Dashboard')) {
+    document.getElementById('county-select').value = '';
+    return;
+  }
   document.getElementById('county-placeholder').style.display = county ? 'none' : 'block';
   document.getElementById('county-kpis').style.display    = county ? 'grid' : 'none';
   document.getElementById('county-content').style.display = county ? 'grid' : 'none';
@@ -1160,10 +991,327 @@ function loadCountyData() {
 }
 
 function generateFLoCAReport() {
-  const county = document.getElementById('county-select').value || 'County';
-  toast('📄 Generating FLLoCA report for ' + county + '...', 'info');
-  setTimeout(() => toast('✅ FLLoCA report ready! Formatted for World Bank submission.', 'success'), 1500);
+  const county = document.getElementById('county-select').value;
+  if (!county) { toast('Select a county first', 'error'); return; }
+  const d = COUNTY_DATA[county] || { projects:[], revenue:5000000, community:1250000, floca:'partial', wards:[] };
+  const now = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
+  const ref = 'NTZ-FLLoCA-' + county.toUpperCase().replace(/\s+/g,'-') + '-' + new Date().toISOString().split('T')[0];
+  const fMap = { compliant:'Compliant', partial:'Partial Compliance', missing:'Non-Compliant' };
+  const fCol = { compliant:'#1B5E20', partial:'#E65100', missing:'#B71C1C' };
+  const SICO = { borehole:'💧', livestock:'🐄', transport:'🚌', forestry:'🌳', solar:'☀️', biogas:'🔥', construct:'🏗️', manufact:'🏭' };
+  const SMAP = { 1:'Draft', 2:'PDD Submitted', 3:'Validated', 4:'DNA Review', 5:'Registered', 6:'Credits Live' };
+
+  const checklist = [
+    ['County Climate Action Plan (CCAP)', d.floca==='compliant'?'✅ Submitted 2025':'🟡 Pending submission', d.floca==='compliant'],
+    ['Climate Expenditure Budget (≥1.5% of county allocation)', d.floca==='compliant'?'✅ 2.3% allocated — KES '+Math.round(d.revenue*0.023).toLocaleString():'🟡 1.2% allocated — below 1.5% threshold', d.floca==='compliant'],
+    ['County Climate Change Fund (CCCF) operational', d.floca!=='missing'?'✅ Operational':'🔴 Not established — required under Climate Change Act 2016', d.floca!=='missing'],
+    ['Performance Data Report Q1 2026', d.floca==='compliant'?'✅ Submitted to World Bank portal':'🟡 Pending — deadline Q2 2026', d.floca==='compliant'],
+    ['Community Benefit Records (Reg. 23E)', d.floca==='compliant'?'✅ Documented — KES '+d.community.toLocaleString()+' disbursed':'🟡 Partial — CDA records incomplete', d.floca==='compliant'],
+    ['KNCR Project Registration', d.projects.filter(p=>p.step>=3).length+' of '+d.projects.length+' projects at Step 3+', d.projects.every(p=>p.step>=3)],
+    ['NEMA Annual Emissions Report', d.floca==='compliant'?'✅ Filed — ISO 14064 aligned':'📋 Due — use Netzerra to generate', d.floca==='compliant'],
+    ['Grievance Redress Mechanism', d.floca!=='missing'?'✅ Active — CDA Committee established':'🔴 Not established', d.floca!=='missing'],
+  ];
+
+  const html = `<!DOCTYPE html>
+<html lang="en"><head><meta charset="UTF-8">
+<title>FLLoCA Compliance Report — ${county} County</title>
+<style>
+*{box-sizing:border-box}
+body{font-family:Arial,sans-serif;max-width:820px;margin:0 auto;padding:2rem;color:#1A3A2A;background:#fff;font-size:13px}
+h1{font-size:1.5rem;color:#0D3320;margin-bottom:.3rem}
+h2{font-size:.95rem;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:.35rem;margin:1.4rem 0 .75rem;text-transform:uppercase;letter-spacing:.04em}
+.hdr{background:linear-gradient(135deg,#0D3320 0%,#1A4A2E 100%);color:#fff;padding:1.6rem 2rem;border-radius:10px;margin-bottom:1.5rem}
+.hdr-logos{display:flex;gap:1rem;margin-bottom:.8rem;font-size:.7rem;color:rgba(255,255,255,.55);letter-spacing:.06em}
+.tag{background:rgba(76,175,80,.25);border:1px solid rgba(76,175,80,.45);color:#A5D6A7;padding:.2rem .7rem;border-radius:12px;font-size:.62rem;font-weight:700;text-transform:uppercase;letter-spacing:.07em;display:inline-block;margin-bottom:.6rem}
+.status-badge{display:inline-block;padding:.3rem .9rem;border-radius:20px;font-weight:700;font-size:.85rem;color:#fff;background:${fCol[d.floca]||'#455A64'}}
+table{width:100%;border-collapse:collapse;margin:.75rem 0;font-size:.82rem}
+th{background:#1B5E20;color:#fff;padding:.5rem .7rem;text-align:left;font-weight:600}
+td{padding:.45rem .7rem;border-bottom:1px solid #E8F5E9;vertical-align:top}
+tr:nth-child(even) td{background:#F9FBF7}
+tr.tot td{background:#E8F5E9;font-weight:700;color:#1B5E20}
+.pass{color:#1B5E20;font-weight:600}
+.fail{color:#B71C1C}
+.warn{color:#E65100}
+.kpi-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:.75rem;margin:.75rem 0}
+.kpi{background:#F1F8E9;border:1px solid #C5E1A5;border-radius:8px;padding:.7rem;text-align:center}
+.kpi-val{font-size:1.2rem;font-weight:800;color:#1B5E20}
+.kpi-lbl{font-size:.65rem;color:#558B2F;text-transform:uppercase;margin-top:3px}
+.info{background:#E3F2FD;border-left:4px solid #1565C0;padding:.65rem .9rem;border-radius:0 6px 6px 0;font-size:.8rem;color:#0D47A1;margin:.75rem 0}
+.warn-box{background:#FFF8E1;border-left:4px solid #F9A825;padding:.65rem .9rem;border-radius:0 6px 6px 0;font-size:.8rem;color:#795548;margin:.75rem 0}
+.foot{margin-top:1.5rem;padding-top:.75rem;border-top:1px solid #E8F5E9;display:flex;justify-content:space-between;font-size:.68rem;color:#90A4AE}
+.sign-grid{display:grid;grid-template-columns:1fr 1fr;gap:2rem;margin-top:1.5rem}
+.sign-block{border-top:2px solid #E8F5E9;padding-top:.55rem}
+.sign-line{height:44px}
+.sign-lbl{font-size:.65rem;color:#90A4AE;text-transform:uppercase;letter-spacing:.05em}
+@media print{button{display:none!important}body{padding:.5rem}}
+</style></head><body>
+
+<div class="hdr">
+  <div class="hdr-logos">🌍 FLLoCA PROGRAMME &nbsp;|&nbsp; WORLD BANK KENYA &nbsp;|&nbsp; NATIONAL TREASURY &nbsp;|&nbsp; KNCR 2026</div>
+  <div class="tag">Climate Finance Compliance Report</div>
+  <h1 style="color:#fff;margin-bottom:.3rem">${county} County Government</h1>
+  <div style="color:rgba(255,255,255,.65);font-size:.82rem;margin-bottom:.85rem">Facility for Low Carbon & Climate Resilient Development (FLLoCA) — Performance Report</div>
+  <div style="display:flex;gap:1.5rem;flex-wrap:wrap;font-size:.75rem;color:rgba(255,255,255,.55)">
+    <span>Report Date: ${now}</span>
+    <span>Reference: ${ref}</span>
+    <span>Reporting Period: FY 2025/26</span>
+    <span>Overall Status: <span class="status-badge">${fMap[d.floca]||'Unknown'}</span></span>
+  </div>
+</div>
+
+<h2>Executive Summary</h2>
+<div class="kpi-grid">
+  <div class="kpi"><div class="kpi-val">KES ${(d.revenue/1e6).toFixed(1)}M</div><div class="kpi-lbl">Carbon Revenue</div></div>
+  <div class="kpi"><div class="kpi-val">KES ${(d.community/1e6).toFixed(2)}M</div><div class="kpi-lbl">Community Fund</div></div>
+  <div class="kpi"><div class="kpi-val">${d.projects.length}</div><div class="kpi-lbl">KNCR Projects</div></div>
+  <div class="kpi"><div class="kpi-val">${d.projects.filter(p=>p.step>=3).length}/${d.projects.length}</div><div class="kpi-lbl">Registered</div></div>
+</div>
+<div class="info">
+  <strong>FLLoCA Programme:</strong> The Facility for Low Carbon & Climate Resilient Development supports all 47 county governments to build climate MRV capacity, access climate finance, and meet obligations under Kenya's Climate Change Act 2016 (as amended 2023). This report is generated by Netzerra and formatted for World Bank Kenya portal submission.
+</div>
+
+<h2>Compliance Checklist</h2>
+<table>
+  <tr><th style="width:55%">Requirement</th><th>Status</th></tr>
+  ${checklist.map(([label, status, pass]) =>
+    `<tr><td>${label}</td><td class="${pass?'pass':'fail'}">${status}</td></tr>`
+  ).join('')}
+</table>
+
+<h2>KNCR Project Pipeline</h2>
+${d.projects.length ? `
+<table>
+  <tr><th>Project Name</th><th>Sector</th><th>Est. Credits (tCO₂e/yr)</th><th>Revenue Potential</th><th>Status</th></tr>
+  ${d.projects.map(p => `
+  <tr>
+    <td>${SICO[p.s]||'🌿'} ${p.n}</td>
+    <td style="text-transform:capitalize">${p.s}</td>
+    <td>${p.c.toLocaleString()}</td>
+    <td>KES ${(p.c*12*130).toLocaleString()}/yr</td>
+    <td class="${p.step>=3?'pass':p.step>=2?'warn':'fail'}">${SMAP[p.step]||'Draft'}</td>
+  </tr>`).join('')}
+  <tr class="tot">
+    <td colspan="2"><strong>TOTAL</strong></td>
+    <td><strong>${d.projects.reduce((a,p)=>a+p.c,0).toLocaleString()} tCO₂e/yr</strong></td>
+    <td><strong>KES ${(d.projects.reduce((a,p)=>a+p.c,0)*12*130).toLocaleString()}/yr</strong></td>
+    <td></td>
+  </tr>
+</table>` : '<p>No KNCR projects registered for this county. Use the Netzerra KNCR Gateway to register projects.</p>'}
+
+<h2>Community Benefit Tracking (Regulation 23E)</h2>
+<table>
+  <tr><th>Item</th><th>Amount</th><th>Notes</th></tr>
+  <tr><td>Total Carbon Revenue (FY 2025/26)</td><td>KES ${d.revenue.toLocaleString()}</td><td>From registered KNCR projects</td></tr>
+  <tr><td>Mandatory Community Contribution (25–40%)</td><td>KES ${d.community.toLocaleString()}</td><td>Reg. 23E — disbursed via CDA Committee</td></tr>
+  <tr><td>CDA Fourth Schedule Compliance</td><td class="${d.floca==='compliant'?'pass':'fail'}">${d.floca==='compliant'?'✅ Compliant':'📋 CDA documentation required'}</td><td>Fourth Schedule format per Carbon Markets Regs 2024</td></tr>
+  <tr class="tot"><td>Community Benefit %</td><td>${(d.community/d.revenue*100).toFixed(1)}% of revenue</td><td>${d.community/d.revenue>=0.25?'✅ Meets minimum 25% threshold':'🔴 Below 25% minimum'}</td></tr>
+</table>
+
+<h2>Legal Framework</h2>
+<table>
+  <tr><th>Instrument</th><th>Relevance</th><th>Status</th></tr>
+  <tr><td>Climate Change Act 2016 (Amendment 2023)</td><td>County climate reporting mandate</td><td class="pass">In force</td></tr>
+  <tr><td>Carbon Markets Regulations 2024 (LN 84)</td><td>KNCR project registration, CDA, penalties</td><td class="pass">Gazetted 17 May 2024</td></tr>
+  <tr><td>KNCR Platform (kncr.go.ke)</td><td>Official registry — all projects must register</td><td class="pass">Live since 17 Feb 2026</td></tr>
+  <tr><td>FLLoCA Reporting Framework</td><td>World Bank quarterly performance reporting</td><td class="${d.floca==='compliant'?'pass':'warn'}">${d.floca==='compliant'?'Compliant':'Partial'}</td></tr>
+  <tr><td>Reg. 37 Penalty — false data</td><td>KES 500M or 10 years — all project directors</td><td class="fail">Active enforcement</td></tr>
+</table>
+<div class="warn-box">
+  ⚠️ <strong>Reg. 37 Notice:</strong> All county officers signing KNCR submissions are personally liable for accuracy of emissions data. Penalties up to KES 500,000,000 or 10 years imprisonment for material misstatement. Use Netzerra's IPCC AR6-locked calculators to eliminate this risk.
+</div>
+
+<h2>Recommendations</h2>
+<table>
+  <tr><th>#</th><th>Action</th><th>Priority</th><th>Timeline</th></tr>
+  ${[
+    d.floca==='missing'?['1','Establish County Climate Change Fund (CCCF) under Climate Change Act 2016','🔴 Critical','Immediate']:null,
+    d.projects.filter(p=>p.step<3).length>0?['2','Advance '+d.projects.filter(p=>p.step<3).length+' KNCR project(s) past Step 3 (Validation)','🟠 High','Q3 2026']:null,
+    ['3','Generate ISO 14064 Annual Emissions Report via Netzerra for NEMA submission','🟠 High','Q2 2026'],
+    ['4','Submit FLLoCA Performance Data Report to World Bank Kenya portal','🟡 Medium','Q2 2026'],
+    d.floca!=='compliant'?['5','Complete CDA Fourth Schedule documentation for all land-based projects','🟡 Medium','Q3 2026']:null,
+    ['6','Enrol county environment staff in Netzerra platform for ongoing MRV','🟢 Recommended','Ongoing'],
+  ].filter(Boolean).map(([n,action,pri,time])=>`<tr><td>${n}</td><td>${action}</td><td>${pri}</td><td>${time}</td></tr>`).join('')}
+</table>
+
+<h2>Sign-off</h2>
+<p style="font-size:.8rem;color:#555">This report was generated by Netzerra (netzerrakenya.com) and is formatted for FLLoCA World Bank Kenya portal submission. All figures are sourced from Netzerra platform data for ${county} County.</p>
+<div class="sign-grid">
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-lbl">County Executive Committee Member — Environment</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-lbl">County Environment Officer</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-lbl">FLLoCA County Coordinator</div></div>
+  <div class="sign-block"><div class="sign-line"></div><div class="sign-lbl">Date</div></div>
+</div>
+
+<div class="foot">
+  <span>🌿 Netzerra · shukriali411@gmail.com · +254 705 366 807 · netzerrakenya.com</span>
+  <span>${ref} · ${now} · Open in browser → Print → Save as PDF</span>
+</div>
+</body></html>`;
+
+  const blob = new Blob([html], { type:'text/html' });
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'FLLoCA_Report_' + county.replace(/\s+/g,'-') + '_' + new Date().toISOString().split('T')[0] + '.html';
+  a.click();
+  URL.revokeObjectURL(a.href);
+  toast('📄 FLLoCA report for ' + county + ' downloaded! Open in browser → Print → Save as PDF', 'success');
 }
+
+// ── ALL 47 COUNTIES ─────────────────────────────────────
+const ALL_COUNTIES = ['Mombasa', 'Kwale', 'Kilifi', 'Tana River', 'Lamu', 'Taita-Taveta', 'Garissa', 'Wajir', 'Mandera', 'Marsabit', 'Isiolo', 'Meru', 'Tharaka-Nithi', 'Embu', 'Kitui', 'Machakos', 'Makueni', 'Nyandarua', 'Nyeri', 'Kirinyaga', "Murang'a", 'Kiambu', 'Turkana', 'West Pokot', 'Samburu', 'Trans Nzoia', 'Uasin Gishu', 'Elgeyo-Marakwet', 'Nandi', 'Baringo', 'Laikipia', 'Nakuru', 'Narok', 'Kajiado', 'Kericho', 'Bomet', 'Kakamega', 'Vihiga', 'Bungoma', 'Busia', 'Siaya', 'Kisumu', 'Homa Bay', 'Migori', 'Kisii', 'Nyamira', 'Nairobi'];
+
+// ── PLAN GATING ──────────────────────────────────────────
+const PLAN_LIMITS = {
+  Seedling: { calcsPerMonth: 3,  sectors: ['borehole','livestock'], pdf: 'basic',  county: false, kncr: false },
+  Grower:   { calcsPerMonth: Infinity, sectors: 'all',              pdf: 'iso',    county: false, kncr: false },
+  Forest:   { calcsPerMonth: Infinity, sectors: 'all',              pdf: 'iso',    county: true,  kncr: true  },
+  Canopy:   { calcsPerMonth: Infinity, sectors: 'all',              pdf: 'iso',    county: true,  kncr: true  },
+};
+function getPlan() { return S.user.plan || 'Seedling'; }
+function planAllows(feature) {
+  const p = PLAN_LIMITS[getPlan()] || PLAN_LIMITS.Seedling;
+  if (feature === 'county')  return p.county;
+  if (feature === 'kncr')    return p.kncr;
+  if (feature === 'iso_pdf') return p.pdf === 'iso';
+  if (feature === 'calc') {
+    const mk = 'ntz_calcs_' + new Date().toISOString().slice(0,7);
+    const used = parseInt(localStorage.getItem(mk)||'0');
+    return p.calcsPerMonth === Infinity || used < p.calcsPerMonth;
+  }
+  return true;
+}
+function countCalcUsage() {
+  const mk = 'ntz_calcs_' + new Date().toISOString().slice(0,7);
+  localStorage.setItem(mk, String(parseInt(localStorage.getItem(mk)||'0') + 1));
+}
+function getRemainingCalcs() {
+  const p = PLAN_LIMITS[getPlan()] || PLAN_LIMITS.Seedling;
+  if (p.calcsPerMonth === Infinity) return Infinity;
+  const mk = 'ntz_calcs_' + new Date().toISOString().slice(0,7);
+  return Math.max(0, p.calcsPerMonth - parseInt(localStorage.getItem(mk)||'0'));
+}
+function gateCalc(sector) {
+  const p = PLAN_LIMITS[getPlan()] || PLAN_LIMITS.Seedling;
+  if (p.sectors !== 'all' && !p.sectors.includes(sector)) {
+    toast('🔒 ' + sector.charAt(0).toUpperCase()+sector.slice(1) + ' calculator requires Grower plan. Tap Membership to upgrade.', 'error');
+    setTimeout(() => showSection('membership'), 1600); return false;
+  }
+  if (!planAllows('calc')) {
+    toast('🔒 Monthly limit reached (' + (PLAN_LIMITS[getPlan()].calcsPerMonth) + ' calcs/month on ' + getPlan() + '). Upgrade to continue.', 'error');
+    setTimeout(() => showSection('membership'), 1600); return false;
+  }
+  return true;
+}
+function gateFeature(feature, actionLabel) {
+  if (!planAllows(feature)) {
+    const needed = (feature === 'county' || feature === 'kncr') ? 'Forest' : 'Grower';
+    toast('🔒 ' + actionLabel + ' requires ' + needed + ' plan. Tap Membership to upgrade.', 'error');
+    setTimeout(() => showSection('membership'), 1600); return false;
+  }
+  return true;
+}
+
+// ── CALCULATION HISTORY ───────────────────────────────────
+function addToHistory(calc) {
+  if (!S.calcHistory) S.calcHistory = [];
+  S.calcHistory.unshift({...calc, savedAt: new Date().toISOString()});
+  if (S.calcHistory.length > 50) S.calcHistory = S.calcHistory.slice(0,50);
+}
+function renderCalcHistory() {
+  const tbody = document.getElementById('calc-history-tbody');
+  if (!tbody) return;
+  if (!S.calcHistory || !S.calcHistory.length) {
+    tbody.innerHTML = '<tr><td colspan="9" style="text-align:center;color:rgba(255,255,255,.3);font-size:.78rem;padding:.85rem">No calculations yet — run your first calculation above.</td></tr>';
+    return;
+  }
+  const STAG = { borehole:'tag-b', livestock:'tag-l', transport:'tag-t', construction:'tag-c', manufacturing:'tag-m' };
+  tbody.innerHTML = S.calcHistory.slice(0,15).map(c => {
+    const gs = calcNTZScore(c.total_t, c.sector);
+    const col = gs>=70?'var(--leaf)':gs>=50?'var(--gold)':'#EF5350';
+    return '<tr><td>'+(c.name||'Unnamed')+'</td><td><span class="tag-pill '+(STAG[c.sector]||'tag-b')+'">'+c.sector+'</span></td><td>'+(c.county||'—')+'</td><td>'+(c.s1_t?.toFixed(1)||'—')+'</td><td>'+(c.s2_t?.toFixed(1)||'—')+'</td><td>'+(c.s3_t?.toFixed(1)||'—')+'</td><td>'+(c.total_t?.toFixed(1)||'—')+'</td><td style="color:'+col+'">'+gs+'</td><td>'+((c.date||c.savedAt||'').slice(0,10))+'</td></tr>';
+  }).join('');
+}
+
+// ── ITMO TRACKER ──────────────────────────────────────────
+const ITMO_ST = {
+  pending:    {bg:'rgba(245,166,35,.15)',border:'rgba(245,166,35,.35)',text:'#F5A623',label:'Pending DNA Review'},
+  authorised: {bg:'rgba(33,150,243,.15)',border:'rgba(33,150,243,.35)',text:'#64B5F6',label:'LoA Issued'},
+  transferred:{bg:'rgba(76,175,80,.15)', border:'rgba(76,175,80,.35)', text:'#81C784',label:'Transferred'},
+  settled:    {bg:'rgba(156,39,176,.15)',border:'rgba(156,39,176,.35)',text:'#CE93D8',label:'Settled & Adjusted'},
+};
+function renderITMOs() {
+  const el = document.getElementById('itmo-list');
+  const sumEl = document.getElementById('itmo-summary');
+  if (!el) return;
+  if (!S.itmos || !S.itmos.length) {
+    el.innerHTML = '<div style="text-align:center;padding:1.5rem;color:rgba(255,255,255,.25);font-size:.8rem">No ITMOs tracked yet. Click "+ New ITMO" to add one.</div>';
+    if (sumEl) sumEl.style.display='none'; return;
+  }
+  el.innerHTML = S.itmos.map((itmo,i) => {
+    const st = ITMO_ST[itmo.status]||ITMO_ST.pending;
+    return '<div style="background:'+st.bg+';border:1px solid '+st.border+';border-radius:var(--r-sm);padding:.7rem .9rem;display:flex;align-items:center;gap:.75rem;margin-bottom:.4rem">' +
+      '<div style="flex:1"><div style="font-size:.83rem;font-weight:600;color:rgba(255,255,255,.88)">'+itmo.project+' → '+itmo.country+'</div>' +
+      '<div style="font-size:.72rem;color:rgba(255,255,255,.45);margin-top:2px">'+itmo.volume.toLocaleString()+' tCO₂e · USD '+itmo.price+'/t · LoA: '+(itmo.loa||'Pending')+'</div></div>' +
+      '<div style="background:'+st.bg+';border:1px solid '+st.border+';color:'+st.text+';padding:.2rem .6rem;border-radius:12px;font-size:.68rem;font-weight:700;flex-shrink:0">'+st.label+'</div>' +
+      '<button onclick="removeITMO('+i+')" style="background:none;border:none;color:rgba(255,255,255,.25);cursor:pointer;font-size:.85rem">✕</button></div>';
+  }).join('');
+  if (sumEl) {
+    sumEl.style.display='block';
+    const tv = S.itmos.reduce((a,x)=>a+x.volume,0);
+    const tk = S.itmos.reduce((a,x)=>a+x.volume*x.price*130,0);
+    sumEl.innerHTML = 'ITMOs: <strong>'+S.itmos.length+'</strong> &nbsp;·&nbsp; Volume: <strong>'+tv.toLocaleString()+' tCO₂e</strong> &nbsp;·&nbsp; Value: <strong>KES '+Math.round(tk).toLocaleString()+'</strong>';
+  }
+}
+function populateITMOProjectSelect() {
+  const sel = document.getElementById('itmo-project');
+  if (!sel) return;
+  sel.innerHTML = '<option value="">— Select project —</option>' +
+    S.kncr.projects.map(p => '<option value="'+p.id+'">'+p.name+'</option>').join('');
+}
+function addITMO() {
+  const projId=document.getElementById('itmo-project').value;
+  const country=document.getElementById('itmo-country').value;
+  const volume=parseFloat(document.getElementById('itmo-volume').value)||0;
+  const price=parseFloat(document.getElementById('itmo-price').value)||0;
+  const loa=document.getElementById('itmo-loa').value.trim();
+  const status=document.getElementById('itmo-status').value;
+  if (!projId||!volume){toast('Select a project and enter volume','error');return;}
+  const proj=S.kncr.projects.find(p=>p.id===projId);
+  if (!S.itmos) S.itmos=[];
+  S.itmos.push({project:proj?proj.name:projId,country,volume,price,loa,status,created:new Date().toISOString().split('T')[0]});
+  closeModal('modal-itmo-new');
+  renderITMOs(); saveToStorage();
+  toast('🌍 ITMO registered: '+volume.toLocaleString()+' tCO₂e → '+country,'success');
+}
+function removeITMO(i) {
+  if (!S.itmos) return;
+  const name=S.itmos[i]?.project||'ITMO';
+  S.itmos.splice(i,1); renderITMOs(); saveToStorage();
+  toast('Removed: '+name,'info');
+}
+
+// ── KNCR STEP CHECKLIST ───────────────────────────────────
+const KNCR_STEP_DOCS = {
+  1:{title:'Concept Note',docs:['Project title, type and location','Carbon standard (Verra VCS / Gold Standard / KNCR Domestic)','Estimated annual emission reductions (tCO₂e/yr) — from Netzerra calculator','Project proponent identity and ownership structure','FPIC documentation for community/public land projects','County letter of support (Reg. 16)']},
+  2:{title:'ESIA + County Support',docs:['Environmental and Social Impact Assessment (NEMA-accredited firm)','County Government letter of support — signed by CECM Environment','Community consultation report with FPIC evidence','Community Development Agreement (CDA) — Fourth Schedule format (Reg. 23E)','CDA Committee membership list and structure','Stakeholder engagement plan']},
+  3:{title:'Letter of No Objection',docs:['Ad hoc committee review within 30 days (Reg. 22(8))','DNA issues LoNO within 14 days of committee recommendation (Reg. 22(9))','CDA must be finalised and attached','Project boundary map with GPS coordinates','Baseline scenario description']},
+  4:{title:'Validation + PDD',docs:['Project Design Document (PDD) — per applied carbon standard','Third-party validation by KNCR-accredited VVB','Monitoring plan (MRV protocol)','Additionality demonstration','IPCC AR6 methodology declaration — Netzerra generates this','Article 6 corresponding adjustment declaration (if selling internationally)']},
+  5:{title:'Letter of Approval + Registration',docs:['Fifth Schedule Letter of Approval — issued by DNA + Cabinet Secretary','Registration fee payment (Second Schedule)','Project registered on kncr.go.ke','Letter of Authorisation for Article 6 ITMOs (if applicable)','Project must commence within 12 months of approval (Reg. 30)']},
+  6:{title:'Annual Reports (Ongoing)',docs:['Annual progress report — ISO 14064 aligned — Netzerra generates this','CDA disbursement records (40%/25% community benefit paid)','Monitoring data for the reporting period','Submit to NEMA/DNA annually','KES 20,000 penalty per missed report (Reg. 37)','KES 500M penalty for false data (Reg. 37)']},
+};
+function showKNCRStepChecklist(step) {
+  const data = KNCR_STEP_DOCS[step]; if (!data) return;
+  const existing = document.getElementById('kncr-step-checklist');
+  if (existing) existing.remove();
+  const div = document.createElement('div');
+  div.id = 'kncr-step-checklist';
+  div.style.cssText = 'background:rgba(26,94,53,.15);border:1px solid rgba(76,175,80,.25);border-radius:var(--r-sm);padding:.85rem 1rem;margin-top:.75rem';
+  div.innerHTML = '<div style="font-weight:700;font-size:.85rem;color:var(--mint);margin-bottom:.55rem">📋 Step '+step+': '+data.title+' — Required Documents</div>' +
+    data.docs.map(d=>'<div style="display:flex;gap:.5rem;align-items:flex-start;padding:.2rem 0;font-size:.78rem;color:rgba(255,255,255,.72)"><span style="color:var(--leaf);flex-shrink:0">☐</span><span>'+d+'</span></div>').join('');
+  const pipeline = document.getElementById('kncr-pipeline');
+  if (pipeline) pipeline.after(div);
+}
+
 
 // ── CHARTS ────────────────────────────────────────────
 function initCharts() {
@@ -1276,6 +1424,7 @@ function advanceKNCR(i) {
   const p = S.kncr.projects[i];
   if (!p) return;
   renderKNCRPipeline(p.step);
+  showKNCRStepChecklist(p.step);
   if (p.step < 6) {
     p.step++;
     renderKNCRProjects();
@@ -1364,14 +1513,22 @@ ${c ? `<p>Baseline emissions (from Netzerra calculation): <strong>${c.total_t.to
 </table>` : '<p>Run a Netzerra calculation first to populate this section with verified baseline data.</p>'}
 <p>Claimed annual reduction: <strong>${credits.toLocaleString()} tCO₂e/yr</strong>. Full additionality demonstration per ${standard} methodology to be provided in final PDD with third-party VVB engagement.</p>
 
-<h2>4. Community Benefit Plan (25% Mandate)</h2>
+<h2>4. Community Benefit Plan (Reg. 23E Mandate)</h2>
+${(()=>{
+  const ltype = document.getElementById('kncr-land-type')?.value || 'land';
+  const cRate = ltype==='land' ? 0.40 : ltype==='nonland' ? 0.25 : 0;
+  const cLabel = ltype==='land' ? '40% — land-based on public/community land (Reg. 23E)' : ltype==='nonland' ? '25% — non-land-based on public/community land (Reg. 23E)' : 'Exempt — private land project (Reg. 23E(3))';
+  const devShare = 1 - cRate;
+  return \`
+<div class="info"><strong>Regulation 23E Rate Applied: ${cLabel}</strong></div>
 <table>
   <tr><th>Revenue Stream</th><th>Annual (USD @ $12/t)</th><th>Annual (KES @ 130)</th><th>Share</th></tr>
-  <tr><td>Gross Credit Revenue</td><td>USD ${(credits*12).toLocaleString()}</td><td>KES ${(credits*12*130).toLocaleString()}</td><td>100%</td></tr>
-  <tr><td><strong>Community Fund (mandatory)</strong></td><td><strong>USD ${(credits*12*.25).toLocaleString()}</strong></td><td><strong>KES ${(credits*12*130*.25).toLocaleString()}</strong></td><td><strong>25%</strong></td></tr>
-  <tr><td>Developer Share</td><td>USD ${(credits*12*.75).toLocaleString()}</td><td>KES ${(credits*12*130*.75).toLocaleString()}</td><td>75%</td></tr>
-  <tr class="tot"><td>Net (after 15% preferential tax)</td><td>USD ${Math.round(credits*12*.75*.85).toLocaleString()}</td><td>KES ${Math.round(credits*12*130*.75*.85).toLocaleString()}</td><td>~64%</td></tr>
-</table>
+  <tr><td>Gross Credit Revenue</td><td>USD \${(credits*12).toLocaleString()}</td><td>KES \${(credits*12*130).toLocaleString()}</td><td>100%</td></tr>
+  <tr><td><strong>Community Fund (mandatory)</strong></td><td><strong>USD \${Math.round(credits*12*cRate).toLocaleString()}</strong></td><td><strong>KES \${Math.round(credits*12*130*cRate).toLocaleString()}</strong></td><td><strong>\${Math.round(cRate*100)}%</strong></td></tr>
+  <tr><td>Developer Share</td><td>USD \${Math.round(credits*12*devShare).toLocaleString()}</td><td>KES \${Math.round(credits*12*130*devShare).toLocaleString()}</td><td>\${Math.round(devShare*100)}%</td></tr>
+  <tr class="tot"><td>Net (after 15% preferential tax)</td><td>USD \${Math.round(credits*12*devShare*.85).toLocaleString()}</td><td>KES \${Math.round(credits*12*130*devShare*.85).toLocaleString()}</td><td>~\${Math.round(devShare*.85*100)}%</td></tr>
+</table>\`;
+})()}
 
 <h2>5. Environmental &amp; Social Safeguards</h2>
 <ul>
@@ -1666,10 +1823,10 @@ function renderPricing() {
 
 function renderFAQs() {
   const faqs = [
-    { q:'What emission factors does Netzerra use?', a:'IPCC 2006 Guidelines with selectable GWP values — AR6 (default, Kenya KNCR) or AR5 (UNFCCC Paris Agreement). AR6 values: CH₄ = 27.0, N₂O = 273, HFC-134a = 1,530 (GHG Protocol Aug 2024). Kenya grid: 0.070 kgCO₂e/kWh (IEA 2024, ~90% renewable). DEFRA/BEIS 2023 for transport. KEFRI 2019 for agroforestry.' },
+    { q:'What emission factors does Netzerra use?', a:'IPCC 2006 Guidelines with selectable GWP values — AR6 (default, Kenya KNCR) or AR5 (UNFCCC Paris Agreement). AR6 values: CH₄ = 27.0, N₂O = 273, HFC-134a = 1,530 (GHG Protocol Aug 2024). Kenya grid: 0.3174 kgCO₂/kWh (KNCR) (IEA 2024, ~90% renewable). DEFRA/BEIS 2023 for transport. KEFRI 2019 for agroforestry.' },
     { q:'Are Netzerra reports accepted by donors?', a:'Yes. Reports are formatted for ISO 14064-1:2018 compliance and have been accepted by World Bank Kenya, UN Environment Programme, and multiple county governments for NEMA and NDC reporting.' },
     { q:'How is the NTZ Score calculated?', a:'The NTZ Score (0–100) combines: emission intensity vs sector benchmark (40 pts), offset-to-emission ratio (30 pts), year-on-year reduction rate (20 pts), and platform engagement (10 pts).' },
-    { q:'What is the Kenya Power grid emission factor?', a:"Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%). Netzerra uses 0.070 kgCO₂e/kWh (IEA 2024 / SEforAll Kenya). A figure of 0.497 kgCO₂e/kWh was previously incorrect — that value applies to fossil-heavy grids and has been corrected." },
+    { q:'What is the Kenya Power grid emission factor?', a:"Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%). Netzerra uses 0.3174 kgCO₂/kWh (KNCR) (IEA 2024 / SEforAll Kenya). A figure of 0.497 kgCO₂e/kWh was previously incorrect — that value applies to fossil-heavy grids and has been corrected." },
     { q:'What is the County Dashboard for?', a:'County officers can use it to track all carbon projects in their county, verify community benefit fund distributions (40% for land-based, 25% for non-land — Carbon Markets Regulations 2024), check FLLoCA compliance status, and track carbon levy revenue by ward.' },
     { q:'How does PDF report generation work?', a:'Netzerra uses html2pdf.js to generate a real PDF client-side in your browser. Reports include uncertainty bands (IPCC Tier 1), data quality scores, GWP version used, and plausibility flags — formatted for NEMA and VCM verifier submissions.' },
     { q:'What is KNCR and why does it matter?', a:"Kenya's National Carbon Registry (KNCR) went live 17 February 2026. Governed by the Carbon Markets Regulations 2024 and Carbon Trading Regulations 2025. All carbon projects must register. False data carries a KES 500M penalty. Netzerra is the first automation tool generating KNCR-compliant documentation." },
@@ -1692,7 +1849,7 @@ function toggleFAQ(el) {
 // ══════════════════════════════════════════════════════
 // IMPROVEMENT 1 — localStorage Persistence
 // ══════════════════════════════════════════════════════
-const LS_KEY = 'ntz_v1';
+const LS_KEY = 'ntz_v3';
 
 function saveToStorage() {
   try {
@@ -1700,6 +1857,8 @@ function saveToStorage() {
       user:      S.user,
       projects:  S.kncr.projects,
       lastCalc:  S.lastCalc,
+      calcHistory: S.calcHistory || [],
+      itmos:     S.itmos || [],
       gwp:       ACTIVE_GWP,
       savedAt:   new Date().toISOString(),
     };
@@ -1713,8 +1872,10 @@ function loadFromStorage() {
     if (!raw) return false;
     const d = JSON.parse(raw);
     if (d.user)     Object.assign(S.user, d.user);
-    if (d.projects) S.kncr.projects = d.projects;
-    if (d.lastCalc) S.lastCalc = d.lastCalc;
+    if (d.projects)     S.kncr.projects = d.projects;
+    if (d.lastCalc)     S.lastCalc = d.lastCalc;
+    if (d.calcHistory)  S.calcHistory = d.calcHistory;
+    if (d.itmos)        S.itmos = d.itmos;
     if (d.gwp)      applyGWP(d.gwp);
     return true;
   } catch(e) { return false; }
@@ -1819,6 +1980,85 @@ function loadSharedReport() {
 }
 
 // ══════════════════════════════════════════════════════
+// IMPROVEMENT 3 — Print-to-PDF fallback
+// ══════════════════════════════════════════════════════
+function printReport() {
+  const c = S.lastCalc;
+  if (!c) { toast('Run a calculation first!', 'error'); return; }
+  const gs  = calcNTZScore(c.total_t, c.sector);
+  const now = new Date().toLocaleDateString('en-KE', { year:'numeric', month:'long', day:'numeric' });
+  const unc = c.uncertainty || calcUncertainty(c.total_t, c.sector);
+  const win = window.open('', '_blank');
+  win.document.write(`<!DOCTYPE html><html><head>
+    <title>Netzerra Report — ${c.name}</title>
+    <style>
+      *{margin:0;padding:0;box-sizing:border-box}
+      body{font-family:Arial,sans-serif;color:#1A3A2A;padding:2rem;font-size:11px}
+      .hdr{background:#0D3320;color:#fff;padding:1.5rem;border-radius:8px;margin-bottom:1.25rem}
+      .hdr h1{font-size:16px;margin:.25rem 0}
+      .hdr .meta{font-size:10px;opacity:.7;margin-top:.5rem}
+      .kpis{display:grid;grid-template-columns:repeat(4,1fr);gap:.6rem;margin-bottom:1rem}
+      .kpi{background:#F1F8E9;border:1px solid #C5E1A5;border-radius:6px;padding:.65rem;text-align:center}
+      .kpi .val{font-size:13px;font-weight:700;color:#1B5E20}
+      .kpi .lbl{font-size:9px;text-transform:uppercase;color:#558B2F;margin-top:2px}
+      h2{font-size:12px;color:#1B5E20;border-bottom:2px solid #E8F5E9;padding-bottom:3px;margin:1rem 0 .5rem}
+      table{width:100%;border-collapse:collapse;font-size:10px}
+      th{background:#1B5E20;color:#fff;padding:5px 7px;text-align:left}
+      td{padding:4px 7px;border-bottom:1px solid #E8F5E9}
+      tr:nth-child(even) td{background:#F9FBF7}
+      .unc{background:#E3F2FD;border:1px solid #BBDEFB;border-radius:4px;padding:6px 10px;margin:.6rem 0;font-size:10px;color:#1565C0}
+      .flags{background:#FFF3E0;border-left:3px solid #FF6D00;padding:6px 10px;margin:.6rem 0;font-size:10px}
+      .ok{background:#E8F5E9;border:1px solid #A5D6A7;border-radius:4px;padding:6px 10px;margin:.6rem 0;font-size:10px;color:#2E7D32}
+      .disc{margin-top:1rem;padding:8px 10px;background:#E3F2FD;border-left:3px solid #1565C0;font-size:9px;color:#0D47A1}
+      .mvp{margin-top:.5rem;font-size:8.5px;color:#BDBDBD;border-top:1px solid #F5F5F5;padding-top:5px}
+      .foot{margin-top:.75rem;padding-top:.6rem;border-top:1px solid #E8F5E9;display:flex;justify-content:space-between;font-size:9px;color:#90A4AE}
+      @media print{@page{margin:1.5cm}}
+    </style>
+  </head><body>
+    <div class="hdr">
+      <div style="font-size:18px;font-weight:800;margin-bottom:3px">🌿 Netzerra</div>
+      <div style="font-size:9px;opacity:.6;text-transform:uppercase;letter-spacing:1px;margin-bottom:10px">Kenya Carbon Intelligence Platform · MVP v1.0</div>
+      <h1>Greenhouse Gas Emission Report</h1>
+      <div class="meta">${S.user.name} · ${S.user.org} · ${now} · ${c.ref}</div>
+    </div>
+    <div class="kpis">
+      <div class="kpi"><div class="val">${c.total_t.toFixed(2)} tCO₂e</div><div class="lbl">Total Emissions/yr</div></div>
+      <div class="kpi"><div class="val">${gs}/100</div><div class="lbl">NTZ Score</div></div>
+      <div class="kpi"><div class="val">${gradeFromScore(gs).split('·')[0].trim()}</div><div class="lbl">Grade</div></div>
+      <div class="kpi"><div class="val">${c.dqs||0}/100</div><div class="lbl">Data Quality</div></div>
+    </div>
+    ${c.flags&&c.flags.length ? `<div class="flags"><b>⚠️ Plausibility Flags (${c.flags.length}):</b><br>${c.flags.map(f=>`· ${f}`).join('<br>')}</div>` : `<div class="ok">✅ No plausibility flags — all values within expected benchmark ranges.</div>`}
+    <h2>Project Summary</h2>
+    <p><b>Project:</b> ${c.name} &nbsp;|&nbsp; <b>Sector:</b> ${c.sector} &nbsp;|&nbsp; <b>Date:</b> ${c.date}</p>
+    <h2>Methodology</h2>
+    <p>${ACTIVE_GWP} GWP100: CH₄=${EF.gwpCH4}, N₂O=${EF.gwpN2O}, HFC-134a=${EF.gwpHFC134a.toLocaleString()}. Kenya grid: 0.3174 kgCO₂/kWh (KNCR) (IEA 2024). IPCC 2006 Guidelines. Config: v${KNCR_CONFIG.version}</p>
+    <div class="unc"><b>IPCC Tier 1 Uncertainty (±${unc.pct}%):</b> ${unc.low}–${unc.high} tCO₂e/yr · ${unc.basis}</div>
+    <h2>Scope Breakdown</h2>
+    <table>
+      <tr><th>Scope</th><th>tCO₂e/yr</th><th>%</th><th>Primary Source</th></tr>
+      <tr><td>Scope 1 — Direct combustion</td><td>${c.s1_t.toFixed(3)}</td><td>${c.total_t>0?(c.s1_t/c.total_t*100).toFixed(1):0}%</td><td>IPCC 2006 Vol.2 / DEFRA 2023</td></tr>
+      <tr><td>Scope 2 — Purchased energy</td><td>${c.s2_t.toFixed(3)}</td><td>${c.total_t>0?(c.s2_t/c.total_t*100).toFixed(1):0}%</td><td>IEA 2024 · 0.3174 kgCO₂/kWh (KNCR)</td></tr>
+      <tr><td>Scope 3 — Embodied/upstream</td><td>${c.s3_t.toFixed(3)}</td><td>${c.total_t>0?(c.s3_t/c.total_t*100).toFixed(1):0}%</td><td>Bath ICE v3.0 / World Steel 2023</td></tr>
+      <tr style="font-weight:700;background:#E8F5E9"><td>TOTAL</td><td>${c.total_t.toFixed(3)}</td><td>100%</td><td></td></tr>
+    </table>
+    <h2>Data Audit Trail</h2>
+    <p>Data Quality Score: ${c.dqs||0}/100 — ${c.dqsGrade||'Not declared'}. ${c.sources&&c.sources.filter(Boolean).length ? 'Sources declared: '+[...new Set(c.sources.filter(Boolean))].join(', ') : 'No data sources declared.'}</p>
+    <h2>Recommended Offsets</h2>
+    <table>
+      <tr><th>Strategy</th><th>Requirement</th><th>Source</th></tr>
+      <tr><td>Bamboo plantation</td><td>${(c.total_t/17).toFixed(2)} ha @ 17 tCO₂e/ha/yr</td><td>Yuen et al. 2017</td></tr>
+      <tr><td>Casuarina trees</td><td>${(c.total_t/8).toFixed(2)} ha @ 8 tCO₂e/ha/yr</td><td>KEFRI 2019</td></tr>
+      <tr><td>Biogas digesters</td><td>${Math.ceil(c.total_t/3.5)} units @ 3.5 tCO₂e/unit/yr</td><td>SNV Kenya 2021</td></tr>
+    </table>
+    <div class="disc">Generated by Netzerra MVP v1.0 — Kenya Carbon Intelligence Platform. ISO 14064-1:2018 aligned. ${ACTIVE_GWP} GWP (GHG Protocol Aug 2024).</div>
+    <div class="mvp">MVP DISCLAIMER: County data is illustrative. No regulatory partnerships established. Verify with a qualified carbon auditor before formal submission. © 2026 Netzerra · Shukri Ali</div>
+    <div class="foot"><span>Netzerra · shukriali411@gmail.com · netzerrakenya.com</span><span>${c.ref} · ${now}</span></div>
+    <script>window.onload=()=>{window.print();}</script>
+  </body></html>`);
+  win.document.close();
+}
+
+// ══════════════════════════════════════════════════════
 // IMPROVEMENT 4 — Sector Benchmark Comparison callout
 // ══════════════════════════════════════════════════════
 // Kenya sector averages (estimated from IPCC defaults + Kenya context)
@@ -1868,7 +2108,7 @@ function shareWhatsApp() {
   const msg = encodeURIComponent(
     `My ${c.name} (${c.sector}) emits ${c.total_t.toFixed(2)} tCO₂e/yr — verified by Netzerra 🌿\n` +
     `NTZ Score: ${gs}/100 (${grade})\n` +
-    `IPCC ${c.gwp || ACTIVE_GWP} · Kenya grid 0.070 kgCO₂e/kWh (IEA 2024)\n\n` +
+    `IPCC ${c.gwp || ACTIVE_GWP} · Kenya grid 0.3174 kgCO₂/kWh (KNCR) (IEA 2024)\n\n` +
     `View full report: ${url}\n` +
     `Calculate yours: https://netzerrakenya.com`
   );
