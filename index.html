@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
   <!-- Netzerra Styles -->
-  <link rel="stylesheet" href="style.css?v=2.2">
+  <link rel="stylesheet" href="style.css?v=2.4">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -129,19 +129,19 @@
     <!-- ══════════════ HOME ══════════════ -->
     <section class="section active" id="home-section">
       <div class="hero">
-        <div class="hero-eyebrow">🌍 Kenya's Carbon Intelligence Platform</div>
-        <h1>Measure. Reduce. <em>Offset.</em><br>Kenya's Carbon Future Starts Here.</h1>
-        <p>IPCC AR6-compliant MRV for boreholes, livestock, transport, construction, and manufacturing. KNCR-native, county-ready, M-Pesa enabled.</p>
+        <div class="hero-eyebrow">🏛️ National Carbon Compliance Infrastructure</div>
+        <h1>The KNCR-Native<br><em>Compliance Layer</em> for Kenya.</h1>
+        <p>80+ carbon projects stalled. Zero have automated MRV. Every manual entry carries a <strong>KES 500M penalty</strong> under Regulation 37. Netzerra is the first platform built specifically to automate Kenya's Carbon Markets Regulations 2024 — from IPCC-verified calculations to CDA Fourth Schedule generation to KNCR submission.</p>
         <div class="hero-actions">
           <button class="btn-hero-p" onclick="showSection('calculator')">⚡ Start Calculating</button>
           <button class="btn-hero-s" onclick="showSection('county')">🏢 County Dashboard</button>
           <button class="btn-hero-s" onclick="showSection('kncr')">🏛️ KNCR Gateway</button>
         </div>
         <div class="hero-stats">
+          <div class="hero-stat"><div class="num">KES 500M</div><div class="lbl">Reg. 37 Penalty Risk</div></div>
+          <div class="hero-stat"><div class="num">80+</div><div class="lbl">Projects Stalled</div></div>
           <div class="hero-stat"><div class="num">47</div><div class="lbl">Counties Mandated</div></div>
-          <div class="hero-stat"><div class="num">12,840</div><div class="lbl">tCO₂e Tracked</div></div>
-          <div class="hero-stat"><div class="num">80+</div><div class="lbl">KNCR Concept Notes</div></div>
-          <div class="hero-stat"><div class="num">KES 23.8M</div><div class="lbl">Levy Distributed</div></div>
+          <div class="hero-stat"><div class="num">Feb 2026</div><div class="lbl">KNCR Went Live</div></div>
         </div>
       </div>
 
@@ -700,6 +700,13 @@
               style="display:none;width:100%;margin-top:.38rem;background:rgba(0,0,0,.3);border:1px solid rgba(109,217,140,.3);border-radius:var(--r-sm);padding:.45rem .65rem;color:var(--mint);font-size:.7rem;font-family:'JetBrains Mono',monospace"
               onclick="this.select()" placeholder="Share URL will appear here">
             <button class="btn-report" onclick="showSection('offsets')" style="margin-top:.38rem">🌳 Explore Offsets</button>
+            <!-- PIPELINE BUTTON — carries calculation into KNCR Gateway -->
+            <button class="btn-report btn-kncr-pipeline" onclick="registerAsKNCRProject()" style="margin-top:.62rem">
+              🏛️ Register as KNCR Carbon Project →
+            </button>
+            <div style="font-size:.67rem;color:rgba(255,255,255,.3);text-align:center;margin-top:.28rem">
+              Pre-fills KNCR Gateway with your calculation data
+            </div>
           </div>
         </div>
       </div>
@@ -710,7 +717,7 @@
       <div class="county-hero">
         <div class="kncr-tag">🏢 County Government Intelligence Dashboard</div>
         <h2 style="color:#fff;margin-bottom:.35rem">County Carbon Oversight Platform</h2>
-        <p style="color:rgba(255,255,255,.62);font-size:.85rem;max-width:540px">Real-time visibility into carbon projects, community benefit tracking, FLLoCA compliance, and carbon levy revenue. Legally mandated — Climate Change Act 2016 (Amended 2023).</p>
+        <p style="color:rgba(255,255,255,.62);font-size:.85rem;max-width:540px">For a County Governor, Netzerra is a revenue and protection tool — live visibility into every carbon project on their land, automated tracking of the 40% community benefit mandate, FLLoCA performance data, and carbon levy collection. 40 of 47 counties currently report manually via Excel.</p>
         <div class="county-select-row">
           <select id="county-select" onchange="loadCountyData()">
             <option value="">— Select a County —</option>
@@ -1046,8 +1053,8 @@
           <p style="font-size:.83rem">Give Kenya's farmers, county governments, and businesses the tools to measure, understand, and reduce their carbon footprint — without needing a PhD in climate science. By combining IPCC AR6 methodology with Kenya-calibrated factors, we provide auditable data that meets international carbon market standards.</p>
         </div>
         <div class="card">
-          <h3 style="margin-bottom:.62rem">🎯 Why Netzerra?</h3>
-          <p style="font-size:.83rem">Kenya's KNCR launched February 2026. 80+ concept notes filed — zero with proper MRV documentation. Every project risks KES 500M in penalties for false data. Netzerra is the compliance automation layer: from emission calculation to CDA generation to KNCR submission, all in one platform.</p>
+          <h3 style="margin-bottom:.62rem">🎯 The Regulatory Moat</h3>
+          <p style="font-size:.83rem">The Carbon Markets Regulations 2024 created a "digital-first" mandate. The KNCR is a central digital ledger — all 80+ stalled projects must submit verified MRV data or face a <strong style="color:var(--coral)">KES 500M penalty</strong> under Regulation 37. Netzerra is the first platform built to speak the KNCR's language natively — using Kenya-specific emission factors, automated CDA Fourth Schedule generation, and ISO 14064-aligned reports that cut VVB audit time from 6 months to 2 weeks.</p>
         </div>
       </div>
 
@@ -1087,57 +1094,59 @@
     <section class="section" id="kncr-section">
       <div class="kncr-hero">
         <div class="kncr-tag">🏛️ Kenya National Carbon Registry · Launched 17 Feb 2026</div>
-        <h2 style="color:#fff;margin-bottom:.35rem">KNCR Gateway</h2>
-        <p style="color:rgba(255,255,255,.62);font-size:.86rem;max-width:560px">Netzerra is your upstream measurement layer for Kenya's sovereign carbon registry. Calculate emissions, generate KNCR-compliant DNA submission packages, and track your project pipeline — all in one platform.</p>
+        <h2 style="color:#fff;margin-bottom:.35rem">KNCR Full Pipeline</h2>
+        <p style="color:rgba(255,255,255,.62);font-size:.86rem;max-width:600px">Complete automation from Concept Note to Credits Live. Every document required by Kenya's Carbon Markets Regulations 2024 — generated, pre-filled with your calculation data, and ready for NEMA submission.</p>
         <div class="kncr-badges">
-          <span class="kncr-badge">📋 Climate Change Amendment Act 2023</span>
-          <span class="kncr-badge">📜 Carbon Markets Regulations 2024</span>
-          <span class="kncr-badge" style="background:rgba(0,201,167,.12);border-color:rgba(0,201,167,.3);color:var(--teal)">🆕 Carbon Trading Regulations 2025</span>
-          <span class="kncr-badge" style="background:rgba(0,201,167,.12);border-color:rgba(0,201,167,.3);color:var(--teal)">🆕 Non-Market Approaches Regs 2025</span>
+          <span class="kncr-badge">📋 Carbon Markets Regulations 2024</span>
+          <span class="kncr-badge" style="background:rgba(0,201,167,.12);border-color:rgba(0,201,167,.3);color:var(--teal)">🆕 Carbon Trading Regs 2025</span>
           <span class="kncr-badge">🌍 Article 6 Paris Agreement</span>
-          <span class="kncr-badge">📐 Verra VCS · Gold Standard aligned methodology</span>
+          <span class="kncr-badge" style="background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.3);color:var(--gold)">⚡ IPCC AR6 Verified</span>
         </div>
       </div>
 
-      <div class="kncr-stats">
-        <div class="kncr-stat"><div class="kncr-stat-val">17 Feb</div><div class="kncr-stat-lbl">KNCR Launch 2026</div></div>
-        <div class="kncr-stat"><div class="kncr-stat-val">$2.1B</div><div class="kncr-stat-lbl">VCM Today</div></div>
-        <div class="kncr-stat"><div class="kncr-stat-val">$20B</div><div class="kncr-stat-lbl">Projected 2035</div></div>
-        <div class="kncr-stat"><div class="kncr-stat-val">25%</div><div class="kncr-stat-lbl">Community Mandate</div></div>
-        <div class="kncr-stat"><div class="kncr-stat-val">KES 500M</div><div class="kncr-stat-lbl">Penalty: False Data</div></div>
-        <div class="kncr-stat"><div class="kncr-stat-val">15%</div><div class="kncr-stat-lbl">Preferential Tax</div></div>
-      </div>
-
-      <h3 style="margin:1.2rem 0 .7rem">🔄 KNCR Registration Pipeline</h3>
+      <!-- ── PIPELINE PROGRESS TRACKER ── -->
       <div class="card" style="padding:1.4rem;margin-bottom:1.2rem">
-        <div class="kncr-pipeline" id="kncr-pipeline"></div>
-        <div style="display:flex;justify-content:space-between;align-items:center;margin:1.2rem 0 .7rem">
-          <h4>My KNCR Projects</h4>
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <h4>📂 My KNCR Projects</h4>
           <button onclick="openModal('modal-kncr-new')" style="padding:.38rem .88rem;background:rgba(58,170,92,.16);border:1px solid rgba(58,170,92,.3);color:var(--mint);font-size:.72rem;font-weight:600;border-radius:var(--r-sm);cursor:pointer">+ New Project</button>
         </div>
         <div id="kncr-projects-list"></div>
+        <div style="margin-top:1.2rem">
+          <div style="font-size:.72rem;font-weight:700;color:var(--mint);margin-bottom:.62rem;text-transform:uppercase;letter-spacing:.06em">Pipeline Progress</div>
+          <div class="kncr-pipeline" id="kncr-pipeline"></div>
+        </div>
       </div>
 
-      <div class="g2">
-        <!-- DNA Submission Package Generator -->
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:.62rem;margin-bottom:1.05rem">
-            <div style="width:26px;height:26px;border-radius:50%;background:rgba(58,170,92,.2);border:1px solid rgba(58,170,92,.4);color:var(--mint);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">1</div>
-            <div style="font-family:'Sora',sans-serif;font-size:.98rem;font-weight:700">Generate DNA Submission Package</div>
+      <!-- ── SHARED PROJECT FIELDS ── -->
+      <div class="card" style="margin-bottom:1.2rem;border:1px solid rgba(0,201,167,.25)">
+        <div style="display:flex;align-items:center;gap:.72rem;margin-bottom:1rem">
+          <div style="background:rgba(0,201,167,.18);border:1px solid rgba(0,201,167,.4);color:var(--teal);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0">📋</div>
+          <div>
+            <div style="font-weight:700;font-size:.95rem">Project Details — shared across all documents</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Fill once, used by all 6 document generators below</div>
           </div>
-          <div class="inp" style="margin-bottom:.72rem"><label>Project Name</label><input type="text" id="kncr-proj-name" placeholder="e.g. Turkana Borehole Electrification Project"></div>
-          <div class="inp" style="margin-bottom:.72rem"><label>Project Type</label>
+        </div>
+        <!-- Pipeline arrival banner -->
+        <div id="kncr-pipeline-banner" style="display:none;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.35);border-left:3px solid var(--teal);border-radius:var(--r-sm);padding:.72rem .88rem;margin-bottom:.88rem;font-size:.78rem">
+          <div style="font-weight:700;color:var(--teal);margin-bottom:.32rem">✅ Calculation data loaded from your emission calculator</div>
+          <div id="kncr-pipeline-summary" style="color:rgba(255,255,255,.65);line-height:1.7"></div>
+          <div style="font-size:.68rem;color:rgba(255,255,255,.35);margin-top:.25rem">Review and complete the fields below. All documents below will use this verified baseline.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.72rem">
+          <div class="inp" style="margin-bottom:0"><label>Project Name</label><input type="text" id="kncr-proj-name" placeholder="e.g. Turkana Borehole Electrification Project"></div>
+          <div class="inp" style="margin-bottom:0"><label>Project Proponent</label><input type="text" id="kncr-proponent" placeholder="Organisation / County Gov."></div>
+          <div class="inp" style="margin-bottom:0"><label>Project Type</label>
             <select id="kncr-proj-type">
-              <option value="borehole">Borehole / Water Infrastructure</option>
-              <option value="livestock">Livestock Management</option>
-              <option value="transport">Transport Decarbonisation</option>
-              <option value="construction">Low-Carbon Construction</option>
-              <option value="forestry">Agroforestry / Offset Planting</option>
-              <option value="solar">Renewable Energy</option>
-              <option value="biogas">Clean Cooking / Biogas</option>
+              <option value="borehole">💧 Borehole / Water Infrastructure</option>
+              <option value="livestock">🐄 Livestock Management (AFOLU)</option>
+              <option value="transport">🚌 Transport Decarbonisation</option>
+              <option value="construction">🏗️ Low-Carbon Construction</option>
+              <option value="forestry">🌳 Agroforestry / Offset Planting</option>
+              <option value="solar">☀️ Renewable Energy</option>
+              <option value="biogas">🔥 Clean Cooking / Biogas</option>
             </select>
           </div>
-          <div class="inp" style="margin-bottom:.72rem"><label>Registry Standard</label>
+          <div class="inp" style="margin-bottom:0"><label>Registry Standard</label>
             <select id="kncr-standard">
               <option value="verra">Verra VCS</option>
               <option value="gs">Gold Standard</option>
@@ -1145,71 +1154,238 @@
               <option value="cdm">CDM</option>
             </select>
           </div>
-          <div class="inp" style="margin-bottom:.72rem"><label>Project Proponent</label><input type="text" id="kncr-proponent" placeholder="Organisation / County Gov."></div>
-          <div class="inp" style="margin-bottom:.72rem"><label>County</label>
+          <div class="inp" style="margin-bottom:0"><label>County</label>
             <select id="kncr-county">
               <option>Turkana</option><option>Laikipia</option><option>Nairobi</option>
               <option>Nakuru</option><option>Mombasa</option><option>Garissa</option>
-              <option>Isiolo</option><option>Kajiado</option><option>Narok</option><option>Other</option>
+              <option>Isiolo</option><option>Kajiado</option><option>Narok</option>
+              <option>Baringo</option><option>Tana River</option><option>Marsabit</option>
+              <option>Samburu</option><option>Mandera</option><option>Wajir</option><option>Other</option>
             </select>
           </div>
-          <div class="inp" style="margin-bottom:.72rem"><label>Land Type <span class="ef-tip" title="CDA is required for public and community land projects only. Private land projects are exempt (Carbon Markets Regs 2024 Reg.23E).">ⓘ</span></label>
+          <div class="inp" style="margin-bottom:0"><label>Land Type <span class="ef-tip" title="CDA required for public/community land (40% mandate). Private land is exempt.">ⓘ</span></label>
             <select id="kncr-land-type">
-              <option value="community">Community Land (40% mandate — CDA required)</option>
-              <option value="public">Public Land (40% mandate — CDA required)</option>
-              <option value="private">Private Land (exempt from CDA requirement)</option>
+              <option value="community">Community Land (40% CDA mandate)</option>
+              <option value="public">Public Land (40% CDA mandate)</option>
+              <option value="private">Private Land (exempt)</option>
             </select>
           </div>
-          <div class="inp" style="margin-bottom:.72rem"><label>Community Name</label><input type="text" id="kncr-community" placeholder="e.g. Turkana Pastoral Community"></div>
-          <div class="inp" style="margin-bottom:1.05rem"><label>Est. Annual Credits <span class="unit">(tCO₂e/yr)</span></label><input type="number" id="kncr-credits" placeholder="e.g. 1500"><div class="hint">From your Netzerra calculation above</div></div>
-          <div style="display:flex;gap:.5rem">
-            <button class="btn-calc" style="flex:1;justify-content:center;font-size:.78rem" onclick="generateKNCRPackage()">📄 DNA Package</button>
-            <button class="btn-calc" style="flex:1;justify-content:center;font-size:.78rem;background:linear-gradient(135deg,#1A3A6B,#1565C0)" onclick="generateCDA()">📋 CDA Fourth Schedule</button>
+          <div class="inp" style="margin-bottom:0"><label>Community Name</label><input type="text" id="kncr-community" placeholder="e.g. Turkana Pastoral Community"></div>
+          <div class="inp" style="margin-bottom:0">
+            <label>Est. Annual Credits <span class="unit">(tCO₂e/yr)</span></label>
+            <input type="number" id="kncr-credits" placeholder="e.g. 1500">
+            <div class="hint" id="kncr-credits-hint">From your Netzerra calculation — or enter manually</div>
           </div>
-          <div class="kncr-info-box" style="margin-top:.62rem">DNA Package: PDD + baseline + methodology. CDA: legally formatted Fourth Schedule agreement per Carbon Markets Regulations 2024 — required for all public/community land projects.</div>
+          <div class="inp" style="margin-bottom:0"><label>Project Budget <span class="unit">(KES)</span></label><input type="number" id="kncr-budget" placeholder="e.g. 5000000"></div>
+          <div class="inp" style="margin-bottom:0"><label>Project Start Date</label><input type="date" id="kncr-start-date"></div>
         </div>
+      </div>
 
-        <!-- Community Benefit Calculator -->
-        <div class="card">
-          <div style="display:flex;align-items:center;gap:.62rem;margin-bottom:1.05rem">
-            <div style="width:26px;height:26px;border-radius:50%;background:rgba(58,170,92,.2);border:1px solid rgba(58,170,92,.4);color:var(--mint);display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.78rem;flex-shrink:0">2</div>
-            <div style="font-family:'Sora',sans-serif;font-size:.98rem;font-weight:700">Community Benefit Calculator</div>
+      <!-- ═══════════════════════════════════════════════════
+           STEP-BY-STEP DOCUMENT PIPELINE
+      ════════════════════════════════════════════════════ -->
+
+      <!-- STEP 1: CONCEPT NOTE -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">1</div>
+          <div>
+            <div class="kncr-step-title">Project Concept Note (PCN)</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Regulation 21 · First Schedule Form PCN</div>
           </div>
-          <p style="font-size:.78rem;color:rgba(255,255,255,.48);margin-bottom:1.05rem">Kenya's Carbon Markets Regulations 2024 mandate <strong style="color:#FFCC80">25% of all credit proceeds</strong> must flow to local communities.</p>
-          <div class="inp" style="margin-bottom:.7rem"><label>Project Type</label>
+          <div class="kncr-step-badge badge-gen">✅ Netzerra generates</div>
+        </div>
+        <p class="kncr-step-desc">The first official submission to NEMA/DNA. Uses the exact First Schedule Form PCN format prescribed in the Kenya Gazette (Legal Notice No. 84 of 2024). DNA issues a Letter of No Objection (LoNO) within 14 days if satisfied.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">📝</div>
+            <div class="doc-name">Form PCN<br><span>Official First Schedule</span></div>
+            <button class="doc-btn" onclick="generatePCN()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🏛️</div>
+            <div class="doc-name">Letter of No Objection<br><span>Issued by NEMA/DNA (14 days)</span></div>
+            <div class="doc-btn-nema">From NEMA</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Timeline: Submit PCN → NEMA reviews → LoNO within 14 days</div>
+      </div>
+
+      <!-- STEP 2: PROJECT DESIGN -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">2</div>
+          <div>
+            <div class="kncr-step-title">Project Design Document (PDD) + Safeguards</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 22 · Must be submitted within 12 months of LoNO</div>
+          </div>
+          <div class="kncr-step-badge badge-gen">✅ Netzerra generates</div>
+        </div>
+        <p class="kncr-step-desc">Full project design submitted after LoNO. Reviewed by an ad hoc committee within 30 days. DNA then issues a Letter of Approval within 14 days. Also requires CDA (mandatory for public/community land), ESCP, and Stakeholder Consultation Report.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">📄</div>
+            <div class="doc-name">PDD / DNA Package<br><span>Baseline + methodology + additionality</span></div>
+            <button class="doc-btn" onclick="generateKNCRPackage()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">📋</div>
+            <div class="doc-name">CDA Fourth Schedule<br><span>40% community mandate — legally binding</span></div>
+            <button class="doc-btn" onclick="generateCDA()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">🌿</div>
+            <div class="doc-name">ESCP<br><span>Env. & Social Commitment Plan</span></div>
+            <button class="doc-btn" onclick="generateESCP()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">👥</div>
+            <div class="doc-name">Stakeholder Consultation<br><span>FPIC records + community engagement</span></div>
+            <button class="doc-btn" onclick="generateStakeholderReport()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🔬</div>
+            <div class="doc-name">ESIA Report<br><span>NEMA-registered firm required</span></div>
+            <div class="doc-btn-nema">External</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Timeline: Submit PDD → Ad hoc committee review (30 days) → Letter of Approval (14 days)</div>
+      </div>
+
+      <!-- STEP 3: VALIDATION -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">3</div>
+          <div>
+            <div class="kncr-step-title">Third-Party Validation</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 23 · Independent VVB assessment</div>
+          </div>
+          <div class="kncr-step-badge badge-ext">🔍 VVB required</div>
+        </div>
+        <p class="kncr-step-desc">An accredited Validation/Verification Body (VVB) independently reviews and validates your PDD. They confirm the methodology, additionality, baseline, and safeguards are correct. This is the only step Netzerra cannot automate — it requires a qualified third party.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card nema" style="flex:2">
+            <div class="doc-icon">🔍</div>
+            <div class="doc-name">Validation Report<br><span>Issued by NEMA-accredited VVB · Netzerra data quality score reduces VVB time from 6 months to ~2 weeks</span></div>
+            <div class="doc-btn-nema">From VVB</div>
+          </div>
+          <div class="kncr-doc-card gen" style="flex:1">
+            <div class="doc-icon">📊</div>
+            <div class="doc-name">Netzerra DQS Pack<br><span>Data quality evidence for VVB</span></div>
+            <button class="doc-btn" onclick="generateAndDownloadPDF()">PDF Report →</button>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Netzerra audit-ready data reduces VVB time from 6 months to ~2 weeks</div>
+      </div>
+
+      <!-- STEP 4: DNA REVIEW -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">4</div>
+          <div>
+            <div class="kncr-step-title">DNA Review & Letter of Approval</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 24 · Cabinet Secretary approves</div>
+          </div>
+          <div class="kncr-step-badge badge-ext">🏛️ NEMA/DNA</div>
+        </div>
+        <p class="kncr-step-desc">NEMA submits the validated PDD to the Cabinet Secretary for Science, Climate Change and Natural Resources for final approval. The DNA issues the Letter of Approval (LoA) once satisfied. For Article 6 projects, a Letter of Authorisation is also issued.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">✅</div>
+            <div class="doc-name">Letter of Approval (LoA)<br><span>Issued by DNA/NEMA after CS approval</span></div>
+            <div class="doc-btn-nema">From NEMA</div>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🌐</div>
+            <div class="doc-name">Letter of Authorisation<br><span>For Article 6 ITMO transfers only</span></div>
+            <div class="doc-btn-nema">From DNA</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Must commence project within 12 months of Letter of Approval</div>
+      </div>
+
+      <!-- STEP 5: KNCR REGISTRATION -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">5</div>
+          <div>
+            <div class="kncr-step-title">KNCR Registration</div>
+            <div class="kncr-step-law">kncr.go.ke · Public listing on Kenya National Carbon Registry</div>
+          </div>
+          <div class="kncr-step-badge badge-ext">📲 KNCR Portal</div>
+        </div>
+        <p class="kncr-step-desc">Project is formally listed on kncr.go.ke with a public project page and unique KNCR ID. All project documents are uploaded and made publicly accessible. Annual reporting to DNA is now mandatory under Regulation 25.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card nema" style="flex:2">
+            <div class="doc-icon">📲</div>
+            <div class="doc-name">KNCR Registration Form<br><span>Submit via kncr.go.ke portal · Upload all Netzerra-generated documents</span></div>
+            <a href="https://kncr.go.ke" target="_blank" rel="noopener" class="doc-btn" style="text-decoration:none">Open Portal →</a>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Annual progress reports to DNA due within 60 days of each project year-end</div>
+      </div>
+
+      <!-- STEP 6: MONITORING & CREDITS -->
+      <div class="kncr-step-block" style="border-color:rgba(245,166,35,.35)">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num" style="background:rgba(245,166,35,.25);border-color:rgba(245,166,35,.5);color:var(--gold)">6</div>
+          <div>
+            <div class="kncr-step-title" style="color:var(--gold)">Annual MRV · Credits Issued · Community Disbursement</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 25 · VCS Monitoring Report v4.4 format</div>
+          </div>
+          <div class="kncr-step-badge badge-gen">✅ Netzerra generates</div>
+        </div>
+        <p class="kncr-step-desc">After registration, verified emission reductions are monitored annually. The Annual MRV Report documents actual reductions achieved vs the baseline, triggers VVB verification, and upon approval — credits are issued and community disbursements begin.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card gen" style="border-color:rgba(245,166,35,.4)">
+            <div class="doc-icon">📊</div>
+            <div class="doc-name">Annual MRV Report<br><span>ISO 14064-1 · VCS MR format · DNA annual submission</span></div>
+            <button class="doc-btn" style="background:rgba(245,166,35,.2);color:var(--gold);border-color:rgba(245,166,35,.5)" onclick="generateMRVReport()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🔬</div>
+            <div class="doc-name">VVB Verification Report<br><span>Annual verification by accredited VVB</span></div>
+            <div class="doc-btn-nema">From VVB</div>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🏅</div>
+            <div class="doc-name">Credit Issuance<br><span>KNCR issues credits post-verification</span></div>
+            <div class="doc-btn-nema">KNCR Portal</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline" style="color:var(--gold)">⏱ Annual cycle: Monitor → MRV Report → VVB Verify → Credits Issued → Community Disbursement</div>
+      </div>
+
+      <!-- Community benefit calculator -->
+      <h3 style="margin:1.4rem 0 .7rem">💰 Community Benefit Calculator</h3>
+      <div class="card" style="margin-bottom:1.2rem">
+        <p style="font-size:.78rem;color:rgba(255,255,255,.48);margin-bottom:1.05rem">Kenya's Carbon Markets Regulations 2024 Reg.23E: <strong style="color:#FFCC80">40% of proceeds</strong> for land-based (public/community land) · <strong style="color:#FFCC80">25%</strong> for non-land-based</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.72rem;margin-bottom:1rem">
+          <div class="inp" style="margin-bottom:0"><label>Project Type</label>
             <select id="cb-type" onchange="calcCB()">
-              <option value="land">🌳 Land-based (public/community land) — 40% mandate</option>
-              <option value="nonland">⚡ Non-land-based (renewables, clean cooking) — 25% mandate</option>
-              <option value="private">🏠 Private land — exempt from community mandate</option>
+              <option value="land">🌳 Land-based — 40%</option>
+              <option value="nonland">⚡ Non-land-based — 25%</option>
+              <option value="private">🏠 Private — exempt</option>
             </select>
             <div class="hint" id="cb-rate-label" style="color:var(--gold);font-weight:600;margin-top:.22rem"></div>
-            <div class="hint" style="color:rgba(255,255,255,.28)">Source: Carbon Markets Regulations 2024, Regulation 23E (verified March 2026)</div>
           </div>
-          <div class="inp" style="margin-bottom:.7rem"><label>Annual Credits <span class="unit">(tCO₂e/yr)</span></label><input type="number" id="cb-credits" placeholder="1500" oninput="calcCB()"></div>
-          <div class="inp" style="margin-bottom:.7rem"><label>Credit Price <span class="unit">(USD/t)</span></label><input type="number" id="cb-price" value="12" oninput="calcCB()"></div>
-          <div class="inp" style="margin-bottom:.7rem"><label>Project Duration <span class="unit">(years)</span></label><input type="number" id="cb-years" value="10" oninput="calcCB()"></div>
-          <div class="inp" style="margin-bottom:1.05rem"><label>USD → KES Rate</label><input type="number" id="cb-fx" value="130" oninput="calcCB()"></div>
-          <div class="benefit-calc">
-            <div class="benefit-row"><span>Annual gross revenue</span><span class="benefit-val" id="cb-gross">—</span></div>
-            <div class="benefit-row"><span>Community fund <span id="cb-rate-display" style="color:var(--gold);font-size:.7rem">(select type above)</span></span><span class="benefit-val" id="cb-comm">—</span></div>
-            <div class="benefit-row"><span>Developer share (75%)</span><span class="benefit-val" id="cb-dev">—</span></div>
-            <div class="benefit-row"><span>Tax @ 15% preferential</span><span class="benefit-val" id="cb-tax">—</span></div>
-            <div class="benefit-row"><span>Lifetime gross (×years)</span><span class="benefit-val" id="cb-life">—</span></div>
-            <div class="benefit-row"><span style="color:var(--mint)">Net lifetime to developer</span><span class="benefit-val" id="cb-net">—</span></div>
-          </div>
-          <div style="margin-top:1rem;display:grid;grid-template-columns:1fr 1fr;gap:.42rem;font-size:.73rem">
-            <div style="background:rgba(255,255,255,.04);padding:.45rem .6rem;border-radius:5px">🌊 Clean Water</div>
-            <div style="background:rgba(255,255,255,.04);padding:.45rem .6rem;border-radius:5px">📚 Education</div>
-            <div style="background:rgba(255,255,255,.04);padding:.45rem .6rem;border-radius:5px">🏥 Healthcare</div>
-            <div style="background:rgba(255,255,255,.04);padding:.45rem .6rem;border-radius:5px">⚡ Energy Access</div>
-            <div style="background:rgba(255,255,255,.04);padding:.45rem .6rem;border-radius:5px">🌳 Reforestation</div>
-            <div style="background:rgba(255,255,255,.04);padding:.45rem .6rem;border-radius:5px">🌾 Food Security</div>
-          </div>
+          <div class="inp" style="margin-bottom:0"><label>Annual Credits <span class="unit">(tCO₂e/yr)</span></label><input type="number" id="cb-credits" placeholder="1500" oninput="calcCB()"></div>
+          <div class="inp" style="margin-bottom:0"><label>Credit Price <span class="unit">(USD/t)</span></label><input type="number" id="cb-price" value="12" oninput="calcCB()"></div>
+          <div class="inp" style="margin-bottom:0"><label>Duration <span class="unit">(years)</span></label><input type="number" id="cb-years" value="10" oninput="calcCB()"></div>
+          <div class="inp" style="margin-bottom:0"><label>USD/KES Rate</label><input type="number" id="cb-fx" value="130" oninput="calcCB()"></div>
+        </div>
+        <div class="benefit-calc">
+          <div class="benefit-row"><span>Annual gross revenue</span><span class="benefit-val" id="cb-gross">—</span></div>
+          <div class="benefit-row"><span>Community fund <span id="cb-rate-display" style="color:var(--gold);font-size:.7rem">(select type above)</span></span><span class="benefit-val" id="cb-comm">—</span></div>
+          <div class="benefit-row"><span>Developer share</span><span class="benefit-val" id="cb-dev">—</span></div>
+          <div class="benefit-row"><span>Tax @ 15% preferential</span><span class="benefit-val" id="cb-tax">—</span></div>
+          <div class="benefit-row"><span>Lifetime gross (×years)</span><span class="benefit-val" id="cb-life">—</span></div>
+          <div class="benefit-row"><span style="color:var(--mint)">Net lifetime to developer</span><span class="benefit-val" id="cb-net">—</span></div>
         </div>
       </div>
 
       <!-- Official links -->
-      <div class="g2" style="margin-top:1.2rem">
+      <div class="g2">
         <div class="card">
           <h4 style="margin-bottom:.9rem">🌐 Kenya's Bilateral Carbon Markets</h4>
           <div style="display:flex;flex-direction:column;gap:.5rem">
@@ -1221,16 +1397,17 @@
           </div>
         </div>
         <div class="card">
-          <h4 style="margin-bottom:.9rem">🔗 Official KNCR Links</h4>
+          <h4 style="margin-bottom:.9rem">🔗 Official Submission Links</h4>
           <div style="display:flex;flex-direction:column;gap:.62rem">
             <a href="https://kncr.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(58,170,92,.09);border:1px solid rgba(58,170,92,.2);border-radius:7px;color:var(--mint);font-size:.82rem;font-weight:600">🌐 kncr.go.ke — National Registry Portal</a>
-            <a href="https://nema.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🏛️ nema.go.ke — NEMA (Registry Manager)</a>
-            <a href="https://climate.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🌍 climate.go.ke — Climate Change Directorate (DNA)</a>
-            <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 DNA submissions processed through NEMA's Climate Change Directorate. Netzerra prepares your complete package — contact <strong style="color:#FFCC80">shukriali411@gmail.com</strong> for guided support.</div>
+            <a href="https://nema.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🏛️ nema.go.ke — NEMA (DNA / Registry Manager)</a>
+            <a href="https://climate.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🌍 climate.go.ke — Climate Change Directorate</a>
+            <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 Netzerra prepares all applicant-side documents. Contact <strong style="color:#FFCC80">shukriali411@gmail.com</strong> for guided submission support.</div>
           </div>
         </div>
       </div>
     </section>
+
 
     <!-- ══════════════ DISCLAIMER ══════════════ -->
     <section class="section" id="disclaimer-section">
@@ -1484,6 +1661,6 @@
 </footer>
 
 <!-- Netzerra App Script -->
-<script src="app.js?v=2.2"></script>
+<script src="app.js?v=2.4"></script>
 </body>
 </html>
