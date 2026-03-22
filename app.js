@@ -1933,7 +1933,7 @@ function renderPricing() {
         </div>
         <ul class="plan-features">${p.features.map(f => `<li>${f}</li>`).join('')}</ul>
         <button class="btn-plan ${isCanopy ? 'p' : 's'}"
-          onclick="${isCanopy ? `toast('You already have full Canopy access during the demo! 🏔️','success')` : `toast('Paid plans activate at commercial launch. You have Canopy access now.','info')`}">
+          onclick="${isCanopy ? 'toast(&quot;You already have full Canopy access during the demo!&quot;,&quot;success&quot;)' : 'toast(&quot;Paid plans activate at commercial launch. You have Canopy access now.&quot;,&quot;info&quot;)'}">
           ${isCanopy ? '🏔️ Active — Canopy Demo' : 'Available at Launch'}
         </button>
         ${isCanopy ? `<div class="mpesa-note" style="color:var(--gold);opacity:.8">Becomes KES 25,000/mo at commercial launch</div>` : ''}
