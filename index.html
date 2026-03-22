@@ -128,6 +128,15 @@
 
     <!-- ══════════════ HOME ══════════════ -->
     <section class="section active" id="home-section">
+    <!-- DNA ENDORSEMENT BANNER -->
+    <div id="dna-banner" style="background:linear-gradient(90deg,rgba(13,51,32,.95),rgba(26,94,53,.95));border:1px solid rgba(76,175,80,.35);border-radius:10px;padding:.75rem 1.1rem;margin-bottom:1.1rem;display:flex;align-items:center;gap:.85rem;cursor:pointer" onclick="showSection('kncr')">
+      <div style="font-size:1.5rem;flex-shrink:0">🏛️</div>
+      <div style="flex:1">
+        <div style="font-weight:700;font-size:.85rem;color:#A5D6A7">KNCR DNA Endorsement — Application In Progress</div>
+        <div style="font-size:.72rem;color:rgba(255,255,255,.5);margin-top:2px">Filed with NEMA · Status: Under Review · Target: Q2 2026 · Click to view KNCR Gateway →</div>
+      </div>
+      <div style="font-size:.72rem;font-weight:700;color:#4CAF50;background:rgba(76,175,80,.15);border:1px solid rgba(76,175,80,.3);padding:.22rem .65rem;border-radius:12px;flex-shrink:0">LIVE</div>
+    </div>
       <div class="hero">
         <div class="hero-eyebrow">🌍 Kenya's Carbon Intelligence Platform</div>
         <h1>Measure. Reduce. <em>Offset.</em><br>Kenya's Carbon Future Starts Here.</h1>
@@ -248,6 +257,7 @@
             <thead><tr><th>Project</th><th>Sector</th><th>County</th><th>tCO₂e/yr</th><th>S1</th><th>S2</th><th>S3</th><th>Score</th><th>Date</th></tr></thead>
             <tbody>
               <tr><td>Turkana BH-07</td><td><span class="tag-pill tag-b">Borehole</span></td><td>Turkana</td><td>48.2</td><td>18.4</td><td>22.1</td><td>7.7</td><td style="color:var(--gold)">72</td><td>2026-02-18</td></tr>
+              <tbody id="calc-history-tbody"></tbody>
               <tr><td>Laikipia Drip Scheme</td><td><span class="tag-pill tag-b">Irrigation</span></td><td>Laikipia</td><td>124.5</td><td>0</td><td>89.2</td><td>35.3</td><td style="color:var(--gold)">61</td><td>2026-02-10</td></tr>
               <tr><td>Narok Cattle Ranch</td><td><span class="tag-pill tag-l">Livestock</span></td><td>Narok</td><td>892.0</td><td>812.0</td><td>0</td><td>80.0</td><td style="color:var(--gold)">55</td><td>2026-02-05</td></tr>
               <tr><td>Mombasa Cold Chain</td><td><span class="tag-pill tag-t">Transport</span></td><td>Mombasa</td><td>38.7</td><td>38.7</td><td>0</td><td>0</td><td style="color:var(--gold)">78</td><td>2026-01-28</td></tr>
@@ -282,7 +292,55 @@
             <div class="inp-grid">
               <div class="inp"><label>Project Name</label><input type="text" id="bh-name" placeholder="e.g. Turkana BH-07"></div>
               <div class="inp"><label>County</label>
-                <select id="bh-county"><option>Turkana</option><option>Baringo</option><option>Nakuru</option><option>Laikipia</option><option>Marsabit</option><option>Garissa</option><option>Wajir</option><option>Mandera</option><option>Kitui</option><option>Machakos</option><option>Kajiado</option><option>Narok</option><option>Other</option></select>
+                <select id="bh-county">
+                <option>Mombasa</option>
+                <option>Kwale</option>
+                <option>Kilifi</option>
+                <option>Tana River</option>
+                <option>Lamu</option>
+                <option>Taita-Taveta</option>
+                <option>Garissa</option>
+                <option>Wajir</option>
+                <option>Mandera</option>
+                <option>Marsabit</option>
+                <option>Isiolo</option>
+                <option>Meru</option>
+                <option>Tharaka-Nithi</option>
+                <option>Embu</option>
+                <option>Kitui</option>
+                <option>Machakos</option>
+                <option>Makueni</option>
+                <option>Nyandarua</option>
+                <option>Nyeri</option>
+                <option>Kirinyaga</option>
+                <option>Murang'a</option>
+                <option>Kiambu</option>
+                <option>Turkana</option>
+                <option>West Pokot</option>
+                <option>Samburu</option>
+                <option>Trans Nzoia</option>
+                <option>Uasin Gishu</option>
+                <option>Elgeyo-Marakwet</option>
+                <option>Nandi</option>
+                <option>Baringo</option>
+                <option>Laikipia</option>
+                <option>Nakuru</option>
+                <option>Narok</option>
+                <option>Kajiado</option>
+                <option>Kericho</option>
+                <option>Bomet</option>
+                <option>Kakamega</option>
+                <option>Vihiga</option>
+                <option>Bungoma</option>
+                <option>Busia</option>
+                <option>Siaya</option>
+                <option>Kisumu</option>
+                <option>Homa Bay</option>
+                <option>Migori</option>
+                <option>Kisii</option>
+                <option>Nyamira</option>
+                <option>Nairobi</option>
+                </select>
               </div>
             </div>
 
@@ -714,7 +772,53 @@
         <div class="county-select-row">
           <select id="county-select" onchange="loadCountyData()">
             <option value="">— Select a County —</option>
-            <option>Turkana</option><option>Laikipia</option><option>Isiolo</option>
+            <option value="Mombasa">Mombasa County</option>
+            <option value="Kwale">Kwale County</option>
+            <option value="Kilifi">Kilifi County</option>
+            <option value="Tana River">Tana River County</option>
+            <option value="Lamu">Lamu County</option>
+            <option value="Taita-Taveta">Taita-Taveta County</option>
+            <option value="Garissa">Garissa County</option>
+            <option value="Wajir">Wajir County</option>
+            <option value="Mandera">Mandera County</option>
+            <option value="Marsabit">Marsabit County</option>
+            <option value="Isiolo">Isiolo County</option>
+            <option value="Meru">Meru County</option>
+            <option value="Tharaka-Nithi">Tharaka-Nithi County</option>
+            <option value="Embu">Embu County</option>
+            <option value="Kitui">Kitui County</option>
+            <option value="Machakos">Machakos County</option>
+            <option value="Makueni">Makueni County</option>
+            <option value="Nyandarua">Nyandarua County</option>
+            <option value="Nyeri">Nyeri County</option>
+            <option value="Kirinyaga">Kirinyaga County</option>
+            <option value="Murang'a">Murang'a County</option>
+            <option value="Kiambu">Kiambu County</option>
+            <option value="Turkana">Turkana County</option>
+            <option value="West Pokot">West Pokot County</option>
+            <option value="Samburu">Samburu County</option>
+            <option value="Trans Nzoia">Trans Nzoia County</option>
+            <option value="Uasin Gishu">Uasin Gishu County</option>
+            <option value="Elgeyo-Marakwet">Elgeyo-Marakwet County</option>
+            <option value="Nandi">Nandi County</option>
+            <option value="Baringo">Baringo County</option>
+            <option value="Laikipia">Laikipia County</option>
+            <option value="Nakuru">Nakuru County</option>
+            <option value="Narok">Narok County</option>
+            <option value="Kajiado">Kajiado County</option>
+            <option value="Kericho">Kericho County</option>
+            <option value="Bomet">Bomet County</option>
+            <option value="Kakamega">Kakamega County</option>
+            <option value="Vihiga">Vihiga County</option>
+            <option value="Bungoma">Bungoma County</option>
+            <option value="Busia">Busia County</option>
+            <option value="Siaya">Siaya County</option>
+            <option value="Kisumu">Kisumu County</option>
+            <option value="Homa Bay">Homa Bay County</option>
+            <option value="Migori">Migori County</option>
+            <option value="Kisii">Kisii County</option>
+            <option value="Nyamira">Nyamira County</option>
+            <option value="Nairobi">Nairobi County</option>
             <option>Samburu</option><option>Marsabit</option><option>Garissa</option>
             <option>Narok</option><option>Kajiado</option><option>Nakuru</option>
             <option>Baringo</option><option>West Pokot</option><option>Kwale</option>
@@ -996,7 +1100,7 @@
             <div class="founder-name">Shukri Ali</div>
             <div class="founder-title">Founder & CEO, Netzerra</div>
             <div style="display:flex;flex-direction:column;gap:.3rem;margin-top:.7rem">
-              <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📧 shukriali411@gmail.com</div>
+              <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4f3c273a243d262e23267b7e7e0f28222e2623612c2022">[email&#160;protected]</a></div>
               <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📱 +254 705 366 807</div>
               <div style="font-size:.75rem;color:var(--teal)">🌐 netzerrakenya.com</div>
             </div>
@@ -1077,7 +1181,7 @@
       <!-- Contact -->
       <h3 style="margin-bottom:.9rem">📬 Contact</h3>
       <div class="g3">
-        <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📧</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Email</div><div style="font-size:.83rem;color:var(--mint)">shukriali411@gmail.com</div></div>
+        <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📧</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Email</div><div style="font-size:.83rem;color:var(--mint)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="37445f425c455e565b5e03060677505a565e5b1954585a">[email&#160;protected]</a></div></div>
         <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📱</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Phone / WhatsApp</div><div style="font-size:.83rem;color:var(--mint)">+254 705 366 807</div></div>
         <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📍</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Location</div><div style="font-size:.83rem;color:var(--mint)">Nairobi, Kenya 🇰🇪</div></div>
       </div>
@@ -1148,9 +1252,60 @@
           <div class="inp" style="margin-bottom:.72rem"><label>Project Proponent</label><input type="text" id="kncr-proponent" placeholder="Organisation / County Gov."></div>
           <div class="inp" style="margin-bottom:.72rem"><label>County</label>
             <select id="kncr-county">
-              <option>Turkana</option><option>Laikipia</option><option>Nairobi</option>
-              <option>Nakuru</option><option>Mombasa</option><option>Garissa</option>
-              <option>Isiolo</option><option>Kajiado</option><option>Narok</option><option>Other</option>
+              <option>Mombasa</option>
+              <option>Kwale</option>
+              <option>Kilifi</option>
+              <option>Tana River</option>
+              <option>Lamu</option>
+              <option>Taita-Taveta</option>
+              <option>Garissa</option>
+              <option>Wajir</option>
+              <option>Mandera</option>
+              <option>Marsabit</option>
+              <option>Isiolo</option>
+              <option>Meru</option>
+              <option>Tharaka-Nithi</option>
+              <option>Embu</option>
+              <option>Kitui</option>
+              <option>Machakos</option>
+              <option>Makueni</option>
+              <option>Nyandarua</option>
+              <option>Nyeri</option>
+              <option>Kirinyaga</option>
+              <option>Murang'a</option>
+              <option>Kiambu</option>
+              <option>Turkana</option>
+              <option>West Pokot</option>
+              <option>Samburu</option>
+              <option>Trans Nzoia</option>
+              <option>Uasin Gishu</option>
+              <option>Elgeyo-Marakwet</option>
+              <option>Nandi</option>
+              <option>Baringo</option>
+              <option>Laikipia</option>
+              <option>Nakuru</option>
+              <option>Narok</option>
+              <option>Kajiado</option>
+              <option>Kericho</option>
+              <option>Bomet</option>
+              <option>Kakamega</option>
+              <option>Vihiga</option>
+              <option>Bungoma</option>
+              <option>Busia</option>
+              <option>Siaya</option>
+              <option>Kisumu</option>
+              <option>Homa Bay</option>
+              <option>Migori</option>
+              <option>Kisii</option>
+              <option>Nyamira</option>
+              <option>Nairobi</option>
+            </select>
+          </div>
+          <div class="inp" style="margin-bottom:.72rem"><label>Land Type <span style="font-size:.68rem;color:rgba(255,200,128,.8)">(sets CDA % — Reg. 23E)</span></label>
+            <select id="kncr-land-type">
+              <option value="land">Land-based on public/community land — 40% CDA</option>
+              <option value="nonland">Non-land-based on public/community land — 25% CDA</option>
+              <option value="private">Private land — Exempt from CDA (Reg. 23E(3))</option>
             </select>
           </div>
           <div class="inp" style="margin-bottom:1.05rem"><label>Est. Annual Credits <span class="unit">(tCO₂e/yr)</span></label><input type="number" id="kncr-credits" placeholder="e.g. 1500"><div class="hint">From your Netzerra calculation above</div></div>
@@ -1215,11 +1370,26 @@
             <a href="https://kncr.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(58,170,92,.09);border:1px solid rgba(58,170,92,.2);border-radius:7px;color:var(--mint);font-size:.82rem;font-weight:600">🌐 kncr.go.ke — National Registry Portal</a>
             <a href="https://nema.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🏛️ nema.go.ke — NEMA (Registry Manager)</a>
             <a href="https://climate.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🌍 climate.go.ke — Climate Change Directorate (DNA)</a>
-            <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 DNA submissions processed through NEMA's Climate Change Directorate. Netzerra prepares your complete package — contact <strong style="color:#FFCC80">shukriali411@gmail.com</strong> for guided support.</div>
+            <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 DNA submissions processed through NEMA's Climate Change Directorate. Netzerra prepares your complete package — contact <strong style="color:#FFCC80"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6b18031e0019020a07025f5a5a2b0c060a020745080406">[email&#160;protected]</a></strong> for guided support.</div>
           </div>
         </div>
       </div>
-    </section>
+    
+        <!-- ARTICLE 6 ITMO TRACKER -->
+        <div class="card" style="margin-top:1.1rem">
+          <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:.85rem">
+            <div style="display:flex;align-items:center;gap:.62rem">
+              <div style="width:26px;height:26px;border-radius:50%;background:rgba(106,27,154,.25);border:1px solid rgba(206,147,216,.4);color:#CE93D8;display:flex;align-items:center;justify-content:center;font-weight:700;font-size:.75rem;flex-shrink:0">A6</div>
+              <div style="font-family:'Sora',sans-serif;font-size:.98rem;font-weight:700">Article 6 ITMO Tracker</div>
+            </div>
+            <button onclick="openModal('modal-itmo-new')" style="padding:.3rem .85rem;background:rgba(106,27,154,.2);border:1px solid rgba(206,147,216,.3);color:#CE93D8;font-size:.72rem;font-weight:600;border-radius:var(--r-sm);cursor:pointer">+ New ITMO</button>
+          </div>
+          <p style="font-size:.76rem;color:rgba(255,255,255,.45);margin-bottom:.85rem">Track corresponding adjustments for internationally transferred mitigation outcomes (ITMOs). Required for Kenya bilateral deals with 🇨🇭 Switzerland and 🇸🇪 Sweden under Paris Agreement Article 6.2.</p>
+          <div class="kncr-info-box" style="margin-bottom:.85rem">DNA issues Letters of Authorisation for all ITMOs. Corresponding adjustments prevent double-counting. KES 500M penalty applies for unauthorised transfers (Reg. 37).</div>
+          <div id="itmo-list"><div style="text-align:center;padding:1.5rem;color:rgba(255,255,255,.25);font-size:.8rem">No ITMOs tracked yet. Click "+ New ITMO" to add.</div></div>
+          <div id="itmo-summary" style="display:none;margin-top:.75rem;padding:.65rem .85rem;background:rgba(106,27,154,.12);border:1px solid rgba(206,147,216,.2);border-radius:var(--r-sm);font-size:.8rem;color:rgba(255,255,255,.65)"></div>
+        </div>
+</section>
 
     <!-- ══════════════ DISCLAIMER ══════════════ -->
     <section class="section" id="disclaimer-section">
@@ -1276,7 +1446,7 @@
         <div style="font-size:.9rem;font-weight:600;color:var(--mint);margin-bottom:.38rem">Contact the Developer</div>
         <p style="font-size:.82rem;margin-bottom:.62rem">For partnership enquiries, county government pilots, or technical feedback:</p>
         <div style="display:flex;gap:.88rem;justify-content:center;flex-wrap:wrap;font-size:.82rem">
-          <a href="mailto:shukriali411@gmail.com" style="color:var(--mint)">📧 shukriali411@gmail.com</a>
+          <a href="/cdn-cgi/l/email-protection#76051e031d041f171a1f42474736111b171f1a5815191b" style="color:var(--mint)">📧 <span class="__cf_email__" data-cfemail="4d3e2538263f242c2124797c7c0d2a202c2421632e2220">[email&#160;protected]</span></a>
           <span style="color:var(--mint)">📱 +254 705 366 807</span>
           <span style="color:var(--teal)">🌐 netzerrakenya.com</span>
         </div>
@@ -1303,42 +1473,7 @@
      MODALS
 ══════════════════════════════════════════════════ -->
 <!-- New KNCR Project Modal -->
-<div class="modal-overlay" id="modal-kncr-new">
-  <div class="modal">
-    <h3>🏛️ Register New KNCR Project</h3>
-    <p style="color:rgba(255,255,255,.48)">Add a project to your KNCR pipeline tracker.</p>
-    <div class="fg"><label>Project Name</label><input type="text" id="kn-name" placeholder="e.g. Laikipia Agroforestry Initiative"></div>
-    <div class="fg"><label>Sector</label>
-      <select id="kn-sector">
-        <option value="borehole">💧 Borehole</option>
-        <option value="livestock">🐄 Livestock</option>
-        <option value="transport">🚌 Transport</option>
-        <option value="forestry">🌳 Agroforestry</option>
-        <option value="solar">☀️ Renewable Energy</option>
-        <option value="biogas">🔥 Clean Cooking</option>
-      </select>
-    </div>
-    <div class="fg"><label>County</label>
-      <select id="kn-county">
-        <option>Turkana</option><option>Laikipia</option><option>Nakuru</option>
-        <option>Nairobi</option><option>Mombasa</option><option>Garissa</option>
-        <option>Isiolo</option><option>Kajiado</option><option>Narok</option>
-      </select>
-    </div>
-    <div class="fg"><label>Est. Credits (tCO₂e/yr)</label><input type="number" id="kn-credits" placeholder="850"></div>
-    <div class="fg"><label>Registry Standard</label>
-      <select id="kn-std">
-        <option>Verra VCS</option>
-        <option>Gold Standard</option>
-        <option>KNCR Domestic</option>
-      </select>
-    </div>
-    <div style="display:flex;gap:.62rem;margin-top:.75rem">
-      <button class="btn-calc" onclick="addKNCRProject()" style="flex:1;justify-content:center;margin-top:0">✅ Add to Pipeline</button>
-      <button onclick="closeModal('modal-kncr-new')" style="flex:1;padding:.7rem;background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.52);border-radius:var(--r-sm);cursor:pointer">Cancel</button>
-    </div>
-  </div>
-</div>
+
 
 <!-- Profile / Account Modal -->
 <div class="modal-overlay" id="modal-profile">
@@ -1445,17 +1580,7 @@
       <select id="kn-sector">
         <option value="borehole">💧 Borehole</option>
         <option value="livestock">🐄 Livestock</option>
-        <option value="transport">🚌 Transport</option>
-        <option value="forestry">🌳 Agroforestry</option>
-        <option value="solar">☀️ Renewable Energy</option>
-        <option value="biogas">🔥 Clean Cooking</option>
-      </select>
-    </div>
-    <div class="fg"><label>County</label>
-      <select id="kn-county">
-        <option>Turkana</option><option>Laikipia</option><option>Nakuru</option>
-        <option>Nairobi</option><option>Mombasa</option><option>Garissa</option>
-        <option>Isiolo</option><option>Kajiado</option><option>Narok</option>
+        <option value="transport">🚌 TransportNarok</option>
       </select>
     </div>
     <div class="fg"><label>Est. Credits (tCO₂e/yr)</label><input type="number" id="kn-credits" placeholder="850"></div>
@@ -1511,5 +1636,52 @@
 
 <!-- Netzerra App Script -->
 <script src="app.js"></script>
+
+<!-- ITMO Modal -->
+<div class="modal-overlay" id="modal-itmo-new">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3>🌍 Register ITMO Transfer</h3>
+      <button onclick="closeModal('modal-itmo-new')" class="modal-x">✕</button>
+    </div>
+    <p style="color:rgba(255,255,255,.48);font-size:.8rem;margin-bottom:.88rem">Article 6.2 Paris Agreement — Internationally Transferred Mitigation Outcome</p>
+    <div class="fg"><label>KNCR Project</label>
+      <select id="itmo-project"><option value="">— Select project —</option></select>
+    </div>
+    <div class="fg"><label>Buyer Country</label>
+      <select id="itmo-country">
+        <option value="Switzerland">🇨🇭 Switzerland</option>
+        <option value="Sweden">🇸🇪 Sweden</option>
+        <option value="Japan">🇯🇵 Japan</option>
+        <option value="Singapore">🇸🇬 Singapore</option>
+        <option value="Other">Other Bilateral Partner</option>
+      </select>
+    </div>
+    <div class="fg"><label>Volume (tCO₂e)</label><input type="number" id="itmo-volume" placeholder="e.g. 5000"></div>
+    <div class="fg"><label>Price per tCO₂e (USD)</label><input type="number" id="itmo-price" placeholder="e.g. 15" step="0.01"></div>
+    <div class="fg"><label>LoA Reference No.</label><input type="text" id="itmo-loa" placeholder="NEMA-LoA-2026-001  (or: Pending)"></div>
+    <div class="fg"><label>Status</label>
+      <select id="itmo-status">
+        <option value="pending">Pending DNA Review</option>
+        <option value="authorised">LoA Issued — Authorised</option>
+        <option value="transferred">Credits Transferred</option>
+        <option value="settled">Settled &amp; Adjusted</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:.62rem;margin-top:.75rem">
+      <button class="btn-calc" onclick="addITMO()" style="flex:1;justify-content:center;margin-top:0">✅ Register ITMO</button>
+      <button onclick="closeModal('modal-itmo-new')" style="flex:1;padding:.7rem;background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.52);border-radius:var(--r-sm);cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+<script>
+if('serviceWorker' in navigator){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('./sw.js')
+      .then(function(){console.log('Netzerra offline ready');})
+      .catch(function(){});
+  });
+}
+</script>
 </body>
 </html>
