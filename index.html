@@ -16,7 +16,7 @@
   <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
 
   <!-- Netzerra Styles -->
-  <link rel="stylesheet" href="style.css?v=2.4">
+  <link rel="stylesheet" href="style.css?v=2.5">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -282,7 +282,7 @@
             <div class="inp-grid">
               <div class="inp"><label>Project Name</label><input type="text" id="bh-name" placeholder="e.g. Turkana BH-07"></div>
               <div class="inp"><label>County</label>
-                <select id="bh-county"><option>Turkana</option><option>Baringo</option><option>Nakuru</option><option>Laikipia</option><option>Marsabit</option><option>Garissa</option><option>Wajir</option><option>Mandera</option><option>Kitui</option><option>Machakos</option><option>Kajiado</option><option>Narok</option><option>Other</option></select>
+                <select id="bh-county"><option>Baringo</option><option>Bomet</option><option>Bungoma</option><option>Busia</option><option>Elgeyo-Marakwet</option><option>Embu</option><option>Garissa</option><option>Homa Bay</option><option>Isiolo</option><option>Kajiado</option><option>Kakamega</option><option>Kericho</option><option>Kiambu</option><option>Kilifi</option><option>Kirinyaga</option><option>Kisii</option><option>Kisumu</option><option>Kitui</option><option>Kwale</option><option>Laikipia</option><option>Lamu</option><option>Machakos</option><option>Makueni</option><option>Mandera</option><option>Marsabit</option><option>Meru</option><option>Migori</option><option>Mombasa</option><option>Murang'a</option><option>Nairobi</option><option>Nakuru</option><option>Nandi</option><option>Narok</option><option>Nyamira</option><option>Nyandarua</option><option>Nyeri</option><option>Samburu</option><option>Siaya</option><option>Taita-Taveta</option><option>Tana River</option><option>Tharaka-Nithi</option><option>Trans Nzoia</option><option>Turkana</option><option>Uasin Gishu</option><option>Vihiga</option><option>Wajir</option><option>West Pokot</option></select>
               </div>
             </div>
 
@@ -719,14 +719,7 @@
         <h2 style="color:#fff;margin-bottom:.35rem">County Carbon Oversight Platform</h2>
         <p style="color:rgba(255,255,255,.62);font-size:.85rem;max-width:540px">For a County Governor, Netzerra is a revenue and protection tool — live visibility into every carbon project on their land, automated tracking of the 40% community benefit mandate, FLLoCA performance data, and carbon levy collection. 40 of 47 counties currently report manually via Excel.</p>
         <div class="county-select-row">
-          <select id="county-select" onchange="loadCountyData()">
-            <option value="">— Select a County —</option>
-            <option>Turkana</option><option>Laikipia</option><option>Isiolo</option>
-            <option>Samburu</option><option>Marsabit</option><option>Garissa</option>
-            <option>Narok</option><option>Kajiado</option><option>Nakuru</option>
-            <option>Baringo</option><option>West Pokot</option><option>Kwale</option>
-            <option>Kilifi</option><option>Tana River</option>
-          </select>
+          <select id="county-select" onchange="loadCountyData()"><option value="">— Select County —</option><option value="Baringo">Baringo</option><option value="Bomet">Bomet</option><option value="Bungoma">Bungoma</option><option value="Busia">Busia</option><option value="Elgeyo-Marakwet">Elgeyo-Marakwet</option><option value="Embu">Embu</option><option value="Garissa">Garissa</option><option value="Homa Bay">Homa Bay</option><option value="Isiolo">Isiolo</option><option value="Kajiado">Kajiado</option><option value="Kakamega">Kakamega</option><option value="Kericho">Kericho</option><option value="Kiambu">Kiambu</option><option value="Kilifi">Kilifi</option><option value="Kirinyaga">Kirinyaga</option><option value="Kisii">Kisii</option><option value="Kisumu">Kisumu</option><option value="Kitui">Kitui</option><option value="Kwale">Kwale</option><option value="Laikipia">Laikipia</option><option value="Lamu">Lamu</option><option value="Machakos">Machakos</option><option value="Makueni">Makueni</option><option value="Mandera">Mandera</option><option value="Marsabit">Marsabit</option><option value="Meru">Meru</option><option value="Migori">Migori</option><option value="Mombasa">Mombasa</option><option value="Murang'a">Murang'a</option><option value="Nairobi">Nairobi</option><option value="Nakuru">Nakuru</option><option value="Nandi">Nandi</option><option value="Narok">Narok</option><option value="Nyamira">Nyamira</option><option value="Nyandarua">Nyandarua</option><option value="Nyeri">Nyeri</option><option value="Samburu">Samburu</option><option value="Siaya">Siaya</option><option value="Taita-Taveta">Taita-Taveta</option><option value="Tana River">Tana River</option><option value="Tharaka-Nithi">Tharaka-Nithi</option><option value="Trans Nzoia">Trans Nzoia</option><option value="Turkana">Turkana</option><option value="Uasin Gishu">Uasin Gishu</option><option value="Vihiga">Vihiga</option><option value="Wajir">Wajir</option><option value="West Pokot">West Pokot</option></select>
           <button class="btn-county-load" onclick="loadCountyData()">Load Dashboard →</button>
         </div>
       </div>
@@ -1155,13 +1148,7 @@
             </select>
           </div>
           <div class="inp" style="margin-bottom:0"><label>County</label>
-            <select id="kncr-county">
-              <option>Turkana</option><option>Laikipia</option><option>Nairobi</option>
-              <option>Nakuru</option><option>Mombasa</option><option>Garissa</option>
-              <option>Isiolo</option><option>Kajiado</option><option>Narok</option>
-              <option>Baringo</option><option>Tana River</option><option>Marsabit</option>
-              <option>Samburu</option><option>Mandera</option><option>Wajir</option><option>Other</option>
-            </select>
+            <select id="kncr-county"><option>Baringo</option><option>Bomet</option><option>Bungoma</option><option>Busia</option><option>Elgeyo-Marakwet</option><option>Embu</option><option>Garissa</option><option>Homa Bay</option><option>Isiolo</option><option>Kajiado</option><option>Kakamega</option><option>Kericho</option><option>Kiambu</option><option>Kilifi</option><option>Kirinyaga</option><option>Kisii</option><option>Kisumu</option><option>Kitui</option><option>Kwale</option><option>Laikipia</option><option>Lamu</option><option>Machakos</option><option>Makueni</option><option>Mandera</option><option>Marsabit</option><option>Meru</option><option>Migori</option><option>Mombasa</option><option>Murang'a</option><option>Nairobi</option><option>Nakuru</option><option>Nandi</option><option>Narok</option><option>Nyamira</option><option>Nyandarua</option><option>Nyeri</option><option>Samburu</option><option>Siaya</option><option>Taita-Taveta</option><option>Tana River</option><option>Tharaka-Nithi</option><option>Trans Nzoia</option><option>Turkana</option><option>Uasin Gishu</option><option>Vihiga</option><option>Wajir</option><option>West Pokot</option></select>
           </div>
           <div class="inp" style="margin-bottom:0"><label>Land Type <span class="ef-tip" title="CDA required for public/community land (40% mandate). Private land is exempt.">ⓘ</span></label>
             <select id="kncr-land-type">
@@ -1603,11 +1590,7 @@
       </select>
     </div>
     <div class="fg"><label>County</label>
-      <select id="kn-county">
-        <option>Turkana</option><option>Laikipia</option><option>Nakuru</option>
-        <option>Nairobi</option><option>Mombasa</option><option>Garissa</option>
-        <option>Isiolo</option><option>Kajiado</option><option>Narok</option>
-      </select>
+      <select id="kn-county"><option>Baringo</option><option>Bomet</option><option>Bungoma</option><option>Busia</option><option>Elgeyo-Marakwet</option><option>Embu</option><option>Garissa</option><option>Homa Bay</option><option>Isiolo</option><option>Kajiado</option><option>Kakamega</option><option>Kericho</option><option>Kiambu</option><option>Kilifi</option><option>Kirinyaga</option><option>Kisii</option><option>Kisumu</option><option>Kitui</option><option>Kwale</option><option>Laikipia</option><option>Lamu</option><option>Machakos</option><option>Makueni</option><option>Mandera</option><option>Marsabit</option><option>Meru</option><option>Migori</option><option>Mombasa</option><option>Murang'a</option><option>Nairobi</option><option>Nakuru</option><option>Nandi</option><option>Narok</option><option>Nyamira</option><option>Nyandarua</option><option>Nyeri</option><option>Samburu</option><option>Siaya</option><option>Taita-Taveta</option><option>Tana River</option><option>Tharaka-Nithi</option><option>Trans Nzoia</option><option>Turkana</option><option>Uasin Gishu</option><option>Vihiga</option><option>Wajir</option><option>West Pokot</option></select>
     </div>
     <div class="fg"><label>Est. Credits (tCO₂e/yr)</label><input type="number" id="kn-credits" placeholder="850"></div>
     <div class="fg"><label>Registry Standard</label>
@@ -1661,6 +1644,6 @@
 </footer>
 
 <!-- Netzerra App Script -->
-<script src="app.js?v=2.4"></script>
+<script src="app.js?v=2.5"></script>
 </body>
 </html>
