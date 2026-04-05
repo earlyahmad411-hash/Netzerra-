@@ -17,6 +17,7 @@
 
   <!-- Netzerra Styles -->
   <link rel="stylesheet" href="style.css?v=2.6">
+  <link rel="stylesheet" href="netzerra-enterprise.css?v=1.0">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -79,6 +80,26 @@
         <span class="ico">⚡</span> Emission Calculator <span class="nav-badge">5</span>
       </div>
       <div class="nav-item" onclick="showSection('offsets')"><span class="ico">🌳</span> Offset Strategies</div>
+      <div class="nav-item" onclick="showSection('sequestration')"><span class="ico">🌿</span> Sequestration Calc</div>
+
+      <div class="nav-label">Enterprise</div>
+      <div class="nav-item" id="nav-enterprise" onclick="showSection('enterprise')" style="display:none;background:rgba(245,166,35,.06)">
+        <span class="ico">🏢</span> Enterprise Dashboard
+        <span class="nav-badge" style="background:var(--gold);color:var(--forest)">NEW</span>
+      </div>
+      <div class="nav-item" id="nav-exchange" onclick="showSection('exchange')" style="display:none">
+        <span class="ico">🔄</span> Carbon Exchange
+      </div>
+      <div class="nav-item" id="nav-b2b" onclick="showSection('b2b')" style="display:none;background:rgba(0,201,167,.06)">
+        <span class="ico">🤝</span> B2B Trading Hub
+        <span class="nav-badge" style="background:var(--teal);color:var(--forest)">NEW</span>
+      </div>
+
+      <div class="nav-label">Oversight</div>
+      <div class="nav-item" id="nav-nema-oversight" onclick="showSection('nema-oversight')" style="display:none;background:rgba(128,222,234,.06)">
+        <span class="ico">🏛️</span> NEMA Oversight
+        <span class="nav-badge" style="background:#80DEEA;color:var(--forest)">NEW</span>
+      </div>
 
       <div class="nav-label">County Gov</div>
       <div class="nav-item" onclick="showSection('county')" style="background:rgba(0,201,167,.06)">
@@ -675,6 +696,7 @@
             <div class="dqs-box" id="res-dqs-box">
               <div class="dqs-lbl">Data Quality Score</div>
               <div class="dqs-score" id="res-dqs-score">—</div>
+          <div id="dqs-ai-advice" style="margin-top:.55rem"></div>
               <div class="dqs-grade" id="res-dqs-grade">Declare sources to score</div>
             </div>
             <!-- Plausibility Flags -->
@@ -996,7 +1018,7 @@
             <div class="founder-name">Shukri Ali</div>
             <div class="founder-title">Founder & CEO, Netzerra</div>
             <div style="display:flex;flex-direction:column;gap:.3rem;margin-top:.7rem">
-              <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📧 shukriali411@gmail.com</div>
+              <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📧 <a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="4b38233e2039222a27227f7a7a0b2c262a222765282426">[email&#160;protected]</a></div>
               <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📱 +254 705 366 807</div>
               <div style="font-size:.75rem;color:var(--teal)">🌐 netzerrakenya.com</div>
             </div>
@@ -1077,7 +1099,7 @@
       <!-- Contact -->
       <h3 style="margin-bottom:.9rem">📬 Contact</h3>
       <div class="g3">
-        <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📧</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Email</div><div style="font-size:.83rem;color:var(--mint)">shukriali411@gmail.com</div></div>
+        <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📧</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Email</div><div style="font-size:.83rem;color:var(--mint)"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="6f1c071a041d060e03065b5e5e2f08020e0603410c0002">[email&#160;protected]</a></div></div>
         <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📱</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Phone / WhatsApp</div><div style="font-size:.83rem;color:var(--mint)">+254 705 366 807</div></div>
         <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📍</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Location</div><div style="font-size:.83rem;color:var(--mint)">Nairobi, Kenya 🇰🇪</div></div>
       </div>
@@ -1389,7 +1411,7 @@
             <a href="https://kncr.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(58,170,92,.09);border:1px solid rgba(58,170,92,.2);border-radius:7px;color:var(--mint);font-size:.82rem;font-weight:600">🌐 kncr.go.ke — National Registry Portal</a>
             <a href="https://nema.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🏛️ nema.go.ke — NEMA (DNA / Registry Manager)</a>
             <a href="https://climate.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🌍 climate.go.ke — Climate Change Directorate</a>
-            <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 Netzerra prepares all applicant-side documents. Contact <strong style="color:#FFCC80">shukriali411@gmail.com</strong> for guided submission support.</div>
+            <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 Netzerra prepares all applicant-side documents. Contact <strong style="color:#FFCC80"><a href="/cdn-cgi/l/email-protection" class="__cf_email__" data-cfemail="b3c0dbc6d8c1dad2dfda878282f3d4ded2dadf9dd0dcde">[email&#160;protected]</a></strong> for guided submission support.</div>
           </div>
         </div>
       </div>
@@ -1451,11 +1473,376 @@
         <div style="font-size:.9rem;font-weight:600;color:var(--mint);margin-bottom:.38rem">Contact the Developer</div>
         <p style="font-size:.82rem;margin-bottom:.62rem">For partnership enquiries, county government pilots, or technical feedback:</p>
         <div style="display:flex;gap:.88rem;justify-content:center;flex-wrap:wrap;font-size:.82rem">
-          <a href="mailto:shukriali411@gmail.com" style="color:var(--mint)">📧 shukriali411@gmail.com</a>
+          <a href="/cdn-cgi/l/email-protection#4f3c273a243d262e23267b7e7e0f28222e2623612c2022" style="color:var(--mint)">📧 <span class="__cf_email__" data-cfemail="4f3c273a243d262e23267b7e7e0f28222e2623612c2022">[email&#160;protected]</span></a>
           <span style="color:var(--mint)">📱 +254 705 366 807</span>
           <span style="color:var(--teal)">🌐 netzerrakenya.com</span>
         </div>
         <div style="margin-top:.88rem;font-size:.72rem;color:rgba(255,255,255,.32)">© 2026 Netzerra · Shukri Ali · All rights reserved</div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════ CARBON SEQUESTRATION CALCULATOR ══════════════ -->
+    <section class="section" id="sequestration-section">
+      <div class="ent-hero">
+        <div class="trust-badge" style="margin-bottom:.8rem">🌿 IPCC AR6 · KEFRI 2019/2021 · Verra VM0047 Compatible</div>
+        <h2>🌳 Carbon Sequestration Calculator</h2>
+        <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:600px;margin:.4rem auto 0">How much CO₂ does your tree planting, agroforestry, or conservation project absorb? Calculate sequestration, project credit value, and KNCR eligibility.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <h3 style="margin-bottom:.3rem">📐 Input Method</h3>
+        <div style="display:flex;gap:1rem;margin-bottom:1rem;flex-wrap:wrap">
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.83rem;cursor:pointer">
+            <input type="radio" name="seq-input-mode" value="area" checked onchange="updateSeqPreview()"> By area (hectares)
+          </label>
+          <label style="display:flex;align-items:center;gap:.4rem;font-size:.83rem;cursor:pointer">
+            <input type="radio" name="seq-input-mode" value="trees" onchange="updateSeqPreview()"> By number of trees
+          </label>
+        </div>
+        <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.75rem;margin-bottom:1rem">
+          <div class="inp"><label>Project Area (hectares)</label><input type="number" id="seq-area" placeholder="e.g. 500" min="0" step="0.1" oninput="updateSeqPreview()"></div>
+          <div class="inp"><label>Number of Trees</label><input type="number" id="seq-trees" placeholder="e.g. 1000000" min="0" oninput="updateSeqPreview()"></div>
+          <div class="inp"><label>Tree Age/Size</label>
+            <select id="seq-tree-age" onchange="updateSeqPreview()">
+              <option value="small">Small (&lt;5yr)</option>
+              <option value="medium" selected>Medium (5–15yr)</option>
+              <option value="large">Mature (&gt;15yr)</option>
+              <option value="mixed">Mixed / unknown</option>
+            </select>
+          </div>
+          <div class="inp"><label>Project Duration (years)</label><input type="number" id="seq-years" value="10" min="1" max="50" oninput="updateSeqPreview()"></div>
+        </div>
+        <div id="seq-tree-direct" style="font-size:.75rem;color:rgba(255,200,128,.7);margin-bottom:.5rem"></div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <h3 style="margin-bottom:.75rem">🌱 Select Species / Ecosystem</h3>
+        <div class="seq-species-grid" id="seq-species-grid"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem;margin-bottom:1rem">
+        <div class="card">
+          <h3 style="margin-bottom:.75rem">📊 Sequestration Results</h3>
+          <div class="seq-results">
+            <div class="seq-result-row"><span>Species</span><span id="seq-result-species" style="color:var(--mint)">—</span></div>
+            <div class="seq-result-row"><span>Area</span><span id="seq-result-area">—</span></div>
+            <div class="seq-result-row"><span>Annual Absorption</span><span id="seq-result-annual" style="color:#69F0AE;font-weight:700;font-size:1.1rem">—</span></div>
+            <div class="seq-result-row"><span>Total Over Period</span><span id="seq-result-total" style="color:var(--gold);font-weight:700">—</span></div>
+            <div class="seq-result-row"><span>Tradeable Credits (net)</span><span id="seq-result-net" style="color:var(--mint)">—</span></div>
+            <div class="seq-result-row"><span>Estimated Credit Value</span><span id="seq-result-value" style="color:var(--gold)">—</span></div>
+            <div class="seq-result-row" style="border-top:1px solid rgba(255,255,255,.08);margin-top:.5rem;padding-top:.5rem"><span>Planting Density</span><span id="seq-result-density" style="color:rgba(255,255,255,.45)">—</span></div>
+            <div class="seq-result-row"><span>Source</span><span id="seq-result-ref" style="color:rgba(255,255,255,.3);font-size:.72rem">—</span></div>
+          </div>
+          <div style="margin-top:.75rem;padding:.55rem .75rem;background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2);border-radius:8px;font-size:.72rem;color:rgba(245,166,35,.7)">
+            ⚠️ 20% buffer pool deducted per Verra VCS standard. KES 800–1,800/tCO₂e price range (KNCR Domestic to Gold Standard).
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:.75rem">📈 Absorption Projection</h3>
+          <canvas id="seq-chart"></canvas>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+          <h3>🤖 AI Project Analysis</h3>
+          <button id="btn-seq-ai" class="btn-buy-credit" onclick="generateSeqAIInsight()">🤖 AI Project Analysis</button>
+        </div>
+        <p style="font-size:.78rem;color:rgba(255,255,255,.4);margin-bottom:.6rem">Get KNCR eligibility assessment, risk analysis, co-benefits, and next steps tailored to your species and scale.</p>
+        <div id="seq-ai-output"></div>
+      </div>
+
+      <div class="card">
+        <h3 style="margin-bottom:.5rem">📋 Quick Reference — Kenya Sequestration Rates</h3>
+        <div style="overflow-x:auto">
+          <table style="width:100%;border-collapse:collapse;font-size:.78rem">
+            <thead><tr style="background:rgba(109,217,140,.1)">
+              <th style="padding:.4rem .6rem;text-align:left;color:var(--mint)">Species</th>
+              <th style="padding:.4rem .6rem;text-align:right;color:var(--mint)">tCO₂e/ha/yr</th>
+              <th style="padding:.4rem .6rem;text-align:left;color:var(--mint)">Best For</th>
+              <th style="padding:.4rem .6rem;text-align:left;color:var(--mint)">Source</th>
+            </tr></thead>
+            <tbody>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.05)"><td style="padding:.35rem .6rem">🎋 Bamboo (Highland)</td><td style="padding:.35rem .6rem;text-align:right;font-weight:700;color:#69F0AE">17.0</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.5)">Highlands &gt;1,500m</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.3)">Yuen et al. 2017</td></tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)"><td style="padding:.35rem .6rem">🌲 Casuarina</td><td style="padding:.35rem .6rem;text-align:right;font-weight:700;color:#69F0AE">8.0</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.5)">ASAL + coastal</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.3)">KEFRI 2019</td></tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.05)"><td style="padding:.35rem .6rem">🌳 Grevillea</td><td style="padding:.35rem .6rem;text-align:right;font-weight:700;color:#69F0AE">6.0</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.5)">Smallholder farms</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.3)">KEFRI 2019</td></tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)"><td style="padding:.35rem .6rem">🌊 Mangrove</td><td style="padding:.35rem .6rem;text-align:right;font-weight:700;color:#69F0AE">6.4–9.8</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.5)">Coast (Kwale, Kilifi)</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.3)">Alongi 2014</td></tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.05)"><td style="padding:.35rem .6rem">🌴 Acacia tortilis</td><td style="padding:.35rem .6rem;text-align:right;font-weight:700;color:#69F0AE">4.0</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.5)">Arid/semi-arid</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.3)">KEFRI 2020</td></tr>
+              <tr style="border-bottom:1px solid rgba(255,255,255,.05);background:rgba(255,255,255,.02)"><td style="padding:.35rem .6rem">🌱 Soil Carbon</td><td style="padding:.35rem .6rem;text-align:right;font-weight:700;color:#69F0AE">0.4</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.5)">Cropland</td><td style="padding:.35rem .6rem;color:rgba(255,255,255,.3)">IPCC 2019</td></tr>
+            </tbody>
+          </table>
+        </div>
+        <div style="margin-top:.6rem;font-size:.7rem;color:rgba(255,255,255,.25)">Note: 1 million trees × 21 kg CO₂/tree/yr (medium age) = 21,000 tCO₂e/yr. Adjust using the calculator above for your specific species and density.</div>
+      </div>
+    </section>
+
+    <!-- ══════════════ ENTERPRISE DASHBOARD ══════════════ -->
+    <section class="section" id="enterprise-section">
+      <div class="ent-hero">
+        <div class="trust-badge" style="margin-bottom:.8rem">🏛️ Built in alignment with Carbon Markets Regulations 2024</div>
+        <h2>🏢 Enterprise Carbon Dashboard</h2>
+        <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:580px;margin:0 auto;margin-top:.4rem">Manage your organisation's carbon portfolio, buy and sell credits, track your net-zero trajectory, and generate AI-powered compliance reports.</p>
+      </div>
+
+      <div class="g4" id="ent-kpis" style="margin-bottom:1.2rem"></div>
+
+      <div class="ent-tabs">
+        <div class="ent-tab active" data-tab="ent-portfolio-view">📋 Credit Portfolio</div>
+        <div class="ent-tab" data-tab="ent-sell-view">📤 List Credits for Sale</div>
+        <div class="ent-tab" data-tab="ent-parse-view">🤖 Smart Data Parser</div>
+        <div class="ent-tab" data-tab="ent-ocr-view">📷 OCR Receipt Scan</div>
+        <div class="ent-tab" data-tab="ent-scope3-view">🔗 Scope 3 Tracker</div>
+        <div class="ent-tab" data-tab="ent-netzero-view">🎯 Net Zero Pathway</div>
+        <div class="ent-tab" data-tab="ent-ai-view">🧠 AI Tools</div>
+      </div>
+
+      <div id="ent-portfolio-view" class="ent-tab-content">
+        <div class="card" style="margin-bottom:1rem">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem;flex-wrap:wrap;gap:.5rem">
+            <h3>🏅 Retired Carbon Credits</h3>
+            <div style="display:flex;gap:.5rem">
+              <button class="btn-buy-credit" onclick="showSection('exchange')">🔄 Go to Exchange</button>
+              <button class="btn-buy-credit" style="background:var(--teal)" onclick="showSection('b2b')">🤝 B2B Hub</button>
+            </div>
+          </div>
+          <div id="portfolio-list"></div>
+        </div>
+      </div>
+
+      <div id="ent-sell-view" class="ent-tab-content" style="display:none">
+        <div class="card" style="margin-bottom:1rem">
+          <h3 style="margin-bottom:.5rem">📤 List Your Carbon Credits for Sale</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Have verified carbon credits? List them on the Netzerra Exchange for other enterprises to purchase. Credits will appear as "Pending" until verified.</p>
+          <div class="sell-form">
+            <div class="fg fg-full"><label>Project Name *</label><input type="text" id="sell-project-name" placeholder="e.g., Kisumu Solar Farm Phase II"></div>
+            <div class="fg"><label>Credits (tCO₂e) *</label><input type="number" id="sell-credits" placeholder="e.g., 500" min="1"></div>
+            <div class="fg"><label>Price per tCO₂e (KES) *</label><input type="number" id="sell-price" placeholder="e.g., 1200" min="1"></div>
+            <div class="fg"><label>Standard</label><select id="sell-standard"><option>KNCR Domestic</option><option>Verra VCS</option><option>Gold Standard</option></select></div>
+            <div class="fg"><label>Project Type</label><select id="sell-type"><option>Agroforestry</option><option>Renewable Energy</option><option>Blue Carbon</option><option>Clean Cooking</option><option>Transport</option></select></div>
+            <div class="fg"><label>County</label><select id="sell-county"><option>Nairobi</option><option>Mombasa</option><option>Kisumu</option><option>Nakuru</option><option>Turkana</option><option>Kwale</option><option>Narok</option><option>Laikipia</option><option>Machakos</option><option>Kilifi</option></select></div>
+            <div class="fg fg-full" style="margin-top:.3rem"><button class="btn-list-credits" onclick="listCreditsForSale()">📤 List on Exchange</button></div>
+          </div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:.5rem">📋 Your Listed Credits</h3>
+          <div id="listed-credits-list"></div>
+        </div>
+      </div>
+
+      <div id="ent-parse-view" class="ent-tab-content" style="display:none">
+        <div class="card">
+          <h3 style="margin-bottom:.5rem">🤖 AI Smart Data Parser</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Paste text from utility bills, fuel receipts, or delivery notes. Netzerra's AI will extract emission-relevant data automatically.</p>
+          <div class="smart-parse-box">
+            <textarea id="smart-parse-input" placeholder="Paste your receipt or bill text here...&#10;&#10;Example: Purchased 500 litres of diesel from Total Energies. Also consumed 12,000 kWh of electricity from KPLC. Used 200 bags of cement for foundation work."></textarea>
+            <div style="display:flex;gap:.5rem;margin-top:.6rem;flex-wrap:wrap">
+              <button class="btn-buy-credit" onclick="handleSmartParse()">🔍 Extract Data</button>
+              <button style="padding:.5rem 1rem;background:rgba(255,255,255,.06);border:1px solid rgba(255,255,255,.1);color:rgba(255,255,255,.5);border-radius:8px;font-size:.78rem;cursor:pointer" onclick="document.getElementById('smart-parse-input').value='Purchased 500 litres of diesel from Total Energies station in Nairobi. Monthly KPLC bill: 12,000 kWh. Delivered 200 bags of cement (50kg each) to site. Used 15 tonnes of steel rebar.'">📋 Load Example</button>
+            </div>
+          </div>
+          <div id="smart-parse-results" style="margin-top:.8rem"></div>
+        </div>
+      </div>
+
+      <div id="ent-ai-view" class="ent-tab-content" style="display:none">
+        <div class="card" style="margin-bottom:1rem">
+          <h3 style="margin-bottom:.5rem">📈 AI Emissions Forecast</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Predict your future emissions trajectory based on historical patterns. Identify trends and plan your offset strategy.</p>
+          <button class="btn-buy-credit" onclick="runEmissionsForecast()" style="margin-bottom:.8rem">📈 Generate Forecast</button>
+          <div style="max-width:600px"><canvas id="forecast-chart"></canvas></div>
+          <div id="forecast-summary" style="margin-top:.8rem"></div>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h3 style="margin-bottom:.5rem">🛡️ KNCR Compliance Score</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Assess your readiness for KNCR registration. Identifies gaps in methodology, documentation, and verification.</p>
+          <button class="btn-buy-credit" onclick="runComplianceScore()" style="margin-bottom:.8rem">🛡️ Run Compliance Check</button>
+          <div id="compliance-results"></div>
+        </div>
+        <div class="card" style="margin-bottom:1rem">
+          <h3 style="margin-bottom:.5rem">⚠️ Anomaly Detection</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">AI-powered analysis of your emission data to flag unusual patterns, potential errors, or efficiency opportunities.</p>
+          <button class="btn-buy-credit" onclick="runAnomalyDetection()" style="margin-bottom:.8rem">⚠️ Detect Anomalies</button>
+          <div id="anomaly-results"></div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:.5rem">📊 AI Executive Report</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Generate an AI-powered executive summary of your carbon position, risks, and recommended actions.</p>
+          <button class="btn-ai-report" id="btn-ai-report" onclick="generateAIReport()">🤖 Generate AI Report</button>
+          <div id="ai-report-output" style="margin-top:.8rem"></div>
+        </div>
+      </div>
+
+      <div id="ent-ocr-view" class="ent-tab-content" style="display:none">
+        <div class="card">
+          <h3 style="margin-bottom:.5rem">📷 AI Receipt Scanner (OCR)</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Upload a photo of a fuel receipt, utility bill, or delivery note. Gemini Vision reads it and extracts emission data automatically — no typing required.</p>
+          <div class="ocr-upload-area" onclick="document.getElementById('ocr-file-input').click()">
+            <div style="font-size:2rem">📷</div>
+            <div style="font-weight:600;color:var(--mint);margin:.3rem 0">Tap to upload receipt photo</div>
+            <div style="font-size:.75rem;color:rgba(255,255,255,.35)">JPG, PNG · Works with fuel receipts, KPLC bills, delivery notes, invoices</div>
+            <input type="file" id="ocr-file-input" accept="image/*" capture="environment" style="display:none" onchange="handleOCRUpload(this)">
+          </div>
+          <img id="ocr-preview" style="display:none;max-width:100%;max-height:200px;border-radius:8px;margin:.6rem 0;object-fit:contain;border:1px solid rgba(255,255,255,.1)" alt="Receipt preview">
+          <div id="ocr-status" style="font-size:.78rem;margin:.4rem 0;min-height:1.2rem"></div>
+          <div id="ocr-results"></div>
+        </div>
+      </div>
+
+      <div id="ent-scope3-view" class="ent-tab-content" style="display:none">
+        <div class="card">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.75rem;flex-wrap:wrap;gap:.5rem">
+            <h3>🔗 Scope 3 Supply Chain Tracker</h3>
+            <div style="text-align:right">
+              <div id="scope3-total" style="font-size:1.3rem;font-weight:700;color:var(--gold)">0 tCO₂e/yr</div>
+              <div id="scope3-pct" style="font-size:.72rem;color:rgba(255,255,255,.35)">0% of total footprint</div>
+            </div>
+          </div>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Track all 10 GHG Protocol Scope 3 categories. Required for ISO 14064 full boundary reporting and Verra VCS project design documents.</p>
+          <div id="scope3-tracker"></div>
+          <div style="margin-top:.75rem;padding:.6rem .8rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:8px;font-size:.72rem;color:rgba(245,166,35,.65)">
+            📋 Scope 3 is optional for basic KNCR reporting but required for full ISO 14064-1 organisational boundary. For CBAM compliance (EU companies importing to Kenya), Scope 3 will be mandatory by 2026.
+          </div>
+        </div>
+      </div>
+
+      <div id="ent-netzero-view" class="ent-tab-content" style="display:none">
+        <div class="card">
+          <h3 style="margin-bottom:.5rem">🎯 Net Zero Pathway Builder</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Model your road to net zero. See required annual reductions, offset needs, and budget implications.</p>
+          <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(180px,1fr));gap:.75rem;margin-bottom:.8rem">
+            <div class="inp"><label>Target Year</label>
+              <select id="nz-target-year" onchange="runNetZeroPathway()">
+                <option value="2030">2030</option><option value="2035" selected>2035</option>
+                <option value="2040">2040</option><option value="2050">2050</option>
+              </select>
+            </div>
+            <div class="inp"><label>Annual Offset Budget (KES)</label><input type="number" id="nz-offset-budget" placeholder="500000" oninput="runNetZeroPathway()"></div>
+          </div>
+          <button class="btn-buy-credit" onclick="runNetZeroPathway()" style="margin-bottom:.8rem">🎯 Model Pathway</button>
+          <canvas id="nz-chart" style="max-height:280px"></canvas>
+          <div id="nz-summary" style="margin-top:.75rem"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ CARBON CREDIT EXCHANGE ══════════════ -->
+    <section class="section" id="exchange-section">
+      <div class="exchange-hero">
+        <div class="trust-badge" style="margin-bottom:.8rem">🔒 Verified Credits · KNCR Compliant · M-Pesa Enabled</div>
+        <h2 style="color:var(--mint)">🔄 Carbon Credit Exchange</h2>
+        <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:580px;margin:0 auto;margin-top:.4rem">Browse, buy, and retire verified carbon credits from Kenyan projects. Every credit is traceable to a registered KNCR project with full audit trail.</p>
+      </div>
+
+      <div class="ex-stats" id="ex-stats"></div>
+
+      <div class="exchange-filters">
+        <select id="ex-filter-standard" onchange="renderExchange()">
+          <option value="all">All Standards</option>
+          <option value="Verra VCS">Verra VCS</option>
+          <option value="Gold Standard">Gold Standard</option>
+          <option value="KNCR Domestic">KNCR Domestic</option>
+        </select>
+        <select id="ex-filter-type" onchange="renderExchange()">
+          <option value="all">All Types</option>
+          <option value="Renewable Energy">Renewable Energy</option>
+          <option value="Blue Carbon">Blue Carbon</option>
+          <option value="Agroforestry">Agroforestry</option>
+          <option value="Clean Cooking">Clean Cooking</option>
+          <option value="Transport">Transport</option>
+        </select>
+        <select id="ex-sort" onchange="renderExchange()">
+          <option value="price-asc">Price: Low → High</option>
+          <option value="price-desc">Price: High → Low</option>
+          <option value="credits">Most Credits</option>
+        </select>
+      </div>
+
+      <div class="exchange-grid" id="exchange-listings"></div>
+    </section>
+
+    <!-- ══════════════ NEMA OVERSIGHT PORTAL ══════════════ -->
+    <section class="section" id="nema-oversight-section">
+      <div class="nema-hero">
+        <div class="trust-badge" style="margin-bottom:.8rem;border-color:rgba(128,222,234,.3);color:#80DEEA">🏛️ NEMA Regulatory Oversight Portal</div>
+        <h2>NEMA Carbon Project Oversight</h2>
+        <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:580px;margin-top:.4rem">Real-time visibility into all KNCR-registered carbon projects. Track pipeline stages, verify CDA compliance, and audit project documentation — aligned with the Carbon Markets Regulations 2024.</p>
+        <div class="compliance-strip" style="margin-top:1rem">
+          <strong>Role-Based Access:</strong> National Directors see all Kenya · County Officers see their county only · Technical Reviewers see assigned projects
+        </div>
+      </div>
+
+      <div class="g4" id="nema-kpis" style="margin-bottom:1.2rem"></div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="margin-bottom:.9rem">📋 Project Pipeline — All KNCR Projects</h3>
+        <div style="overflow-x:auto" id="nema-projects-table"></div>
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
+        <div class="card">
+          <h3 style="margin-bottom:.9rem">📊 CDA Compliance Overview</h3>
+          <div style="max-width:280px;margin:0 auto"><canvas id="nema-cda-chart"></canvas></div>
+          <div style="margin-top:.8rem;font-size:.72rem;color:rgba(255,255,255,.35);text-align:center">Community Development Agreement compliance across all tracked projects</div>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:.9rem">📜 Audit Trail</h3>
+          <div id="nema-audit-log" style="max-height:320px;overflow-y:auto"></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ B2B TRADING HUB ══════════════ -->
+    <section class="section" id="b2b-section">
+      <div class="b2b-hero">
+        <div class="trust-badge" style="margin-bottom:.8rem;border-color:rgba(0,201,167,.3);color:var(--teal)">🤝 Enterprise-to-Enterprise Carbon Trading</div>
+        <h2>🤝 B2B Trading Hub</h2>
+        <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:580px;margin:0 auto;margin-top:.4rem">Post RFQs, negotiate bulk deals, browse the enterprise directory, and execute B2B carbon credit contracts with full audit trails.</p>
+      </div>
+
+      <div class="g4" id="b2b-kpis" style="margin-bottom:1.2rem"></div>
+
+      <div class="b2b-tabs">
+        <div class="b2b-tab active" data-tab="b2b-rfq-view">📩 RFQ Board</div>
+        <div class="b2b-tab" data-tab="b2b-contracts-view">📝 Contracts</div>
+        <div class="b2b-tab" data-tab="b2b-directory-view">🏢 Enterprise Directory</div>
+        <div class="b2b-tab" data-tab="b2b-post-rfq-view">➕ Post RFQ</div>
+      </div>
+
+      <div id="b2b-rfq-view" class="b2b-tab-content">
+        <div class="card">
+          <h3 style="margin-bottom:.9rem">📩 Open Requests for Quotes</h3>
+          <div class="rfq-grid" id="rfq-board"></div>
+        </div>
+      </div>
+
+      <div id="b2b-contracts-view" class="b2b-tab-content" style="display:none">
+        <div class="card">
+          <h3 style="margin-bottom:.9rem">📝 B2B Contracts</h3>
+          <div id="contracts-list"></div>
+        </div>
+      </div>
+
+      <div id="b2b-directory-view" class="b2b-tab-content" style="display:none">
+        <div class="card">
+          <h3 style="margin-bottom:.9rem">🏢 Enterprise Directory</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Browse verified enterprises on the Netzerra platform. View their carbon profiles, offset ratios, and trading ratings.</p>
+          <div class="ent-dir-grid" id="enterprise-directory"></div>
+        </div>
+      </div>
+
+      <div id="b2b-post-rfq-view" class="b2b-tab-content" style="display:none">
+        <div class="card">
+          <h3 style="margin-bottom:.5rem">➕ Post a Request for Quote</h3>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.45);margin-bottom:.8rem">Describe the carbon credits you need. Sellers will respond with offers.</p>
+          <div class="rfq-form">
+            <div class="fg fg-full"><label>What credits do you need? *</label><input type="text" id="rfq-need" placeholder="e.g., Agroforestry credits from Rift Valley"></div>
+            <div class="fg"><label>Quantity (tCO₂e) *</label><input type="number" id="rfq-quantity" placeholder="e.g., 1000" min="1"></div>
+            <div class="fg"><label>Max Price (KES/tCO₂e) *</label><input type="number" id="rfq-max-price" placeholder="e.g., 1200" min="1"></div>
+            <div class="fg fg-full"><label>Deadline *</label><input type="date" id="rfq-deadline"></div>
+            <div class="fg fg-full" style="margin-top:.3rem"><button class="btn-post-rfq" onclick="postRFQ()">📩 Post RFQ</button></div>
+          </div>
+        </div>
       </div>
     </section>
 
@@ -1610,6 +1997,178 @@
 <!-- Toast Container -->
 <div id="toast-container"></div>
 
+<!-- ═════════════ AUTH OVERLAY ═════════════ -->
+<div class="auth-overlay" id="auth-overlay">
+  <div class="auth-container">
+    <button class="auth-close" onclick="hideAuthScreen()" title="Close">✕</button>
+    <div class="auth-logo">
+      <h1>🌿 Netzerra</h1>
+      <p>Kenya's Carbon Intelligence Platform</p>
+    </div>
+
+    <div class="auth-tabs">
+      <div class="auth-tab active" onclick="switchAuthTab('login',this)">Login</div>
+      <div class="auth-tab" onclick="switchAuthTab('register',this)">Register</div>
+    </div>
+
+    <!-- LOGIN TAB -->
+    <div id="auth-login-tab">
+      <p style="color:rgba(255,255,255,.55);font-size:.82rem;text-align:center;margin-bottom:1rem">Select your account type to continue</p>
+      <div class="auth-roles">
+        <div class="auth-role-btn" onclick="loginAs('demo-dev')">
+          <div class="auth-role-icon">👤</div>
+          <div class="auth-role-info">
+            <h3>Personal / Project Developer</h3>
+            <p>Calculate emissions, register KNCR projects, generate reports</p>
+          </div>
+        </div>
+        <div class="auth-role-btn" onclick="loginAs('demo-ent')">
+          <div class="auth-role-icon">🏢</div>
+          <div class="auth-role-info">
+            <h3>Enterprise</h3>
+            <p>Buy & sell carbon credits, manage portfolio, B2B trading</p>
+          </div>
+        </div>
+        <div class="auth-role-btn" onclick="loginAs('demo-nema')">
+          <div class="auth-role-icon">🏛️</div>
+          <div class="auth-role-info">
+            <h3>NEMA Officer</h3>
+            <p>Oversee carbon projects, verify CDA compliance, audit trail</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- REGISTER TAB -->
+    <div id="auth-register-tab" style="display:none">
+      <div class="auth-form">
+        <div class="fg"><label>Full Name *</label><input type="text" id="reg-name" placeholder="e.g., Jane Wambui"></div>
+        <div class="fg"><label>Email *</label><input type="email" id="reg-email" placeholder="e.g., jane@company.co.ke"></div>
+        <div class="fg"><label>Organisation *</label><input type="text" id="reg-org" placeholder="e.g., GreenTech Solutions Ltd"></div>
+        <div class="fg"><label>Account Type *</label>
+          <select id="reg-role" onchange="toggleCountyField()">
+            <option value="developer">Personal / Project Developer</option>
+            <option value="enterprise">Enterprise</option>
+            <option value="nema-national">NEMA — National Director</option>
+            <option value="nema-county">NEMA — County Officer</option>
+            <option value="nema-reviewer">NEMA — Technical Reviewer</option>
+          </select>
+        </div>
+        <div class="fg county-field" id="reg-county-field" style="display:none"><label>County *</label>
+          <select id="reg-county">
+            <option>Nairobi</option><option>Mombasa</option><option>Kisumu</option><option>Nakuru</option>
+            <option>Turkana</option><option>Kwale</option><option>Narok</option><option>Laikipia</option>
+            <option>Machakos</option><option>Kilifi</option><option>Nyeri</option><option>Uasin Gishu</option>
+            <option>Kajiado</option><option>Kiambu</option><option>Garissa</option><option>Marsabit</option>
+          </select>
+        </div>
+        <div class="fg"><label>Password *</label><input type="password" id="reg-password" placeholder="Create a password"></div>
+        <button class="btn-register" onclick="registerAccount()">Create Account</button>
+      </div>
+    </div>
+
+    <div class="auth-divider">or</div>
+    <div class="auth-skip">
+      <button onclick="hideAuthScreen()">Continue as Guest →</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════ BUY CREDIT MODAL ═════════════ -->
+<div class="modal-overlay" id="modal-buy-credit">
+  <div class="modal buy-modal-content">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3>🛒 Purchase Carbon Credits</h3>
+      <button onclick="closeModal('modal-buy-credit')" class="modal-x">✕</button>
+    </div>
+    <div style="margin-bottom:.8rem">
+      <div style="font-size:1rem;font-weight:700;color:#fff" id="buy-project-name"></div>
+      <div style="font-size:.78rem;color:rgba(255,255,255,.45)" id="buy-seller"></div>
+    </div>
+    <div style="display:flex;gap:1rem;margin-bottom:.8rem;font-size:.82rem;color:rgba(255,255,255,.6)">
+      <div id="buy-price"></div>
+      <div id="buy-available"></div>
+    </div>
+    <input type="hidden" id="buy-credit-id">
+    <div class="fg">
+      <label>Quantity (tCO₂e)</label>
+      <input type="number" id="buy-quantity" min="1" value="10" onchange="updateBuyTotal()" oninput="updateBuyTotal()">
+    </div>
+    <div class="buy-summary">
+      <div class="buy-summary-item"><span>Subtotal</span><span id="buy-subtotal">KES 0</span></div>
+      <div class="buy-summary-item"><span>Platform Fee (3%)</span><span id="buy-fee">KES 0</span></div>
+      <div class="buy-summary-item total"><span>Total</span><span id="buy-total">KES 0</span></div>
+    </div>
+    <h4 style="font-size:.82rem;color:rgba(255,255,255,.55);margin-bottom:.4rem">Payment Method</h4>
+    <div class="payment-methods">
+      <div class="pay-option selected" onclick="selectPayment(this,'mpesa')">
+        <span class="pay-icon">📱</span>
+        <input type="radio" name="pay-method" value="mpesa" checked>
+        <label>M-Pesa (STK Push)</label>
+      </div>
+      <div class="pay-option" onclick="selectPayment(this,'card')">
+        <span class="pay-icon">💳</span>
+        <input type="radio" name="pay-method" value="card">
+        <label>Visa / Mastercard</label>
+      </div>
+      <div class="pay-option" onclick="selectPayment(this,'bank')">
+        <span class="pay-icon">🏦</span>
+        <input type="radio" name="pay-method" value="bank">
+        <label>Bank Transfer (EFT)</label>
+      </div>
+      <div class="pay-option" onclick="selectPayment(this,'cheque')">
+        <span class="pay-icon">📝</span>
+        <input type="radio" name="pay-method" value="cheque">
+        <label>Cheque</label>
+      </div>
+    </div>
+    <div style="font-size:.7rem;color:rgba(245,166,35,.7);background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.18);border-radius:var(--r-sm);padding:.52rem .75rem;margin-bottom:.62rem">
+      🚧 MVP: Payment is simulated. Live payment gateway integration is on the development roadmap.
+    </div>
+    <div class="modal-acts">
+      <button class="btn-mc" onclick="closeModal('modal-buy-credit')">Cancel</button>
+      <button class="btn-mp" onclick="executePurchase()">✅ Confirm Purchase</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════ PROJECT AUDIT MODAL ═════════════ -->
+<div class="modal-overlay" id="modal-project-audit">
+  <div class="modal" style="max-width:640px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3>🔍 Project Audit Review</h3>
+      <button onclick="closeModal('modal-project-audit')" class="modal-x">✕</button>
+    </div>
+    <h4 id="audit-project-title" style="color:var(--mint);margin-bottom:.8rem"></h4>
+    <div id="audit-project-detail"></div>
+    <div class="modal-acts" style="margin-top:1rem">
+      <button class="btn-mc" onclick="closeModal('modal-project-audit')">Close</button>
+    </div>
+  </div>
+</div>
+
+<!-- ═════════════ ZERRA AI ASSISTANT ═════════════ -->
+<button class="zerra-fab" onclick="toggleZerra()" title="Zerra AI Assistant">🌿</button>
+<div class="zerra-panel" id="zerra-panel">
+  <div class="zerra-header">
+    <div class="zerra-header-icon">🌿</div>
+    <div class="zerra-header-info">
+      <h4>Zerra AI</h4>
+      <p>Carbon Intelligence Assistant</p>
+    </div>
+    <button onclick="toggleZerra()" style="margin-left:auto;background:none;border:none;color:rgba(255,255,255,.3);font-size:1.1rem;cursor:pointer">✕</button>
+  </div>
+  <div class="zerra-messages" id="zerra-messages"></div>
+  <div class="zerra-typing" id="zerra-typing">
+    <span>🌿 Zerra is thinking</span>
+    <div class="dots"><span></span><span></span><span></span></div>
+  </div>
+  <div class="zerra-input-row">
+    <input type="text" id="zerra-input" placeholder="Ask about carbon, KNCR, offsets...">
+    <button onclick="sendZerraMessage()">→</button>
+  </div>
+</div>
+
 <!-- ═══════════════════════════════════════════
      SITE FOOTER — MVP Disclaimer
 ═══════════════════════════════════════════ -->
@@ -1627,7 +2186,7 @@
       <span onclick="showSection('methodology')">Methodology</span>
       <span onclick="showSection('disclaimer')">Legal Disclaimer</span>
       <span onclick="showSection('about')">About</span>
-      <a href="mailto:shukriali411@gmail.com">Contact</a>
+      <a href="/cdn-cgi/l/email-protection#fe8d968b958c979f9297cacfcfbe99939f9792d09d9193">Contact</a>
     </div>
   </div>
   <div class="footer-disclaimer">
@@ -1635,15 +2194,22 @@
     All county government data, project pipelines, and community benefit figures shown are 
     <strong>illustrative samples</strong> — no formal partnerships with any county government, 
     NEMA, the Kenya National Carbon Registry, or any other government body have been established. 
-    Emission calculations are based on published IPCC 2006 / AR6 methodology and peer-reviewed emission factors, 
-    but <strong>results have not been independently verified</strong> and should not be submitted to regulatory bodies 
-    without review by a qualified carbon auditor. M-Pesa payment integration is simulated. 
-    This tool does not constitute legal, financial, or regulatory advice. 
-    © 2026 Netzerra · Shukri Ali · <a href="mailto:shukriali411@gmail.com">shukriali411@gmail.com</a>
+    Emission calculations are based on published IPCC 2006 / AR6 methodology and peer-reviewed emission factors,
+    but <strong>results have not been independently verified</strong> and should not be submitted to regulatory bodies
+    without review by a qualified carbon auditor. M-Pesa payment integration is simulated.
+    This tool does not constitute legal, financial, or regulatory advice.
+    © 2026 Netzerra · Shukri Ali · <a href="/cdn-cgi/l/email-protection#a3d0cbd6c8d1cac2cfca979292e3c4cec2cacf8dc0ccce"><span class="__cf_email__" data-cfemail="81f2e9f4eaf3e8e0ede8b5b0b0c1e6ece0e8edafe2eeec">[email&#160;protected]</span></a>
   </div>
 </footer>
 
-<!-- Netzerra App Script -->
-<script src="app.js?v=2.6"></script>
-</body>
-</html>
+<!-- Netzerra Core App -->
+<script data-cfasync="false" src="/cdn-cgi/scripts/5c5dd728/cloudflare-static/email-decode.min.js"></script><script src="app.js"></script>
+<!-- Netzerra Enterprise Layer -->
+<script src="netzerra-enterprise.js"></script>
+<!-- Netzerra Validation: live flags, unit toggles, audit trail -->
+<script src="netzerra-validation.js"></script>
+<!-- Netzerra AI Assistant: Claude-powered chat, insights, reports -->
+<script src="netzerra-ai.js"></script>
+<!-- Service Worker -->
+<script>
+if(

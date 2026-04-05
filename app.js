@@ -30,7 +30,7 @@ const S = {
 // Source: SEforAll Country Brief Kenya / IEA Emissions Factors 2024.
 // NOTE: 0.497 (formerly used) is incorrect — that figure applies to fossil-heavy grids.
 const EF = {
-  diesel:2.68, petrol:2.31, hfo:3.17, lpg:2.98, cng:1.99, kplc:0.070,
+  diesel:2.68, petrol:2.31, hfo:3.17, lpg:2.98, cng:1.99, kplc:0.3174,
   steel:1.85, pvc:2.41, cement:0.83, rebar:1.99, concrete:0.159,
   asphalt:0.045, timber:0.72, glass:0.91,
   // GWP values set dynamically from GWP_SETS — defaults to AR6
@@ -383,7 +383,10 @@ const LABELS = {
   passport:'Carbon Passport', offsets:'Offset Strategies', methodology:'Methodology',
   docs:'Documentation Hub', marketplace:'Marketplace', membership:'Membership Plans',
   education:'Education Centre', about:'About & Founder', kncr:'KNCR Gateway',
-  disclaimer:'Disclaimer & Legal'
+  disclaimer:'Disclaimer & Legal',
+  enterprise:'Enterprise Dashboard',
+  exchange:'Carbon Credit Exchange',
+  'nema-oversight':'NEMA Oversight Portal'
 };
 
 function showSection(id) {
@@ -513,6 +516,8 @@ function showResults(name, sector, total_t, s1_t, s2_t, s3_t, breakdown, offsets
   document.getElementById('res-dqs-grade').textContent = `${dqsInfo.icon} ${dqsInfo.grade}`;
   document.getElementById('res-dqs-score').style.color = dqsInfo.color;
   document.getElementById('res-dqs-box').style.borderColor = dqsInfo.color + '55';
+  // Trigger AI DQS advice if enterprise layer loaded
+  if (typeof getDQSAdvice === 'function') getDQSAdvice(dqs, dqsInfo.grade, sources || [], sector);
 
   // ── Flags ──
   const flagEl = document.getElementById('res-flags');
@@ -947,7 +952,7 @@ ${flagsHTML}
   IPCC 2006 Guidelines + <strong>${ACTIVE_GWP} GWP100</strong>:
   CH4=${EF.gwpCH4}, N2O=${EF.gwpN2O},
   HFC-134a=${EF.gwpHFC134a.toLocaleString()}, R-404A=${EF.gwpR404A.toLocaleString()}.
-  Kenya grid: <strong>0.070 kgCO2e/kWh</strong> (IEA 2024, ~90% renewable).
+  Kenya grid: <strong>0.3174 kgCO₂/kWh (KNCR)</strong> (UNFCCC CDM ASB0050-2020, ~90% renewable).
   GWP source: ${ACTIVE_GWP==='AR6'?'GHG Protocol Aug 2024 / IPCC AR6 WG1 Ch.7':'IPCC AR5 2013 / UNFCCC Paris Agreement'}.
   Regulatory config: v${KNCR_CONFIG.version}.
 </p>
@@ -978,7 +983,7 @@ ${flagsHTML}
       <td>Scope 2 — Purchased energy</td>
       <td style="text-align:right">${c.s2_t.toFixed(3)}</td>
       <td style="text-align:right">${c.total_t>0?(c.s2_t/c.total_t*100).toFixed(1):0}%</td>
-      <td class="src">IEA 2024 — 0.070 kgCO2e/kWh</td>
+      <td class="src">UNFCCC CDM ASB0050-2020 — 0.3174 kgCO₂/kWh (KNCR)</td>
     </tr>
     <tr>
       <td>Scope 3 — Embodied / upstream</td>
@@ -2904,10 +2909,10 @@ function handlePlanClick(btn) {
 
 function renderFAQs() {
   const faqs = [
-    { q:'What emission factors does Netzerra use?', a:'IPCC 2006 Guidelines with selectable GWP values — AR6 (default, Kenya KNCR) or AR5 (UNFCCC Paris Agreement). AR6 values: CH₄ = 27.0, N₂O = 273, HFC-134a = 1,530 (GHG Protocol Aug 2024). Kenya grid: 0.070 kgCO₂e/kWh (IEA 2024, ~90% renewable). DEFRA/BEIS 2023 for transport. KEFRI 2019 for agroforestry.' },
+    { q:'What emission factors does Netzerra use?', a:'IPCC 2006 Guidelines with selectable GWP values — AR6 (default, Kenya KNCR) or AR5 (UNFCCC Paris Agreement). AR6 values: CH₄ = 27.0, N₂O = 273, HFC-134a = 1,530 (GHG Protocol Aug 2024). Kenya grid: 0.3174 kgCO₂/kWh (KNCR) (UNFCCC CDM ASB0050-2020, Combined Margin). DEFRA/BEIS 2023 for transport. KEFRI 2019 for agroforestry.' },
     { q:'Are Netzerra reports accepted by donors?', a:'Netzerra reports follow ISO 14064-1:2018 format and IPCC AR6 methodology — the same standards required by most development finance institutions. Reports have not been formally endorsed by any specific organisation. Users should verify acceptance requirements with their specific donor or regulatory body before submission.' },
     { q:'How is the NTZ Score calculated?', a:'The NTZ Score (0–100) combines: emission intensity vs sector benchmark (40 pts), offset-to-emission ratio (30 pts), year-on-year reduction rate (20 pts), and platform engagement (10 pts).' },
-    { q:'What is the Kenya Power grid emission factor?', a:"Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%). Netzerra uses 0.070 kgCO₂e/kWh (IEA 2024 / SEforAll Kenya). A figure of 0.497 kgCO₂e/kWh was previously incorrect — that value applies to fossil-heavy grids and has been corrected." },
+    { q:'What is the Kenya Power grid emission factor?', a:"Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%). Netzerra uses 0.3174 kgCO₂/kWh (UNFCCC CDM ASB0050-2020, Combined Margin) for KNCR carbon credit calculations. The IEA actual mix (~0.070) applies only to GHG Protocol Scope 2 corporate reporting — using it for KNCR would understate credits by ~4.5×." },
     { q:'What is the County Dashboard for?', a:'County officers can use it to track all carbon projects in their county, verify community benefit fund distributions (40% for land-based, 25% for non-land — Carbon Markets Regulations 2024), check FLLoCA compliance status, and track carbon levy revenue by ward.' },
     { q:'How does PDF report generation work?', a:'Netzerra uses html2pdf.js to generate a real PDF client-side in your browser. Reports include uncertainty bands (IPCC Tier 1), data quality scores, GWP version used, and plausibility flags — formatted for NEMA and VCM verifier submissions.' },
     { q:'What is KNCR and why does it matter?', a:"Kenya's National Carbon Registry (KNCR) went live 17 February 2026. Governed by the Carbon Markets Regulations 2024 and Carbon Trading Regulations 2025. All carbon projects must register. False data carries a KES 500M penalty. Netzerra is the first automation tool generating KNCR-compliant documentation." },
@@ -2930,7 +2935,7 @@ function toggleFAQ(el) {
 // ══════════════════════════════════════════════════════
 // IMPROVEMENT 1 — sessionStorage Persistence (auto-clears when browser closes)
 // ══════════════════════════════════════════════════════
-const LS_KEY = 'ntz_v1';
+const LS_KEY = 'ntz_v3';
 
 function saveToStorage() {
   try {
@@ -2941,13 +2946,13 @@ function saveToStorage() {
       gwp:       ACTIVE_GWP,
       savedAt:   new Date().toISOString(),
     };
-    sessionStorage.setItem(LS_KEY, JSON.stringify(payload));
+    localStorage.setItem(LS_KEY, JSON.stringify(payload));
   } catch(e) { /* storage full or private mode — silent fail */ }
 }
 
 function loadFromStorage() {
   try {
-    const raw = sessionStorage.getItem(LS_KEY);
+    const raw = localStorage.getItem(LS_KEY);
     if (!raw) return false;
     const d = JSON.parse(raw);
     if (d.user)     Object.assign(S.user, d.user);
@@ -2959,7 +2964,7 @@ function loadFromStorage() {
 }
 
 function clearStorage() {
-  sessionStorage.removeItem(LS_KEY);
+  localStorage.removeItem(LS_KEY);
   toast('🗑️ Saved data cleared. Refresh to reset.', 'info');
 }
 
