@@ -1,0 +1,1649 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <meta name="description" content="Netzerra — Kenya's Carbon Intelligence Platform. IPCC AR6-compliant MRV for boreholes, livestock, transport, construction, and manufacturing. KNCR-native, county-ready, M-Pesa enabled.">
+  <meta name="author" content="Shukri Ali — shukriali411@gmail.com">
+  <meta property="og:title"       content="Netzerra — Kenya's Carbon Intelligence Platform">
+  <meta property="og:description" content="KNCR-native carbon compliance automation. IPCC AR6 calculators, CDA Fourth Schedule generation, county dashboards, real PDF reports.">
+  <meta property="og:type"        content="website">
+  <title>Netzerra — Kenya's Carbon Intelligence Platform</title>
+
+  <!-- Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+
+  <!-- Netzerra Styles -->
+  <link rel="stylesheet" href="style.css?v=2.6">
+
+  <!-- Chart.js -->
+  <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
+  <!-- html2pdf — true client-side PDF generation -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+</head>
+<body>
+
+<!-- ════════════════════════════════════════════════════
+     ONBOARDING MODAL
+════════════════════════════════════════════════════ -->
+<div id="onboarding-overlay">
+  <div class="ob-modal">
+    <div class="ob-steps" id="ob-steps"></div>
+    <div id="ob-content"></div>
+  </div>
+</div>
+
+<!-- ════════════════════════════════════════════════════
+     APP SHELL
+════════════════════════════════════════════════════ -->
+<div id="app">
+
+  <!-- ──────────────── SIDEBAR ──────────────── -->
+  <nav id="sidebar">
+    <div class="sb-logo">
+      <div class="mark">N</div>
+      <div class="text">
+        <div class="brand">Netzerra</div>
+        <div class="sub">Carbon Intelligence Platform</div>
+      </div>
+      <!-- X close button — visible on all sizes -->
+      <button class="sb-close" onclick="toggleSidebar()" aria-label="Close sidebar" title="Close sidebar">✕</button>
+    </div>
+
+    <div class="sb-user" onclick="openProfileModal()" title="Edit your profile" style="cursor:pointer">
+      <div class="sb-avatar" id="sb-avatar">SA</div>
+      <div class="sb-user-info">
+        <div class="name" id="sb-name">Shukri Ali</div>
+        <div class="plan" id="sb-plan">🌱 Seedling Plan</div>
+      </div>
+      <div style="margin-left:auto;font-size:.75rem;color:rgba(109,217,140,.5);flex-shrink:0">✏️</div>
+    </div>
+
+    <div class="sb-nav">
+      <div class="nav-label">🇰🇪 Registry</div>
+      <div class="nav-item" onclick="showSection('kncr')"
+           style="background:rgba(0,100,0,.12);border-left:3px solid var(--leaf)">
+        <span class="ico">🏛️</span> KNCR Gateway
+        <span class="nav-badge new">NEW</span>
+      </div>
+
+      <div class="nav-label">Overview</div>
+      <div class="nav-item active" onclick="showSection('home')"><span class="ico">🏠</span> Home</div>
+      <div class="nav-item" onclick="showSection('dashboard')"><span class="ico">📊</span> Dashboard</div>
+      <div class="nav-item" onclick="showSection('passport')"><span class="ico">🪪</span> Carbon Passport</div>
+
+      <div class="nav-label">Calculate</div>
+      <div class="nav-item" onclick="showSection('calculator')">
+        <span class="ico">⚡</span> Emission Calculator <span class="nav-badge">5</span>
+      </div>
+      <div class="nav-item" onclick="showSection('offsets')"><span class="ico">🌳</span> Offset Strategies</div>
+
+      <div class="nav-label">County Gov</div>
+      <div class="nav-item" onclick="showSection('county')" style="background:rgba(0,201,167,.06)">
+        <span class="ico">🏢</span> County Dashboard
+        <span class="nav-badge" style="background:var(--teal);color:var(--forest)">NEW</span>
+      </div>
+
+      <div class="nav-label">Community</div>
+      <div class="nav-item" onclick="showSection('leaderboard')"><span class="ico">🏆</span> Leaderboard</div>
+      <div class="nav-item" onclick="showSection('community')"><span class="ico">💬</span> Community Feed</div>
+
+      <div class="nav-label">Resources</div>
+      <div class="nav-item" onclick="showSection('methodology')"><span class="ico">📐</span> Methodology</div>
+      <div class="nav-item" onclick="showSection('docs')"><span class="ico">📁</span> Documentation Hub</div>
+      <div class="nav-item" onclick="showSection('marketplace')"><span class="ico">🛒</span> Marketplace</div>
+      <div class="nav-item" onclick="showSection('education')"><span class="ico">🎓</span> Education Centre</div>
+
+      <div class="nav-label">Account</div>
+      <div class="nav-item" onclick="showSection('membership')"><span class="ico">💎</span> Membership Plans</div>
+      <div class="nav-item" onclick="showSection('about')"><span class="ico">ℹ️</span> About & Founder</div>
+      <div class="nav-item" onclick="openProfileModal()"><span class="ico">👤</span> My Profile</div>
+      <div class="nav-item" onclick="showSection('disclaimer')"><span class="ico">📋</span> Disclaimer & Legal</div>
+    </div>
+
+    <div class="sb-footer">
+      <div class="sb-score-label">Your Netzerra Score</div>
+      <div class="sb-score-val" id="sb-score">68</div>
+      <div class="sb-score-sub">Grade B · Improving</div>
+    </div>
+  </nav>
+
+  <!-- ──────────────── MAIN ──────────────── -->
+  <main id="main">
+
+    <!-- TOPBAR -->
+    <div id="topbar">
+      <div class="topbar-l">
+        <button class="hamburger" onclick="toggleSidebar()" aria-label="Toggle menu">☰</button>
+        <div class="breadcrumb" id="breadcrumb"><b>Home</b></div>
+      </div>
+      <div class="topbar-r">
+        <div class="emission-ticker" id="emission-ticker">0 tCO₂e today</div>
+        <button class="tb-btn" onclick="showSection('methodology')">📐 Methods</button>
+        <button class="tb-btn primary" onclick="showSection('calculator')">⚡ Calculate</button>
+      </div>
+    </div>
+
+    <!-- ══════════════ HOME ══════════════ -->
+    <section class="section active" id="home-section">
+      <div class="hero">
+        <div class="hero-eyebrow">🏛️ National Carbon Compliance Infrastructure</div>
+        <h1>The KNCR-Native<br><em>Compliance Layer</em> for Kenya.</h1>
+        <p>80+ carbon projects stalled. Zero have automated MRV. Every manual entry carries a <strong>KES 500M penalty</strong> under Regulation 37. Netzerra is the first platform built specifically to automate Kenya's Carbon Markets Regulations 2024 — from IPCC-verified calculations to CDA Fourth Schedule generation to KNCR submission.</p>
+        <div class="hero-actions">
+          <button class="btn-hero-p" onclick="showSection('calculator')">⚡ Start Calculating</button>
+          <button class="btn-hero-s" onclick="showSection('county')">🏢 County Dashboard</button>
+          <button class="btn-hero-s" onclick="showSection('kncr')">🏛️ KNCR Gateway</button>
+        </div>
+        <div class="hero-stats">
+          <div class="hero-stat"><div class="num">KES 500M</div><div class="lbl">Reg. 37 Penalty Risk</div></div>
+          <div class="hero-stat"><div class="num">80+</div><div class="lbl">Projects Stalled</div></div>
+          <div class="hero-stat"><div class="num">47</div><div class="lbl">Counties Mandated</div></div>
+          <div class="hero-stat"><div class="num">Feb 2026</div><div class="lbl">KNCR Went Live</div></div>
+        </div>
+      </div>
+
+      <div class="sector-grid">
+        <div class="sector-card borehole" onclick="openCalcTab('borehole')">
+          <div class="s-icon">💧</div>
+          <h4>Borehole Operations</h4>
+          <p>Scope 1/2/3 — diesel pumps, materials, transport.</p>
+          <div class="s-ef">EF: 2.68 kgCO₂e/L diesel</div>
+        </div>
+        <div class="sector-card livestock" onclick="openCalcTab('livestock')">
+          <div class="s-icon">🐄</div>
+          <h4>Livestock Management</h4>
+          <p>Enteric CH₄ + manure N₂O for 8 species. AR6 GWP₁₀₀.</p>
+          <div class="s-ef">GWP CH₄: 27.0 (IPCC AR6, GHG Protocol Aug 2024)</div>
+        </div>
+        <div class="sector-card transport" onclick="openCalcTab('transport')">
+          <div class="s-icon">🚌</div>
+          <h4>Transport & Logistics</h4>
+          <p>Matatu SACCOs, freight, boda-bodas, cold chain, SGR rail.</p>
+          <div class="s-ef">DEFRA/BEIS 2023 factors</div>
+        </div>
+        <div class="sector-card construct" onclick="openCalcTab('construct')">
+          <div class="s-icon">🏗️</div>
+          <h4>Construction</h4>
+          <p>Embodied carbon — cement, steel, concrete + site diesel.</p>
+          <div class="s-ef">EF: 0.83 kgCO₂e/kg cement</div>
+        </div>
+        <div class="sector-card manufact" onclick="openCalcTab('manufact')">
+          <div class="s-icon">🏭</div>
+          <h4>Manufacturing & SMEs</h4>
+          <p>Tea factories, flower farms, steel fabricators — energy + refrigerants.</p>
+          <div class="s-ef">Kenya grid: 0.070 kgCO₂e/kWh (IEA 2024)</div>
+        </div>
+      </div>
+
+      <div class="g3">
+        <div class="card">
+          <h4>🎯 IPCC AR6 Compliant</h4>
+          <p style="margin-top:.35rem;font-size:.78rem">AR6 GWP₁₀₀ values (GHG Protocol Aug 2024): CH₄ = 27.0, N₂O = 273, HFC-134a = 1,530. Switch to AR5 for UNFCCC Paris Agreement reporting. Every number traceable to a peer-reviewed source.</p>
+        </div>
+        <div class="card">
+          <h4>🇰🇪 Kenya-Calibrated</h4>
+          <p style="margin-top:.35rem;font-size:.78rem">KPLC 2022 grid factor, KEFRI agroforestry rates, IPCC Sub-Saharan Africa livestock defaults.</p>
+        </div>
+        <div class="card">
+          <h4>📋 True PDF Reports</h4>
+          <p style="margin-top:.35rem;font-size:.78rem">Real PDF generated in your browser — ISO 14064-aligned. Accepted by NEMA, World Bank Kenya, and VCM verifiers.</p>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ DASHBOARD ══════════════ -->
+    <section class="section" id="dashboard-section">
+      <div class="sec-header">
+        <h2>📊 Dashboard</h2>
+        <p>Your emission portfolio — updated after each calculation.</p>
+      </div>
+      <div class="g4" style="margin-bottom:1.2rem">
+        <div class="kpi green"><div class="kpi-lbl">Total Emissions</div><div class="kpi-val green" id="kpi-total">2,847</div><div class="kpi-sub">tCO₂e lifetime</div><div class="kpi-delta up">↑ +312 this month</div></div>
+        <div class="kpi gold"> <div class="kpi-lbl">This Month</div><div class="kpi-val gold">312</div><div class="kpi-sub">tCO₂e</div><div class="kpi-delta down">↑ +18% vs last month</div></div>
+        <div class="kpi teal"> <div class="kpi-lbl">Total Offsets</div><div class="kpi-val teal" id="kpi-offsets">710</div><div class="kpi-sub">tCO₂e sequestered</div><div class="kpi-delta up">↑ +65 this month</div></div>
+        <div class="kpi coral"><div class="kpi-lbl">Netzerra Score</div><div class="kpi-val coral" id="kpi-score">68</div><div class="kpi-sub">Grade B · Improving</div><div class="kpi-delta up">↑ +4 pts</div></div>
+      </div>
+      <div class="db-grid">
+        <div>
+          <div class="charts-2">
+            <div class="chart-card"><h4>Emissions by Sector</h4><div class="sub">tCO₂e breakdown</div><div class="chart-h"><canvas id="sector-chart"></canvas></div></div>
+            <div class="chart-card"><h4>12-Month Trend</h4><div class="sub">Monthly tCO₂e</div><div class="chart-h"><canvas id="trend-chart"></canvas></div></div>
+          </div>
+          <div class="card" style="margin-top:1.05rem">
+            <h4 style="margin-bottom:.35rem">🎯 Net Zero Trajectory</h4>
+            <p style="font-size:.76rem;margin-bottom:.52rem">At current rate, projected net zero: <b style="color:var(--mint)">2041</b>. Target: 2040.</p>
+            <div class="traj-bar"><div class="traj-fill" style="width:32%"></div></div>
+            <div class="traj-labels"><span>2024 Baseline</span><span>32% reduction</span><span>2040 Target</span></div>
+          </div>
+        </div>
+        <div>
+          <div class="chart-card" style="margin-bottom:1.05rem">
+            <h4>Offset Progress</h4><div class="sub">tCO₂e offset vs. emissions</div>
+            <div style="padding:.75rem 0">
+              <div class="scope-bar-item"><div class="scope-bar-hdr"><span>Agroforestry</span><span class="v">380 t</span></div><div class="scope-track"><div class="scope-fill s1" style="width:54%"></div></div></div>
+              <div class="scope-bar-item" style="margin-top:.62rem"><div class="scope-bar-hdr"><span>Biogas Systems</span><span class="v">210 t</span></div><div class="scope-track"><div class="scope-fill s2" style="width:30%"></div></div></div>
+              <div class="scope-bar-item" style="margin-top:.62rem"><div class="scope-bar-hdr"><span>Solar Pumps</span><span class="v">120 t</span></div><div class="scope-track"><div class="scope-fill s3" style="width:17%"></div></div></div>
+            </div>
+            <div style="text-align:center;font-family:'JetBrains Mono',monospace;font-size:1.35rem;color:var(--mint)">710 / 2,847 tCO₂e</div>
+            <div style="text-align:center;font-size:.67rem;color:rgba(255,255,255,.32)">25% offset ratio</div>
+          </div>
+          <div class="card">
+            <h4 style="margin-bottom:.62rem">Quick Actions</h4>
+            <div style="display:flex;flex-direction:column;gap:.38rem">
+              <button class="btn-report" onclick="showSection('calculator')">⚡ Run New Calculation</button>
+              <button class="btn-report" onclick="showSection('county')">🏢 County Dashboard</button>
+              <button class="btn-report" onclick="showSection('offsets')">🌳 Explore Offsets</button>
+              <button class="btn-report" onclick="generateAndDownloadPDF()">📄 Download PDF Report</button>
+            </div>
+          </div>
+        </div>
+      </div>
+      <div style="margin-top:1.2rem">
+        <h3 style="margin-bottom:.85rem">Recent Projects</h3>
+        <div class="table-wrap">
+          <table>
+            <thead><tr><th>Project</th><th>Sector</th><th>County</th><th>tCO₂e/yr</th><th>S1</th><th>S2</th><th>S3</th><th>Score</th><th>Date</th></tr></thead>
+            <tbody>
+              <tr><td>Turkana BH-07</td><td><span class="tag-pill tag-b">Borehole</span></td><td>Turkana</td><td>48.2</td><td>18.4</td><td>22.1</td><td>7.7</td><td style="color:var(--gold)">72</td><td>2026-02-18</td></tr>
+              <tr><td>Laikipia Drip Scheme</td><td><span class="tag-pill tag-b">Irrigation</span></td><td>Laikipia</td><td>124.5</td><td>0</td><td>89.2</td><td>35.3</td><td style="color:var(--gold)">61</td><td>2026-02-10</td></tr>
+              <tr><td>Narok Cattle Ranch</td><td><span class="tag-pill tag-l">Livestock</span></td><td>Narok</td><td>892.0</td><td>812.0</td><td>0</td><td>80.0</td><td style="color:var(--gold)">55</td><td>2026-02-05</td></tr>
+              <tr><td>Mombasa Cold Chain</td><td><span class="tag-pill tag-t">Transport</span></td><td>Mombasa</td><td>38.7</td><td>38.7</td><td>0</td><td>0</td><td style="color:var(--gold)">78</td><td>2026-01-28</td></tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ CALCULATOR ══════════════ -->
+    <section class="section" id="calculator-section">
+      <div class="sec-header">
+        <h2>⚡ Emission Calculator</h2>
+        <p>IPCC AR6-compliant calculations across Kenya's five key emission sectors.</p>
+      </div>
+      <div class="calc-layout">
+        <div>
+          <div class="calc-tabs">
+            <div class="calc-tab active borehole" id="tab-borehole"  onclick="switchCalcTab('borehole')">💧 Borehole</div>
+            <div class="calc-tab livestock"        id="tab-livestock" onclick="switchCalcTab('livestock')">🐄 Livestock</div>
+            <div class="calc-tab transport"        id="tab-transport" onclick="switchCalcTab('transport')">🚌 Transport</div>
+            <div class="calc-tab construct"        id="tab-construct" onclick="switchCalcTab('construct')">🏗️ Construction</div>
+            <div class="calc-tab manufact"         id="tab-manufact"  onclick="switchCalcTab('manufact')">🏭 Manufacturing</div>
+          </div>
+
+          <!-- BOREHOLE -->
+          <div class="calc-panel active card" id="panel-borehole">
+            <h3 style="color:#90CAF9;margin-bottom:.18rem">💧 Borehole Operations</h3>
+            <p style="font-size:.73rem;margin-bottom:1rem">Scope 1 (diesel) + Scope 2 (grid) + Scope 3 (materials). Depth drives auto-estimates for all material quantities. <span class="src-chip">IPCC 2006 Vol.2</span></p>
+
+            <div class="calc-sec-lbl">Project Details</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Project Name</label><input type="text" id="bh-name" placeholder="e.g. Turkana BH-07"></div>
+              <div class="inp"><label>County</label>
+                <select id="bh-county"><option>Baringo</option><option>Bomet</option><option>Bungoma</option><option>Busia</option><option>Elgeyo-Marakwet</option><option>Embu</option><option>Garissa</option><option>Homa Bay</option><option>Isiolo</option><option>Kajiado</option><option>Kakamega</option><option>Kericho</option><option>Kiambu</option><option>Kilifi</option><option>Kirinyaga</option><option>Kisii</option><option>Kisumu</option><option>Kitui</option><option>Kwale</option><option>Laikipia</option><option>Lamu</option><option>Machakos</option><option>Makueni</option><option>Mandera</option><option>Marsabit</option><option>Meru</option><option>Migori</option><option>Mombasa</option><option>Murang'a</option><option>Nairobi</option><option>Nakuru</option><option>Nandi</option><option>Narok</option><option>Nyamira</option><option>Nyandarua</option><option>Nyeri</option><option>Samburu</option><option>Siaya</option><option>Taita-Taveta</option><option>Tana River</option><option>Tharaka-Nithi</option><option>Trans Nzoia</option><option>Turkana</option><option>Uasin Gishu</option><option>Vihiga</option><option>Wajir</option><option>West Pokot</option></select>
+              </div>
+            </div>
+
+            <!-- ── DEPTH & SPECS — drives auto-calculation ── -->
+            <div class="calc-sec-lbl">🔩 Borehole Specifications <span class="ef-tip" title="Depth and diameter auto-populate all material and energy estimates below. You can override any value manually.">ⓘ</span></div>
+            <div class="bh-spec-box">
+              <div class="inp-grid">
+                <div class="inp">
+                  <label>Borehole Depth <span class="unit">(metres)</span> <span class="ef-tip" title="Total drilled depth. Kenya range: 30–300m. ASAL counties typically 80–200m. Each metre adds drilling diesel, casing, grout, and rising main.">ⓘ</span></label>
+                  <input type="number" id="bh-depth" value="80" min="10" max="500" oninput="autofillBorehole()">
+                  <div class="hint">Typical Kenya range: 30–300 m</div>
+                </div>
+                <div class="inp">
+                  <label>Casing Diameter <span class="unit">(inches)</span> <span class="ef-tip" title="6-inch (152mm) is most common for community boreholes. 8-inch for high-yield. Diameter affects casing weight, grout volume, and rising main size.">ⓘ</span></label>
+                  <select id="bh-diameter" onchange="autofillBorehole()">
+                    <option value="4">4-inch (102mm) — Small / test well</option>
+                    <option value="6" selected>6-inch (152mm) — Standard community</option>
+                    <option value="8">8-inch (203mm) — High-yield production</option>
+                    <option value="10">10-inch (254mm) — Municipal / irrigation</option>
+                  </select>
+                </div>
+                <div class="inp">
+                  <label>Rock Formation <span class="ef-tip" title="Rock hardness determines drilling fuel consumption per metre. Source: Kenyan drilling contractor survey / WSRB well logs.">ⓘ</span></label>
+                  <select id="bh-rock" onchange="autofillBorehole()">
+                    <option value="soft">Soft (sedimentary, sand, clay) — ~8 L/m</option>
+                    <option value="medium" selected>Medium (weathered rock) — ~15 L/m</option>
+                    <option value="hard">Hard (basement rock, granite) — ~22 L/m</option>
+                    <option value="veryhard">Very Hard (quartzite, ASAL deep) — ~30 L/m</option>
+                  </select>
+                </div>
+                <div class="inp">
+                  <label>Pump Type <span class="ef-tip" title="Diesel pump: Scope 1 emissions from fuel. Electric/solar pump: Scope 2 from KPLC grid. Solar pump: zero operational emissions.">ⓘ</span></label>
+                  <select id="bh-pump-type" onchange="autofillBorehole()">
+                    <option value="electric">Electric (KPLC grid)</option>
+                    <option value="solar">Solar PV (zero grid)</option>
+                    <option value="diesel">Diesel engine pump</option>
+                    <option value="hybrid">Hybrid (solar + diesel backup)</option>
+                  </select>
+                </div>
+              </div>
+              <!-- Auto-estimate callout -->
+              <div class="bh-auto-callout" id="bh-auto-callout">
+                💡 Enter depth above — material quantities and energy will auto-fill below
+              </div>
+            </div>
+
+            <!-- ── SCOPE 1 — shows diesel estimates ── -->
+            <div class="calc-sec-lbl">Scope 1 — Diesel Combustion <span style="font-size:.62rem;color:var(--teal);font-weight:400">auto-estimated from depth · override if you have exact figures</span></div>
+            <div class="inp-grid">
+              <div class="inp">
+                <label>Diesel for Drilling <span class="unit">(litres)</span> <span class="ef-tip" title="EF: 2.68 kgCO₂e/L — Source: IPCC 2006 Vol.2 Table 3.2.2. Auto-estimated: depth × rock formation fuel rate.">ⓘ</span></label>
+                <input type="number" id="bh-diesel-drill" value="1200" class="bh-auto-field">
+                <div class="hint" id="bh-drill-hint">Auto: 80m × 15 L/m (medium rock) = 1,200 L</div>
+              </div>
+              <div class="inp">
+                <label>Diesel for Pumping <span class="unit">(L/year)</span> <span class="ef-tip" title="EF: 2.68 kgCO₂e/L. Only if diesel pump selected. Auto-estimated from pump power and operating hours.">ⓘ</span></label>
+                <input type="number" id="bh-diesel-pump" value="0" class="bh-auto-field">
+                <div class="hint" id="bh-pump-hint">0 L/yr — electric/solar pump selected</div>
+              </div>
+              <div class="inp">
+                <label>Generator Diesel <span class="unit">(L/year)</span> <span class="ef-tip" title="EF: 2.68 kgCO₂e/L — on-site generator for lighting, controls, maintenance.">ⓘ</span></label>
+                <input type="number" id="bh-diesel-gen" value="300">
+                <div class="hint">Site generator (lighting, controls)</div>
+              </div>
+              <div class="inp">
+                <label>Pump Lifetime <span class="unit">(years)</span></label>
+                <input type="number" id="bh-lifetime" value="20">
+                <div class="hint">Amortises one-time drilling & materials</div>
+              </div>
+            </div>
+
+            <!-- ── SCOPE 2 — grid electricity ── -->
+            <div class="calc-sec-lbl">Scope 2 — Grid Electricity</div>
+            <div class="inp-grid">
+              <div class="inp">
+                <label>Annual Grid Electricity <span class="unit">(kWh/year)</span> <span class="ef-tip" title="EF: 0.070 kgCO₂e/kWh — Source: IEA 2024 / SEforAll Kenya. Kenya grid ~90% renewable. Auto-estimated from pump power × operating hours.">ⓘ</span></label>
+                <input type="number" id="bh-kwh" value="4380" class="bh-auto-field">
+                <div class="hint" id="bh-kwh-hint">Auto: ~0.5 kW × 24 hrs/day × 365 = 4,380 kWh</div>
+              </div>
+              <div class="inp">
+                <label>Daily Operating Hours <span class="ef-tip" title="Hours the pump runs per day. Auto-calculates annual kWh. Community boreholes: 8–16 hrs/day. Irrigation: 12–20 hrs/day.">ⓘ</span></label>
+                <input type="number" id="bh-hours" value="12" min="1" max="24" oninput="autofillBorehole()">
+                <div class="hint">Hours pump operates per day</div>
+              </div>
+              <div class="inp">
+                <label>Solar Fraction <span class="unit">(%)</span> <span class="ef-tip" title="% of electricity from on-site solar. 100% = zero Scope 2. Auto-set to 100% if solar pump selected.">ⓘ</span></label>
+                <input type="number" id="bh-solar" value="0" min="0" max="100" class="bh-auto-field">
+                <div class="hint" id="bh-solar-hint">0% solar (electric pump)</div>
+              </div>
+              <div class="inp">
+                <label>Pump Yield <span class="unit">(m³/hour)</span> <span class="ef-tip" title="Water output rate. Used to estimate pump power. Typical community borehole: 2–8 m³/hr.">ⓘ</span></label>
+                <input type="number" id="bh-yield" value="5" min="0.5" max="200" oninput="autofillBorehole()">
+                <div class="hint">Typical community: 2–8 m³/hr</div>
+              </div>
+            </div>
+
+            <!-- ── SCOPE 3 — materials auto-estimated ── -->
+            <div class="calc-sec-lbl">Scope 3 — Embodied Materials <span style="font-size:.62rem;color:var(--teal);font-weight:400">auto-estimated from depth & diameter · override if you have bill of quantities</span></div>
+            <div class="inp-grid">
+              <div class="inp">
+                <label>Steel Casing <span class="unit">(kg)</span> <span class="ef-tip" title="EF: 1,850 kgCO₂e/t BOF steel — Source: World Steel 2023. Auto-estimated: depth × casing kg/m by diameter. 6-inch: ~10 kg/m.">ⓘ</span></label>
+                <input type="number" id="bh-steel" value="800" class="bh-auto-field">
+                <div class="hint" id="bh-steel-hint">Auto: 80m × 10 kg/m (6-inch) = 800 kg</div>
+              </div>
+              <div class="inp">
+                <label>PVC / HDPE Rising Main <span class="unit">(kg)</span> <span class="ef-tip" title="EF: 2,410 kgCO₂e/t — Source: PlasticsEurope 2022. Auto-estimated: depth × pipe kg/m. 50mm HDPE: ~1.2 kg/m.">ⓘ</span></label>
+                <input type="number" id="bh-pvc" value="96" class="bh-auto-field">
+                <div class="hint" id="bh-pvc-hint">Auto: 80m × 1.2 kg/m = 96 kg</div>
+              </div>
+              <div class="inp">
+                <label>Cement Grout <span class="unit">(kg)</span> <span class="ef-tip" title="EF: 830 kgCO₂e/t — Source: Bath ICE v3.0. Auto-estimated from annular volume and casing depth.">ⓘ</span></label>
+                <input type="number" id="bh-cement" value="1600" class="bh-auto-field">
+                <div class="hint" id="bh-cement-hint">Auto: 80m × ~20 kg/m annular grout</div>
+              </div>
+              <div class="inp">
+                <label>Equipment Transport <span class="unit">(km)</span> <span class="ef-tip" title="EF: 0.20 kgCO₂e/tonne.km — Source: DEFRA 2023. One-way distance from nearest drilling equipment depot.">ⓘ</span></label>
+                <input type="number" id="bh-tkm" value="350">
+                <div class="hint">Distance from Nairobi or nearest depot</div>
+              </div>
+            </div>
+
+            <button class="btn-calc" onclick="calcBorehole()">⚡ Calculate Borehole Emissions →</button>
+
+            <!-- Data Sources -->
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources <span class="src-why">Raises Data Quality Score — needed for NEMA audit-ready reports</span></div>
+              <div class="src-grid">
+                <div class="src-item"><label>Depth / spec source</label><select id="src-bh-diesel-drill" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="log">📒 Driller's completion report</option><option value="invoice">📋 Contractor invoice</option><option value="estimate">📐 Engineering estimate</option></select></div>
+                <div class="src-item"><label>Pump diesel / kWh source</label><select id="src-bh-diesel-pump" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="meter">⚡ Meter reading / KPLC bill</option><option value="receipt">📄 Fuel receipts</option><option value="log">📒 Operational log</option><option value="estimate">📐 Engineering estimate</option></select></div>
+                <div class="src-item"><label>Materials source</label><select id="src-bh-kwh" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="invoice">📋 Purchase invoice / BOQ</option><option value="log">📒 Site material log</option><option value="estimate">📐 Engineering estimate</option></select></div>
+                <div class="src-item"><label>Transport distance source</label><select id="src-bh-steel" class="src-select" onchange="updateDQSPreview('bh')"><option value="">— Select —</option><option value="log">📒 Contractor trip records</option><option value="estimate">📐 Maps estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-bh">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
+          </div>
+
+          <!-- LIVESTOCK -->
+          <div class="calc-panel card" id="panel-livestock">
+            <h3 style="color:#FFCC80;margin-bottom:.18rem">🐄 Livestock Management</h3>
+            <p style="font-size:.73rem;margin-bottom:1rem">Enteric CH₄ + manure N₂O. <span class="src-chip">IPCC 2006 Vol.4 Ch.10</span> <span class="src-chip">AR6 CH₄=27.0 (GHG Protocol Aug 2024)</span></p>
+            <div class="calc-sec-lbl">Project Details</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Project Name</label><input type="text" id="ls-name" placeholder="e.g. Narok Ranch"></div>
+              <div class="inp"><label>Manure System</label>
+                <select id="ls-manure">
+                  <option value="pasture">Pasture / Range (Kenya default)</option>
+                  <option value="biogas">Biogas Digester (low emission)</option>
+                  <option value="pit">Pit Storage</option>
+                  <option value="compost">Composting</option>
+                </select>
+              </div>
+            </div>
+            <div class="calc-sec-lbl">Herd Count by Species</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Dairy Cattle 🐄 <span class="ef-tip" title="Enteric CH₄: 68 kg/head/yr | Manure CH₄: 16 kg/head/yr | N excretion: 70 kgN/head/yr. Source: IPCC 2006 Vol.4 Table 10.11 (Eastern Africa defaults)">ⓘ</span></label><input type="number" id="ls-dairy" value="120"><div class="hint">EF: 68 kgCH₄/head/yr</div></div>
+              <div class="inp"><label>Beef Cattle 🐂 <span class="ef-tip" title="Enteric CH₄: 47 kg/head/yr | Manure CH₄: 10 kg/head/yr | N excretion: 50 kgN/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-beef" value="300"><div class="hint">EF: 47 kgCH₄/head/yr</div></div>
+              <div class="inp"><label>Goats 🐐 <span class="ef-tip" title="Enteric CH₄: 5 kg/head/yr | Manure CH₄: 0.17 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-goats" value="500"></div>
+              <div class="inp"><label>Sheep 🐑 <span class="ef-tip" title="Enteric CH₄: 8 kg/head/yr | Manure CH₄: 0.19 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-sheep" value="200"></div>
+              <div class="inp"><label>Camels 🐪 <span class="ef-tip" title="Enteric CH₄: 46 kg/head/yr | Manure CH₄: 7 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-camels" value="0"></div>
+              <div class="inp"><label>Pigs 🐷 <span class="ef-tip" title="Enteric CH₄: 1 kg/head/yr | Manure CH₄: 4.5 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-pigs" value="0"></div>
+              <div class="inp"><label>Donkeys 🫏 <span class="ef-tip" title="Enteric CH₄: 10 kg/head/yr | Manure CH₄: 1 kg/head/yr. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-donkeys" value="20"></div>
+              <div class="inp"><label>Poultry 🐓 <span class="unit">(hundreds)</span> <span class="ef-tip" title="Enteric CH₄: 0.02 kg/bird/yr | Manure CH₄: 0.02 kg/bird/yr. Enter count in hundreds. Source: IPCC 2006 Vol.4 Table 10.11">ⓘ</span></label><input type="number" id="ls-poultry" value="0"></div>
+            </div>
+            <div class="calc-sec-lbl">Feed & Energy</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Feed Concentrate <span class="unit">(tonnes/year)</span></label><input type="number" id="ls-feed" value="45"></div>
+              <div class="inp"><label>Electricity <span class="unit">(kWh/year)</span></label><input type="number" id="ls-kwh" value="8000"></div>
+            </div>
+            <button class="btn-calc" onclick="calcLivestock()">⚡ Calculate Livestock Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Cattle count source</label><select id="src-ls-dairy" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="log">📒 Herd register</option><option value="receipt">📄 Purchase records</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual count</option></select></div>
+                <div class="src-item"><label>Goats/sheep source</label><select id="src-ls-beef" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="log">📒 Herd register</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual count</option></select></div>
+                <div class="src-item"><label>Feed concentrate source</label><select id="src-ls-goats" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="receipt">📄 Purchase receipt</option><option value="invoice">📋 Feed invoice</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Electricity source</label><select id="src-ls-feed" class="src-select" onchange="updateDQSPreview('ls')"><option value="">— Select —</option><option value="meter">⚡ KPLC meter</option><option value="receipt">📄 KPLC bill</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-ls">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
+          </div>
+
+          <!-- TRANSPORT -->
+          <div class="calc-panel card" id="panel-transport">
+            <h3 style="color:#B0BEC5;margin-bottom:.18rem">🚌 Transport & Logistics</h3>
+            <p style="font-size:.73rem;margin-bottom:1rem">Fleet emissions — matatus, freight, boda-bodas, cold chain. <span class="src-chip">DEFRA/BEIS 2023</span></p>
+            <div class="calc-sec-lbl">Fleet Details</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Fleet / SACCO Name</label><input type="text" id="tr-name" placeholder="e.g. Metro Trans SACCO"></div>
+              <div class="inp"><label>Total Vehicles</label><input type="number" id="tr-vehicles" value="25"></div>
+            </div>
+            <div class="calc-sec-lbl">Annual Diesel Consumption (Litres)</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Heavy Trucks</label><input type="number" id="tr-heavy" value="0"></div>
+              <div class="inp"><label>Matatus / Minibuses</label><input type="number" id="tr-matatu" value="85000"><div class="hint">Typ: 3,600–5,400 L/vehicle/yr</div></div>
+              <div class="inp"><label>Full-size Buses</label><input type="number" id="tr-bus" value="0"></div>
+              <div class="inp"><label>Light Pickups / Vans</label><input type="number" id="tr-light" value="12000"></div>
+            </div>
+            <div class="calc-sec-lbl">Annual Petrol Consumption (Litres)</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Boda-bodas / Motorcycles</label><input type="number" id="tr-moto" value="0"></div>
+              <div class="inp"><label>Cars / SUVs</label><input type="number" id="tr-car" value="0"></div>
+            </div>
+            <div class="calc-sec-lbl">Cold Chain Refrigerants (kg/year)</div>
+            <div class="inp-grid">
+              <div class="inp"><label>HFC-134a</label><input type="number" id="tr-hfc" value="0"><div class="hint">GWP = 1,530 (AR6) — <span class="ef-tip" title="AR6=1,530 | AR5=1,300 | AR4=1,430. Source: GHG Protocol Global Warming Potential Values, August 2024.">ⓘ</span> was 1,430 (AR4 — now corrected)</div></div>
+              <div class="inp"><label>R-404A</label><input type="number" id="tr-r404" value="0"><div class="hint">GWP = 4,180 (AR6) — <span class="ef-tip" title="AR6=4,180 | AR5=3,922. Source: GHG Protocol Global Warming Potential Values, August 2024.">ⓘ</span></div></div>
+            </div>
+            <button class="btn-calc" onclick="calcTransport()">⚡ Calculate Transport Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Fleet diesel source</label><select id="src-tr-heavy" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="receipt">📄 Fuel receipts</option><option value="invoice">📋 Fleet fuel invoices</option><option value="log">📒 Fleet management log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Matatu/bus source</label><select id="src-tr-matatu" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="receipt">📄 SACCO fuel receipts</option><option value="log">📒 Driver fuel log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Refrigerant HFC source</label><select id="src-tr-moto" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="log">📒 Refrigerant service log</option><option value="invoice">📋 Top-up invoice</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual check</option></select></div>
+                <div class="src-item"><label>Vehicle count source</label><select id="src-tr-hfc" class="src-select" onchange="updateDQSPreview('tr')"><option value="">— Select —</option><option value="log">📒 Fleet register</option><option value="invoice">📋 Registration docs</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-tr">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
+          </div>
+
+          <!-- CONSTRUCTION -->
+          <div class="calc-panel card" id="panel-construct">
+            <h3 style="color:#BCAAA4;margin-bottom:.18rem">🏗️ Construction & Infrastructure</h3>
+            <p style="font-size:.73rem;margin-bottom:1rem">Embodied carbon + site diesel. <span class="src-chip">Bath ICE v3.0</span> <span class="src-chip">IPCC 2006 Vol.2</span></p>
+            <div class="calc-sec-lbl">Project Details</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Project Name</label><input type="text" id="con-name" placeholder="e.g. Nairobi Road Phase 2"></div>
+              <div class="inp"><label>Duration <span class="unit">(months)</span></label><input type="number" id="con-months" value="12"></div>
+            </div>
+            <div class="calc-sec-lbl">Scope 3 — Embodied Materials</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Cement <span class="unit">(tonnes)</span> <span class="ef-tip" title="OPC EF: 830 kgCO₂e/t. PLC (low-carbon): 725 kgCO₂e/t (saves 13%). Source: Bath ICE v3.0 (2019)">ⓘ</span></label><input type="number" id="con-cement" value="850"><div class="hint">EF: 830 kgCO₂e/t</div></div>
+              <div class="inp"><label>Concrete <span class="unit">(m³)</span> <span class="ef-tip" title="Ready-mix C25 EF: 159 kgCO₂e/m³. Source: Bath ICE v3.0 (2019)">ⓘ</span></label><input type="number" id="con-concrete" value="1200"><div class="hint">EF: 159 kgCO₂e/m³</div></div>
+              <div class="inp"><label>Structural Steel <span class="unit">(tonnes)</span> <span class="ef-tip" title="BOF primary steel: 1,850 kgCO₂e/t. EAF recycled: 430 kgCO₂e/t (saves 77%). Source: World Steel Association 2023">ⓘ</span></label><input type="number" id="con-steel" value="180"><div class="hint">EF: 1,850 kgCO₂e/t (BOF)</div></div>
+              <div class="inp"><label>Rebar <span class="unit">(tonnes)</span> <span class="ef-tip" title="EF: 1,990 kgCO₂e/t BOF rebar. Specify EAF (430 kgCO₂e/t) to save 77%. Source: Bath ICE v3.0">ⓘ</span></label><input type="number" id="con-rebar" value="240"><div class="hint">EF: 1,990 kgCO₂e/t</div></div>
+              <div class="inp"><label>Asphalt <span class="unit">(tonnes)</span> <span class="ef-tip" title="EF: 45 kgCO₂e/t. Source: DEFRA 2023">ⓘ</span></label><input type="number" id="con-asphalt" value="0"></div>
+              <div class="inp"><label>Timber <span class="unit">(m³)</span> <span class="ef-tip" title="EF: 720 kgCO₂e/m³. FSC-certified sustainable source has similar EF but lower deforestation risk. Source: Bath ICE v3.0">ⓘ</span></label><input type="number" id="con-timber" value="0"></div>
+            </div>
+            <div class="calc-sec-lbl">Scope 1 — Site Machinery</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Excavator/Bulldozer <span class="unit">(L/month)</span></label><input type="number" id="con-excav" value="4500"></div>
+              <div class="inp"><label>Generator <span class="unit">(L/month)</span></label><input type="number" id="con-gen" value="600"></div>
+              <div class="inp"><label>Truck Deliveries <span class="unit">(truck-km)</span></label><input type="number" id="con-tkm" value="25000"></div>
+              <div class="inp"><label>Site Electricity <span class="unit">(kWh/month)</span></label><input type="number" id="con-kwh" value="3200"></div>
+            </div>
+            <div class="calc-sec-lbl">🌳 Leakage — Land Clearing (if applicable) <span class="ef-tip" title="Source: IPCC 2006 Vol.4 Ch.4 Table 4.7 — carbon stocks for Eastern Africa land cover types">ⓘ</span></div>
+            <div class="inp-grid">
+              <div class="inp">
+                <label>Land type cleared</label>
+                <select id="con-land-type">
+                  <option value="">No land clearing (skip leakage)</option>
+                  <option value="moist_forest">Moist tropical forest (Coast/Mt Kenya) — 620 tCO₂e/ha</option>
+                  <option value="dry_woodland">Dry woodland / bush (ASAL) — 85 tCO₂e/ha</option>
+                  <option value="grassland">Savannah / grassland (Maasai Mara) — 18 tCO₂e/ha</option>
+                  <option value="wetland">Wetland / riparian — 380 tCO₂e/ha</option>
+                  <option value="cropland_active">Active cropland / smallholder — 22 tCO₂e/ha</option>
+                  <option value="degraded_land">Degraded / bare land — 12 tCO₂e/ha</option>
+                </select>
+                <div class="hint">Only needed if trees or vegetation were cleared for this project</div>
+              </div>
+              <div class="inp">
+                <label>Area cleared <span class="unit">(hectares)</span></label>
+                <input type="number" id="con-land-ha" value="0" min="0" step="0.1">
+                <div class="hint">1 ha = 10,000 m². Football pitch ≈ 0.7 ha</div>
+              </div>
+            </div>
+            <button class="btn-calc" onclick="calcConstruction()">⚡ Calculate Construction Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Cement/concrete source</label><select id="src-con-cement" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="invoice">📋 Purchase invoice</option><option value="log">📒 Bill of quantities</option><option value="estimate">📐 Engineer estimate</option></select></div>
+                <div class="src-item"><label>Steel/rebar source</label><select id="src-con-steel" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="invoice">📋 Purchase invoice</option><option value="log">📒 Bill of quantities</option><option value="estimate">📐 Engineer estimate</option></select></div>
+                <div class="src-item"><label>Machinery diesel source</label><select id="src-con-excav" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="receipt">📄 Fuel receipts</option><option value="log">📒 Site fuel log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Electricity source</label><select id="src-con-kwh" class="src-select" onchange="updateDQSPreview('con')"><option value="">— Select —</option><option value="meter">⚡ KPLC meter</option><option value="receipt">📄 KPLC bill</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-con">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
+          </div>
+
+          <!-- MANUFACTURING -->
+          <div class="calc-panel card" id="panel-manufact">
+            <h3 style="color:#CE93D8;margin-bottom:.18rem">🏭 Manufacturing & SMEs</h3>
+            <p style="font-size:.73rem;margin-bottom:1rem">Process energy, refrigerants, waste. <span class="src-chip">IPCC 2006 Vol.3</span> <span class="src-chip">KPLC 2022</span></p>
+            <div class="calc-sec-lbl">Facility Details</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Facility Name</label><input type="text" id="mfg-name" placeholder="e.g. Limuru Tea Factory"></div>
+              <div class="inp"><label>Annual Output <span class="unit">(tonnes)</span></label><input type="number" id="mfg-output" value="1200"><div class="hint">For emission intensity metric</div></div>
+            </div>
+            <div class="calc-sec-lbl">Scope 1 — Direct Combustion (Annual)</div>
+            <div class="inp-grid">
+              <div class="inp"><label>Diesel <span class="unit">(litres)</span></label><input type="number" id="mfg-diesel" value="45000"></div>
+              <div class="inp"><label>HFO <span class="unit">(litres)</span></label><input type="number" id="mfg-hfo" value="0"></div>
+              <div class="inp"><label>LPG <span class="unit">(kg)</span></label><input type="number" id="mfg-lpg" value="0"></div>
+              <div class="inp"><label>Process CO₂ <span class="unit">(tonnes)</span></label><input type="number" id="mfg-pco2" value="0"></div>
+            </div>
+            <div class="calc-sec-lbl">Scope 2 — Electricity</div>
+            <div class="inp-grid">
+              <div class="inp"><label>KPLC Grid <span class="unit">(kWh/year)</span> <span class="ef-tip" title="EF: 0.070 kgCO₂e/kWh — Source: IEA 2024 / SEforAll Kenya. Kenya grid ~90% renewable (geothermal 44%, hydro 23%, wind 16%).">ⓘ</span></label><input type="number" id="mfg-kwh" value="380000"><div class="hint">EF: 0.070 kgCO₂e/kWh (IEA 2024)</div></div>
+              <div class="inp"><label>On-site Solar <span class="unit">(kWh/year)</span></label><input type="number" id="mfg-solar" value="0"></div>
+            </div>
+            <div class="calc-sec-lbl">Scope 3 — Refrigerants & Waste</div>
+            <div class="inp-grid">
+              <div class="inp"><label>HFC-134a <span class="unit">(kg/year)</span> <span class="ef-tip" title="AR6 GWP=1,530 | AR5=1,300 | AR4=1,430. Leaks from cold stores, flower farm refrigeration. Source: GHG Protocol Aug 2024">ⓘ</span></label><input type="number" id="mfg-hfc" value="5"><div class="hint">GWP = 1,530 (AR6)</div></div>
+              <div class="inp"><label>R-404A <span class="unit">(kg/year)</span> <span class="ef-tip" title="AR6 GWP=4,180 | AR5=3,922. Being phased out — transition to R-448A (GWP 1,273). Source: GHG Protocol Aug 2024">ⓘ</span></label><input type="number" id="mfg-r404" value="0"></div>
+              <div class="inp"><label>Wastewater <span class="unit">(m³/year)</span></label><input type="number" id="mfg-ww" value="0"></div>
+              <div class="inp"><label>Solid Waste <span class="unit">(tonnes/year)</span></label><input type="number" id="mfg-waste" value="0"></div>
+            </div>
+            <button class="btn-calc" onclick="calcManufacturing()">⚡ Calculate Manufacturing Emissions →</button>
+            <div class="src-section">
+              <div class="src-section-lbl">📋 Declare Data Sources</div>
+              <div class="src-grid">
+                <div class="src-item"><label>Fuel consumption source</label><select id="src-mf-diesel" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="receipt">📄 Fuel receipts</option><option value="invoice">📋 Supplier invoices</option><option value="meter">⚡ Flow meter</option><option value="log">📒 Fuel log</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Electricity source</label><select id="src-mf-kwh" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="meter">⚡ KPLC smart meter</option><option value="receipt">📄 KPLC bill</option><option value="estimate">📐 Estimate</option></select></div>
+                <div class="src-item"><label>Refrigerant leak source</label><select id="src-mf-hfc" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="log">📒 Service/top-up log</option><option value="invoice">📋 Refrigerant invoice</option><option value="estimate">📐 Estimate</option><option value="visual">👁️ Visual check</option></select></div>
+                <div class="src-item"><label>Waste tonnage source</label><select id="src-mf-waste" class="src-select" onchange="updateDQSPreview('mf')"><option value="">— Select —</option><option value="log">📒 Waste manifest</option><option value="receipt">📄 Disposal receipts</option><option value="estimate">📐 Estimate</option></select></div>
+              </div>
+              <div class="dqs-preview" id="dqs-preview-mf">⬆️ Select sources above to preview your Data Quality Score</div>
+            </div>
+          </div>
+        </div><!-- /calc panels -->
+
+        <!-- RESULTS PANEL -->
+        <div class="results-panel">
+          <h3 class="res-panel-title">📋 Results Panel</h3>
+          <div id="res-empty" class="res-empty">
+            <span class="big">🌿</span>
+            <p>Complete a calculation to see your emission breakdown, NTZ Score, and offset recommendations.</p>
+          </div>
+          <div id="res-content" style="display:none">
+            <!-- GWP version tag + switcher -->
+            <div class="gwp-tag-bar">
+              <span id="res-gwp-tag" class="gwp-tag-badge">AR6 · CH₄=27.0 · N₂O=273</span>
+              <button class="gwp-switch-btn" onclick="document.getElementById('gwp-panel').classList.toggle('gwp-open')">Switch GWP ▾</button>
+            </div>
+            <!-- GWP panel -->
+            <div class="gwp-panel" id="gwp-panel">
+              <h4 style="margin-bottom:.48rem;font-size:.8rem;color:var(--mint)">⚖️ GWP Version — matches your verifier's standard</h4>
+              <p style="font-size:.7rem;color:rgba(255,255,255,.42);margin-bottom:.65rem">UNFCCC Paris Agreement uses AR5. Kenya KNCR recommends AR6.</p>
+              <label class="gwp-option"><input type="radio" name="gwp" value="AR6" checked onchange="applyGWP('AR6')">
+                <div><b style="color:var(--mint)">AR6 (IPCC 2021)</b> <span class="gwp-rec">✅ Kenya KNCR</span><br>
+                <span class="gwp-vals">CH₄=27.0 · N₂O=273 · HFC-134a=1,530 · R-404A=4,180</span></div>
+              </label>
+              <label class="gwp-option" style="margin-top:.38rem"><input type="radio" name="gwp" value="AR5" onchange="applyGWP('AR5')">
+                <div><b>AR5 (IPCC 2013)</b> <span class="gwp-rec" style="color:#90CAF9">📋 UNFCCC Paris Agreement</span><br>
+                <span class="gwp-vals">CH₄=28 · N₂O=265 · HFC-134a=1,300 · R-404A=3,922</span></div>
+              </label>
+              <div style="margin-top:.52rem;font-size:.64rem;color:rgba(255,255,255,.24)">Source: GHG Protocol Global Warming Potential Values, August 2024</div>
+            </div>
+            <div class="res-total">
+              <div class="lbl">Total Emissions</div>
+              <div class="val" id="res-total">0</div>
+              <div class="unit">tCO₂e per year</div>
+            </div>
+            <!-- Uncertainty band -->
+            <div class="unc-box" id="res-uncertainty" style="display:none">
+              <div class="unc-label">IPCC Tier 1 Uncertainty</div>
+              <div class="unc-range" id="res-unc-range">—</div>
+              <div class="unc-pct" id="res-unc-pct">—</div>
+              <div class="unc-basis" id="res-unc-basis">—</div>
+            </div>
+            <div class="scope-bars">
+              <div class="scope-bar-item">
+                <div class="scope-bar-hdr">
+                  <span>Scope 1 (Direct) <span class="ef-tip" title="Source: IPCC 2006 Vol.2 — fuel combustion EF: diesel 2.68 kgCO₂e/L, petrol 2.31">ⓘ</span></span>
+                  <span class="v" id="res-s1">0</span>
+                </div>
+                <div class="scope-track"><div class="scope-fill s1" id="res-s1-bar" style="width:0%"></div></div>
+              </div>
+              <div class="scope-bar-item" style="margin-top:.55rem">
+                <div class="scope-bar-hdr">
+                  <span>Scope 2 (Energy) <span class="ef-tip" title="Source: IEA 2024 — Kenya grid EF: 0.070 kgCO₂e/kWh (~90% renewable)">ⓘ</span></span>
+                  <span class="v" id="res-s2">0</span>
+                </div>
+                <div class="scope-track"><div class="scope-fill s2" id="res-s2-bar" style="width:0%"></div></div>
+              </div>
+              <div class="scope-bar-item" style="margin-top:.55rem">
+                <div class="scope-bar-hdr">
+                  <span>Scope 3 (Embodied) <span class="ef-tip" title="Source: Bath ICE v3.0 / World Steel 2023 — embodied carbon in materials">ⓘ</span></span>
+                  <span class="v" id="res-s3">0</span>
+                </div>
+                <div class="scope-track"><div class="scope-fill s3" id="res-s3-bar" style="width:0%"></div></div>
+              </div>
+            </div>
+            <div class="gs-box">
+              <div class="lbl">Netzerra Score</div>
+              <div class="score" id="res-score">—</div>
+              <div class="grade" id="res-grade">—</div>
+            </div>
+            <!-- DQS Box -->
+            <div class="dqs-box" id="res-dqs-box">
+              <div class="dqs-lbl">Data Quality Score</div>
+              <div class="dqs-score" id="res-dqs-score">—</div>
+              <div class="dqs-grade" id="res-dqs-grade">Declare sources to score</div>
+            </div>
+            <!-- Plausibility Flags -->
+            <div id="res-flags" class="flags-box" style="display:none"></div>
+            <!-- Source audit trail -->
+            <div id="res-sources" class="sources-trail" style="display:none"></div>
+            <div id="res-breakdown" style="font-size:.72rem;color:rgba(255,255,255,.5);line-height:1.9;margin-bottom:.58rem"></div>
+            <!-- Sector Benchmark Comparison -->
+            <div id="res-benchmark" class="benchmark-callout" style="display:none"></div>
+            <div id="res-offsets" style="font-size:.72rem;padding:.6rem;background:rgba(58,170,92,.08);border:1px solid rgba(58,170,92,.17);border-radius:var(--r-sm);margin-bottom:.58rem"></div>
+            <!-- Action buttons row -->
+            <div class="res-actions">
+              <button class="btn-report btn-report-primary" onclick="generateAndDownloadPDF()">📄 Download PDF</button>
+              <button class="btn-report" onclick="printReport()">🖨️ Print / Save PDF</button>
+            </div>
+            <div class="res-actions" style="margin-top:.38rem">
+              <button class="btn-report btn-share-wa"  onclick="shareWhatsApp()">💬 Share on WhatsApp</button>
+              <button class="btn-report btn-share-tw"  onclick="shareTwitter()">🐦 Share on X</button>
+              <button class="btn-report btn-share-lnk" onclick="generateShareURL()">🔗 Copy Share Link</button>
+            </div>
+            <!-- Hidden share URL input for fallback copy -->
+            <input id="share-url-box" type="text" readonly
+              style="display:none;width:100%;margin-top:.38rem;background:rgba(0,0,0,.3);border:1px solid rgba(109,217,140,.3);border-radius:var(--r-sm);padding:.45rem .65rem;color:var(--mint);font-size:.7rem;font-family:'JetBrains Mono',monospace"
+              onclick="this.select()" placeholder="Share URL will appear here">
+            <button class="btn-report" onclick="showSection('offsets')" style="margin-top:.38rem">🌳 Explore Offsets</button>
+            <!-- PIPELINE BUTTON — carries calculation into KNCR Gateway -->
+            <button class="btn-report btn-kncr-pipeline" onclick="registerAsKNCRProject()" style="margin-top:.62rem">
+              🏛️ Register as KNCR Carbon Project →
+            </button>
+            <div style="font-size:.67rem;color:rgba(255,255,255,.3);text-align:center;margin-top:.28rem">
+              Pre-fills KNCR Gateway with your calculation data
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ COUNTY DASHBOARD ══════════════ -->
+    <section class="section" id="county-section">
+      <div class="county-hero">
+        <div class="kncr-tag">🏢 County Government Intelligence Dashboard</div>
+        <h2 style="color:#fff;margin-bottom:.35rem">County Carbon Oversight Platform</h2>
+        <p style="color:rgba(255,255,255,.62);font-size:.85rem;max-width:540px">For a County Governor, Netzerra is a revenue and protection tool — live visibility into every carbon project on their land, automated tracking of the 40% community benefit mandate, FLLoCA performance data, and carbon levy collection. 40 of 47 counties currently report manually via Excel.</p>
+        <div class="county-select-row">
+          <select id="county-select" onchange="loadCountyData()"><option value="">— Select County —</option><option value="Baringo">Baringo</option><option value="Bomet">Bomet</option><option value="Bungoma">Bungoma</option><option value="Busia">Busia</option><option value="Elgeyo-Marakwet">Elgeyo-Marakwet</option><option value="Embu">Embu</option><option value="Garissa">Garissa</option><option value="Homa Bay">Homa Bay</option><option value="Isiolo">Isiolo</option><option value="Kajiado">Kajiado</option><option value="Kakamega">Kakamega</option><option value="Kericho">Kericho</option><option value="Kiambu">Kiambu</option><option value="Kilifi">Kilifi</option><option value="Kirinyaga">Kirinyaga</option><option value="Kisii">Kisii</option><option value="Kisumu">Kisumu</option><option value="Kitui">Kitui</option><option value="Kwale">Kwale</option><option value="Laikipia">Laikipia</option><option value="Lamu">Lamu</option><option value="Machakos">Machakos</option><option value="Makueni">Makueni</option><option value="Mandera">Mandera</option><option value="Marsabit">Marsabit</option><option value="Meru">Meru</option><option value="Migori">Migori</option><option value="Mombasa">Mombasa</option><option value="Murang'a">Murang'a</option><option value="Nairobi">Nairobi</option><option value="Nakuru">Nakuru</option><option value="Nandi">Nandi</option><option value="Narok">Narok</option><option value="Nyamira">Nyamira</option><option value="Nyandarua">Nyandarua</option><option value="Nyeri">Nyeri</option><option value="Samburu">Samburu</option><option value="Siaya">Siaya</option><option value="Taita-Taveta">Taita-Taveta</option><option value="Tana River">Tana River</option><option value="Tharaka-Nithi">Tharaka-Nithi</option><option value="Trans Nzoia">Trans Nzoia</option><option value="Turkana">Turkana</option><option value="Uasin Gishu">Uasin Gishu</option><option value="Vihiga">Vihiga</option><option value="Wajir">Wajir</option><option value="West Pokot">West Pokot</option></select>
+          <button class="btn-county-load" onclick="loadCountyData()">Load Dashboard →</button>
+        </div>
+      </div>
+
+      <div class="g4" id="county-kpis" style="display:none;margin-bottom:1.2rem">
+        <div class="kpi teal"><div class="kpi-lbl">Active KNCR Projects</div><div class="kpi-val teal" id="c-projects">0</div><div class="kpi-sub">in county</div></div>
+        <div class="kpi green"><div class="kpi-lbl">Carbon Revenue</div><div class="kpi-val green" style="font-size:1.1rem;margin-top:.2rem" id="c-revenue">KES 0</div><div class="kpi-sub">levy + credits YTD</div></div>
+        <div class="kpi gold"><div class="kpi-lbl">Community Benefit Fund</div><div class="kpi-val gold" style="font-size:1.1rem;margin-top:.2rem" id="c-community">KES 0</div><div class="kpi-sub">25% mandate tracked</div></div>
+        <div class="kpi coral"><div class="kpi-lbl">FLLoCA Status</div><div class="kpi-val coral" style="font-size:.95rem;margin-top:.3rem" id="c-floca">—</div><div class="kpi-sub" id="c-floca-sub">—</div></div>
+      </div>
+
+      <div class="county-grid" id="county-content" style="display:none">
+        <div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
+              <h3>🏭 Projects in <span id="c-name-hdr">County</span></h3>
+              <button onclick="openModal('modal-kncr-new')" style="padding:.32rem .82rem;background:rgba(58,170,92,.16);border:1px solid rgba(58,170,92,.3);color:var(--mint);font-size:.7rem;font-weight:600;border-radius:var(--r-sm);cursor:pointer">+ Register</button>
+            </div>
+            <div id="county-projects-list"></div>
+          </div>
+          <div class="card" style="margin-bottom:1.2rem">
+            <h3 style="margin-bottom:.9rem">🗺️ Ward Emission Comparison</h3>
+            <div id="ward-bars"></div>
+            <div style="margin-top:.62rem;font-size:.67rem;color:rgba(255,255,255,.3)">Estimated tCO₂e per ward based on livestock density, fuel use, and project data</div>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:.9rem">💰 Budget vs. Actual Carbon Revenue</h3>
+            <div class="chart-h"><canvas id="county-revenue-chart"></canvas></div>
+          </div>
+        </div>
+        <div>
+          <div class="card" style="margin-bottom:1.05rem">
+            <h3 style="margin-bottom:.9rem">🌍 FLLoCA Compliance Reporting</h3>
+            <div id="floca-details"></div>
+            <div class="kncr-info-box">FLLoCA requires performance criteria documentation. Netzerra helps counties organise their climate data and prepare for the official NTPIU reporting process — County Readiness Grant and County Climate Resilient Investment Grant.</div>
+            <button class="btn-report" onclick="generateFLoCAReport()">📄 Generate FLLoCA Report</button>
+          </div>
+          <div class="card" style="margin-bottom:1.05rem">
+            <h3 style="margin-bottom:.9rem">👥 Community Benefit Fund Tracking</h3>
+            <div id="community-benefit-tracking"></div>
+          </div>
+          <div class="card">
+            <h3 style="margin-bottom:.9rem">📅 Carbon Levy Revenue Timeline</h3>
+            <div id="levy-timeline"></div>
+          </div>
+        </div>
+      </div>
+
+      <div id="county-placeholder" style="text-align:center;padding:3rem;color:rgba(255,255,255,.26)">
+        <div style="font-size:3.5rem;margin-bottom:.9rem">🏢</div>
+        <p>Select a county above to load its carbon intelligence dashboard</p>
+      </div>
+    </section>
+
+    <!-- ══════════════ LEADERBOARD ══════════════ -->
+    <section class="section" id="leaderboard-section">
+      <div class="sec-header"><h2>🏆 Leaderboard</h2><p>Kenya's top organisations ranked by NTZ Score — updated monthly.</p></div>
+      <div class="g2">
+        <div><h3 style="margin-bottom:.85rem">Top Organisations</h3><div class="lb-list" id="leaderboard-list"></div></div>
+        <div>
+          <div class="chart-card" style="margin-bottom:1.05rem"><h4>County Rankings</h4><div class="sub">Avg NTZ Score</div><div class="chart-h-tall"><canvas id="county-chart"></canvas></div></div>
+          <div class="chart-card"><h4>Sector Distribution</h4><div class="sub">Share of tracked emissions</div><div class="chart-h"><canvas id="sector-dist-chart"></canvas></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ COMMUNITY ══════════════ -->
+    <section class="section" id="community-section">
+      <div class="sec-header"><h2>💬 Community Feed</h2><p>Updates from Kenya's carbon tracking community.</p></div>
+      <div class="community-layout">
+        <div class="feed" id="community-feed"></div>
+        <div>
+          <div class="card" style="margin-bottom:1.05rem"><h4 style="margin-bottom:.82rem">📊 Community Stats</h4><div id="community-stats"></div></div>
+          <div class="card"><h4 style="margin-bottom:.6rem">🌟 Top Contributors</h4><div id="contributor-list"></div></div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ PASSPORT ══════════════ -->
+    <section class="section" id="passport-section">
+      <div class="sec-header"><h2>🪪 Carbon Passport</h2><p>Your verified carbon identity — shareable with donors and carbon markets.</p></div>
+      <div class="passport-wrap">
+        <div class="passport-card">
+          <div class="pp-hdr">
+            <div class="pp-logo">Netzerra<small>CARBON PASSPORT · KENYA</small></div>
+            <div class="pp-qr">🔳</div>
+          </div>
+          <div style="margin-bottom:1.05rem">
+            <div class="pp-name" id="pp-name">Shukri Ali</div>
+            <div class="pp-org"  id="pp-org">Netzerra · Carbon Intelligence</div>
+            <div class="pp-id"   id="pp-id">ID: NTZ-2026-SA-001 · Issued: 2026-01-01</div>
+          </div>
+          <div class="pp-metrics">
+            <div class="pp-m"><div class="val" style="color:var(--mint)" id="pp-total">2,847</div><div class="lbl">tCO₂e Tracked</div></div>
+            <div class="pp-m"><div class="val" style="color:var(--gold)" id="pp-score">68</div><div class="lbl">NTZ Score</div></div>
+            <div class="pp-m"><div class="val" style="color:#80DEEA"     id="pp-projects">12</div><div class="lbl">Projects</div></div>
+          </div>
+          <div class="pp-badges">
+            <div class="badge green">🌿 Pioneer Member</div>
+            <div class="badge gold">⭐ Top Contributor</div>
+            <div class="badge teal">💧 Borehole Expert</div>
+            <div class="badge">📋 IPCC Certified</div>
+          </div>
+        </div>
+        <div style="display:flex;gap:.7rem;flex-wrap:wrap;justify-content:center">
+          <button class="btn-report" style="width:auto;padding:.6rem 1.35rem" onclick="toast('Passport link copied!','success')">📋 Copy Share Link</button>
+          <button class="btn-report" style="width:auto;padding:.6rem 1.35rem" onclick="generateAndDownloadPDF()">⬇️ Download PDF</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ OFFSETS ══════════════ -->
+    <section class="section" id="offsets-section">
+      <div class="sec-header"><h2>🌳 Offset Strategies</h2><p>Kenya-calibrated pathways with sequestration rates, costs, and scientific references.</p></div>
+      <div class="ga" id="offset-grid"></div>
+    </section>
+
+    <!-- ══════════════ METHODOLOGY ══════════════ -->
+    <section class="section" id="methodology-section">
+      <div class="sec-header"><h2>📐 Methodology</h2><p>Full transparency on every emission factor, formula, and data source used in Netzerra.</p></div>
+      <div class="method-layout">
+        <div class="method-nav" id="method-nav">
+          <div class="method-nav-item active" onclick="showMethodPanel('overview',this)">🌍 Overview</div>
+          <div class="method-nav-item"        onclick="showMethodPanel('borehole',this)">💧 Borehole</div>
+          <div class="method-nav-item"        onclick="showMethodPanel('livestock',this)">🐄 Livestock</div>
+          <div class="method-nav-item"        onclick="showMethodPanel('transport',this)">🚌 Transport</div>
+          <div class="method-nav-item"        onclick="showMethodPanel('construction',this)">🏗️ Construction</div>
+          <div class="method-nav-item"        onclick="showMethodPanel('manufacturing',this)">🏭 Manufacturing</div>
+          <div class="method-nav-item"        onclick="showMethodPanel('gs',this)">⭐ NTZ Score</div>
+          <div class="method-nav-item"        onclick="showMethodPanel('refs',this)">📚 References</div>
+        </div>
+        <div>
+          <div class="method-panel active" id="mp-overview">
+            <h2>Methodology Overview</h2>
+            <p>Netzerra implements IPCC 2006 Guidelines updated with AR6 (2021) GWP₁₀₀ values. Calculations follow the GHG Protocol Scope 1/2/3 framework aligned with ISO 14064-1:2018.</p>
+            <div class="ef-correction-note">⚡ <b>Kenya Grid EF — Verified March 2026:</b> Kenya's grid is ~90% renewable (geothermal 44%, hydro 23%, wind 16%). Correct EF: <b>0.070 kgCO₂e/kWh</b> (IEA 2024 / SEforAll Kenya). A figure of 0.497 kgCO₂e/kWh was previously incorrect and has been corrected across all Scope 2 calculations.</div>
+            <div class="formula-box">Emissions (tCO₂e) = Σ [Activity Data × Emission Factor × GWP₁₀₀] ÷ 1000<br><em>AR6 GWP₁₀₀(CH₄) = 27.0, GWP₁₀₀(N₂O) = 273 — GHG Protocol Aug 2024 / IPCC AR6 WG1 Ch.7</em><br><em>AR5 GWP₁₀₀(CH₄) = 28, GWP₁₀₀(N₂O) = 265 — UNFCCC Paris Agreement standard</em></div>
+            <table class="ef-table"><thead><tr><th>Parameter</th><th>Value (AR6)</th><th>Value (AR5)</th><th>Unit</th><th>Source</th></tr></thead><tbody>
+              <tr><td>Kenya Grid (IEA 2024)</td><td class="mn">0.070</td><td class="mn">0.070</td><td>kgCO₂e/kWh</td><td><span class="src-chip">IEA 2024 · SEforAll</span></td></tr>
+              <tr><td>Diesel Combustion</td><td class="mn">2.68</td><td class="mn">2.68</td><td>kgCO₂e/L</td><td><span class="src-chip">IPCC 2006 Vol.2</span></td></tr>
+              <tr><td>Petrol Combustion</td><td class="mn">2.31</td><td class="mn">2.31</td><td>kgCO₂e/L</td><td><span class="src-chip">IPCC 2006 Vol.2</span></td></tr>
+              <tr><td>GWP₁₀₀ CH₄ (non-fossil)</td><td class="mn">27.0</td><td class="mn">28</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>GWP₁₀₀ N₂O</td><td class="mn">273</td><td class="mn">265</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>HFC-134a refrigerant</td><td class="mn">1,530</td><td class="mn">1,300</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>R-404A refrigerant</td><td class="mn">4,180</td><td class="mn">3,922</td><td>kgCO₂e/kg</td><td><span class="src-chip">GHG Protocol Aug 2024</span></td></tr>
+              <tr><td>Cement / OPC</td><td class="mn">830</td><td class="mn">830</td><td>kgCO₂e/t</td><td><span class="src-chip">Bath ICE v3.0</span></td></tr>
+              <tr><td>Steel (BOF primary)</td><td class="mn">1,850</td><td class="mn">1,850</td><td>kgCO₂e/t</td><td><span class="src-chip">World Steel 2023</span></td></tr>
+            </tbody></table>
+          </div>
+          <div class="method-panel" id="mp-borehole"><h2>Borehole Methodology</h2><p>Scope 1: diesel (drilling + pumping + generator). Scope 2: KPLC grid × (1 − solar%). Scope 3: casing materials amortised over design lifetime.</p><div class="formula-box">S1 = (L_drill/lifetime + L_pump + L_gen) × 2.68<br>S2 = kWh × 0.070 × (1 − solar%)  [Kenya grid, IEA 2024]<br>S3 = (kg_steel×1850 + kg_PVC×2410 + kg_cement×830) / lifetime / 1000<br><em>Total [tCO₂e/yr] = (S1 + S2 + S3) / 1000</em></div></div>
+          <div class="method-panel" id="mp-livestock"><h2>Livestock Methodology</h2>
+            <p>IPCC 2006 Vol.4 Ch.10 Tier 1 — Eastern Africa defaults. Enteric CH₄ + manure CH₄ + pasture N₂O. GWP values are dynamically applied from the active GWP set (AR6 default).</p>
+            <div class="formula-box">E_enteric    = Σ(heads × EF_ent) × GWP_CH4  [AR6: 27.0 | AR5: 28]<br>E_manure_CH4 = Σ(heads × EF_man_CH4) × GWP_CH4<br>E_manure_N2O = Σ(heads × Nex × EF3 × 44/28) × GWP_N2O  [AR6: 273 | AR5: 265]<br><em>EF3 = 0.02 pasture (IPCC 2006 Vol.4 Table 11.1)</em><br><em>Total [tCO₂e/yr] = (E_ent + E_man + E_n2o + E_feed + E_elec) / 1000</em></div>
+            <div class="ef-correction-note">📋 Uncertainty: ±30% enteric CH₄, ±50% manure N₂O (IPCC 2006 Vol.4 Table 1.4). Tier 1 values. For Tier 2 accuracy, use country-specific EFs from direct measurement.</div>
+          </div>
+          <div class="method-panel" id="mp-transport"><h2>Transport Methodology</h2>
+            <p>DEFRA/BEIS 2023 fuel-based method. Refrigerant fugitives classified as Scope 3 — use active GWP set.</p>
+            <div class="formula-box">E_fuel = Σ(L_fuel × EF_fuel) / 1000  [diesel 2.68, petrol 2.31 — IPCC 2006 Vol.2]<br>E_HFC  = kg_HFC134a × GWP_HFC134a  [AR6: 1,530 | AR5: 1,300 — GHG Protocol Aug 2024]<br>E_R404 = kg_R404A × GWP_R404A      [AR6: 4,180 | AR5: 3,922]<br><em>Total [tCO₂e/yr] = (E_fuel + E_HFC + E_R404) / 1000</em></div>
+            <div class="ef-correction-note">⚠️ Note: HFC-134a GWP changed significantly between assessment reports. AR4=1,430, AR5=1,300, AR6=1,530. The GWP selector above controls which value is applied.</div>
+          </div>
+          <div class="method-panel" id="mp-construction"><h2>Construction Methodology</h2>
+            <p>Scope 3 embodied carbon (Bath ICE v3.0 cradle-to-gate) typically dominates construction projects. Leakage from land clearing is added to the total if a land type is selected.</p>
+            <div class="formula-box">Scope 3 = t_cement×830 + m³_conc×159 + t_steel×1850 + t_rebar×1990 + ...  [Bath ICE v3.0]<br>Scope 1 = (L_excav + L_gen) × months × 2.68 + truck_km × 0.20  [IPCC 2006 / DEFRA 2023]<br>Scope 2 = kWh/mo × months × 0.070  [IEA 2024 — Kenya grid]<br>Leakage = hectares × tCO₂e/ha  [IPCC 2006 Vol.4 Table 4.7 — Eastern Africa land cover]<br><em>Total = Scope1 + Scope2 + Scope3 + Leakage</em></div>
+            <div class="ef-correction-note">📋 Uncertainty: ±20% steel, ±15% concrete, ±10% cement (Bath ICE v3.0 standard deviations). For KNCR Level 2 accuracy, use contractor-verified material quantities.</div>
+          </div>
+          <div class="method-panel" id="mp-manufacturing"><h2>Manufacturing Methodology</h2>
+            <p>IPCC 2006 Vol.3. Emission intensity benchmarked against KTDA, IFC, FAO, World Steel sector references. CBAM-ready output for EU export compliance.</p>
+            <div class="formula-box">Scope 1 = L_diesel×2.68 + L_HFO×3.17 + kg_LPG×2.98 + t_CO2×1000  [IPCC 2006 Vol.2]<br>Scope 2 = (kWh_grid − kWh_solar) × 0.070  [IEA 2024 — Kenya grid]<br>Scope 3 = kg_HFC134a×GWP_HFC + kg_R404A×GWP_R404 + m³_ww×25 + t_waste×580<br><em>Intensity = Total_kgCO₂e ÷ tonnes_output  [kgCO₂e/t product]</em></div>
+          </div>
+          <div class="method-panel" id="mp-gs">
+            <h2>Netzerra Score Formula</h2>
+            <p>The NTZ Score (0–100) rewards intensity reduction, active offsetting, year-on-year improvement, and engagement. Aligned with SBTi 1.5°C pathway (7% annual reduction).</p>
+            <div class="formula-box">Intensity_Score  = 40 × max(0, 1 − E_intensity / sector_benchmark)<br>Offset_Score     = 30 × min(1, total_offsets / total_emissions)<br>Reduction_Score  = 20 × max(0, ΔE_reduction / 0.07)<br>Engagement_Score = 10 × min(1, projects_tracked / 10)<br><em>NTZ_Score = Σ components  [0–100]</em></div>
+            <table class="ef-table"><thead><tr><th>Score</th><th>Grade</th><th>Status</th></tr></thead><tbody>
+              <tr><td class="mn">85–100</td><td>A+</td><td>🌟 Climate Leader</td></tr>
+              <tr><td class="mn">70–84</td><td>A</td><td>🌿 Climate Positive</td></tr>
+              <tr><td class="mn">55–69</td><td>B</td><td>📈 Improving</td></tr>
+              <tr><td class="mn">40–54</td><td>C</td><td>⚠️ Needs Attention</td></tr>
+              <tr><td class="mn">0–39</td><td>D</td><td>🔴 High Emitter</td></tr>
+            </tbody></table>
+          </div>
+          <div class="method-panel" id="mp-refs">
+            <h2>References</h2>
+            <div class="formula-box" style="font-family:'Space Grotesk',sans-serif;font-size:.77rem;color:rgba(255,255,255,.72);line-height:2.1">
+              1. IPCC (2006). 2006 IPCC Guidelines for National GHG Inventories. IGES, Japan.<br>
+              2. IPCC (2021). Climate Change 2021: AR6 WG1 — Physical Science Basis. Cambridge.<br>
+              3. Kenya Power &amp; Lighting Co. (2022). Annual Report &amp; Grid Emission Factor. Nairobi.<br>
+              4. DEFRA/BEIS (2023). GHG Reporting: Conversion Factors 2023. UK Government.<br>
+              5. World Steel Association (2023). Steel Statistical Yearbook &amp; LCI Data.<br>
+              6. Hammond G. &amp; Jones C. (2019). Inventory of Carbon and Energy (ICE) v3.0. Univ. Bath.<br>
+              7. KEFRI (2019, 2020). Carbon Sequestration Rates of Agroforestry Species. Muguga.<br>
+              8. SNV (2021). Biogas for Cooking and GHG Reduction in Kenya. Nairobi.<br>
+              9. Yuen J.Q. et al. (2017). Carbon stocks in bamboo ecosystems. Forest Ecol. &amp; Mgmt.<br>
+              10. GHG Protocol (2015). Corporate Value Chain (Scope 3) Standard. WRI/WBCSD.<br>
+              11. ISO (2018). ISO 14064-1:2018 — GHG organisation-level specification. Geneva.
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ DOCS ══════════════ -->
+    <section class="section" id="docs-section">
+      <div class="sec-header"><h2>📁 Documentation Hub</h2><p>PDF-ready HTML documents. Open in browser → File → Print → Save as PDF.</p></div>
+      <div class="ga" id="docs-grid"></div>
+    </section>
+
+    <!-- ══════════════ MARKETPLACE ══════════════ -->
+    <section class="section" id="marketplace-section">
+      <div class="sec-header"><h2>🛒 Marketplace</h2><p>Verified offsets, seedlings, biogas equipment, and consultancy from Kenya's green economy.</p></div>
+      <div class="ga" id="market-grid"></div>
+    </section>
+
+    <!-- ══════════════ MEMBERSHIP ══════════════ -->
+    <section class="section" id="membership-section">
+      <div class="sec-header"><h2>💎 Membership Plans</h2><p>All plans include M-Pesa billing. No card required.</p></div>
+      <div class="pricing-grid" id="pricing-grid"></div>
+      <div style="text-align:center;margin:1.6rem auto 0;padding:1.15rem;background:rgba(0,166,81,.05);border:1px solid rgba(0,166,81,.15);border-radius:var(--r);max-width:500px">
+        <div style="font-size:1.3rem;margin-bottom:.38rem">📱</div>
+        <h4>Pay with M-Pesa</h4>
+        <p style="font-size:.78rem;margin-top:.32rem">All Netzerra subscriptions support M-Pesa STK Push. Approve directly from your Safaricom line — no card needed.</p>
+      </div>
+    </section>
+
+    <!-- ══════════════ EDUCATION ══════════════ -->
+    <section class="section" id="education-section">
+      <div class="sec-header"><h2>🎓 Education Centre</h2><p>Tutorials and FAQs for carbon accounting across Kenya's emission sectors.</p></div>
+
+      <h3 style="margin-bottom:.85rem">📹 Video Tutorials</h3>
+      <div class="video-grid">
+        <div class="video-card" onclick="toast('Video player coming soon!','info')">
+          <div class="video-thumb">💧<div class="video-play">▶</div></div>
+          <div class="video-info"><div class="title">Borehole Carbon Footprint Explained</div><div class="meta">18 min · Beginner · 1,240 views</div></div>
+        </div>
+        <div class="video-card" onclick="toast('Video player coming soon!','info')">
+          <div class="video-thumb">🐄<div class="video-play">▶</div></div>
+          <div class="video-info"><div class="title">Livestock GHG: Enteric Fermentation</div><div class="meta">31 min · Intermediate · 1,100 views</div></div>
+        </div>
+        <div class="video-card" onclick="toast('Video player coming soon!','info')">
+          <div class="video-thumb">🚛<div class="video-play">▶</div></div>
+          <div class="video-info"><div class="title">Transport Emissions: DEFRA Method</div><div class="meta">15 min · Beginner · 720 views</div></div>
+        </div>
+        <div class="video-card" onclick="toast('Video player coming soon!','info')">
+          <div class="video-thumb">🌳<div class="video-play">▶</div></div>
+          <div class="video-info"><div class="title">Offset Verification for Donors</div><div class="meta">22 min · Advanced · 540 views</div></div>
+        </div>
+        <div class="video-card" onclick="toast('Video player coming soon!','info')">
+          <div class="video-thumb">🏛️<div class="video-play">▶</div></div>
+          <div class="video-info"><div class="title">KNCR Registration Walkthrough</div><div class="meta">28 min · Intermediate · 890 views</div></div>
+        </div>
+        <div class="video-card" onclick="toast('Video player coming soon!','info')">
+          <div class="video-thumb">🏢<div class="video-play">▶</div></div>
+          <div class="video-info"><div class="title">County Dashboard: FLLoCA Reporting</div><div class="meta">20 min · County Officers · 660 views</div></div>
+        </div>
+      </div>
+
+      <h3 style="margin-bottom:.85rem">❓ Frequently Asked Questions</h3>
+      <div id="faq-list"></div>
+    </section>
+
+    <!-- ══════════════ ABOUT & FOUNDER ══════════════ -->
+    <section class="section" id="about-section">
+      <div class="sec-header">
+        <h2>ℹ️ About Netzerra & The Founder</h2>
+        <p>Kenya's carbon economy needs a data layer. Netzerra is that layer — built from the ground up, for Kenya, by one person who saw the problem firsthand.</p>
+      </div>
+
+      <!-- FOUNDER CARD -->
+      <div class="founder-card" style="margin-bottom:1.65rem">
+        <div style="display:flex;align-items:flex-start;gap:1.65rem;flex-wrap:wrap">
+          <!-- Avatar + contact -->
+          <div style="flex-shrink:0;text-align:center;min-width:140px">
+            <div class="founder-avatar" style="margin:0 auto .9rem">SA</div>
+            <div class="founder-name">Shukri Ali</div>
+            <div class="founder-title">Founder & CEO, Netzerra</div>
+            <div style="display:flex;flex-direction:column;gap:.3rem;margin-top:.7rem">
+              <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📧 shukriali411@gmail.com</div>
+              <div style="font-size:.75rem;color:rgba(255,255,255,.52)">📱 +254 705 366 807</div>
+              <div style="font-size:.75rem;color:var(--teal)">🌐 netzerrakenya.com</div>
+            </div>
+          </div>
+          <!-- Story -->
+          <div style="flex:1;min-width:240px">
+            <div style="font-family:'Sora',sans-serif;font-size:1.05rem;font-weight:700;color:var(--mint);margin-bottom:.7rem">The Story Behind Netzerra</div>
+            <div class="founder-story">
+              <p style="color:rgba(255,255,255,.8);margin-bottom:.85rem">
+                Netzerra started as a single question during my industrial attachment at the <strong>Kenya Water Industry Association (KWIA)</strong> in 2023: <em style="color:var(--mint)">"How much carbon does drilling a borehole actually emit?"</em>
+              </p>
+              <p style="color:rgba(255,255,255,.8);margin-bottom:.85rem">
+                I watched drilling rigs burn diesel for days. Steel casings shipped hundreds of kilometres. Cement grout packed into every hole. No one was measuring any of it. I built a small spreadsheet — then a bigger one.
+              </p>
+              <p style="color:rgba(255,255,255,.8);margin-bottom:.85rem">
+                The late <strong>Mr. Tom Armstrong</strong>, then Chairman of KWIA, became my first mentor. He saw what I was doing and pushed me to think bigger — beyond boreholes, to every sector of Kenya's economy. His passing left a profound gap, and a profound responsibility to see this through.
+              </p>
+              <p style="color:rgba(255,255,255,.8)">
+                Three years later, that spreadsheet is Netzerra — covering five sectors, 47 counties, KNCR-native architecture, and Community Development Agreement (CDA) generation under the Carbon Markets Regulations 2024 Fourth Schedule. Built by one person, in Kenya, for Kenya.
+              </p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Milestones timeline -->
+        <div style="margin-top:1.65rem;border-top:1px solid rgba(109,217,140,.1);padding-top:1.15rem">
+          <div style="font-family:'Sora',sans-serif;font-size:.82rem;font-weight:700;color:var(--mint);margin-bottom:.95rem;text-transform:uppercase;letter-spacing:.06em">Journey Milestones</div>
+          <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:.7rem">
+            <div class="milestone-line"><div class="milestone-year">2020–2022</div><div class="milestone-text">Diploma in Information Technology (Distinction) — Kibabii University, Bungoma</div></div>
+            <div class="milestone-line"><div class="milestone-year">2023</div><div class="milestone-text">Industrial Attachment at KWIA. First borehole carbon footprint analysis. Mentored by Mr. Tom Armstrong.</div></div>
+            <div class="milestone-line"><div class="milestone-year">2023–2024</div><div class="milestone-text">Loss of mentor. Committed to building independently. Expanded from boreholes to livestock, transport, construction, manufacturing.</div></div>
+            <div class="milestone-line"><div class="milestone-year">2024</div><div class="milestone-text">Integrated KPLC 2022 grid factor, KEFRI agroforestry rates, DEFRA transport EFs. Added M-Pesa billing and county dashboards.</div></div>
+            <div class="milestone-line"><div class="milestone-year">2025</div><div class="milestone-text">Built KNCR Gateway — first automation tool for Kenya's National Carbon Registry. CDA automation, community benefit calculators.</div></div>
+            <div class="milestone-line"><div class="milestone-year">Feb 2026</div><div class="milestone-text">KNCR officially launched. Netzerra goes live as the first KNCR-native compliance automation platform in Kenya.</div></div>
+          </div>
+        </div>
+
+        <div style="margin-top:1.15rem;padding:.88rem 1.05rem;background:rgba(58,170,92,.07);border:1px solid rgba(58,170,92,.14);border-radius:var(--r-sm);font-size:.8rem;color:rgba(255,255,255,.58)">
+          🤝 <strong style="color:var(--mint)">Open to collaboration:</strong> Technical co-founder · Carbon market advisor · Legal counsel (climate law) · County government partnerships
+        </div>
+      </div>
+
+      <!-- Mission + Why -->
+      <div class="g2" style="margin-bottom:1.65rem">
+        <div class="card">
+          <h3 style="margin-bottom:.62rem">🌍 Our Mission</h3>
+          <p style="font-size:.83rem">Give Kenya's farmers, county governments, and businesses the tools to measure, understand, and reduce their carbon footprint — without needing a PhD in climate science. By combining IPCC AR6 methodology with Kenya-calibrated factors, we provide auditable data that meets international carbon market standards.</p>
+        </div>
+        <div class="card">
+          <h3 style="margin-bottom:.62rem">🎯 The Regulatory Moat</h3>
+          <p style="font-size:.83rem">The Carbon Markets Regulations 2024 created a "digital-first" mandate. The KNCR is a central digital ledger — all 80+ stalled projects must submit verified MRV data or face a <strong style="color:var(--coral)">KES 500M penalty</strong> under Regulation 37. Netzerra is the first platform built to speak the KNCR's language natively — using Kenya-specific emission factors, automated CDA Fourth Schedule generation, and ISO 14064-aligned reports that cut VVB audit time from 6 months to 2 weeks.</p>
+        </div>
+      </div>
+
+      <!-- Team -->
+      <h3 style="margin-bottom:.95rem">👥 Core Team</h3>
+      <div class="ga" style="margin-bottom:1.65rem">
+        <div class="card" style="text-align:center">
+          <div style="width:58px;height:58px;border-radius:50%;background:linear-gradient(135deg,var(--fern),var(--leaf));display:flex;align-items:center;justify-content:center;font-size:1.35rem;font-weight:700;margin:0 auto .7rem;border:3px solid rgba(109,217,140,.2)">SA</div>
+          <div style="font-weight:700;margin-bottom:.18rem">Shukri Ali</div>
+          <div style="font-size:.72rem;color:var(--mint);margin-bottom:.55rem">Founder &amp; Platform Architect</div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.48);line-height:1.6">Diploma IT (Distinction), Kibabii University. KWIA alumnus. Built Kenya's first KNCR-native compliance automation platform — 3 years of independent development.</div>
+        </div>
+        <div class="card" style="text-align:center;opacity:.7">
+          <div style="width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto .7rem;border:3px dashed rgba(109,217,140,.2)">+</div>
+          <div style="font-weight:700;margin-bottom:.18rem">Technical Co-founder</div>
+          <div style="font-size:.72rem;color:var(--mint);margin-bottom:.55rem">Position Open</div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.38);line-height:1.6">Software engineer with React/Node, API architecture experience. Carbon or climate tech background a strong plus.</div>
+        </div>
+        <div class="card" style="text-align:center;opacity:.7">
+          <div style="width:58px;height:58px;border-radius:50%;background:rgba(255,255,255,.07);display:flex;align-items:center;justify-content:center;font-size:1.5rem;margin:0 auto .7rem;border:3px dashed rgba(109,217,140,.2)">+</div>
+          <div style="font-weight:700;margin-bottom:.18rem">Carbon Market Advisor</div>
+          <div style="font-size:.72rem;color:var(--mint);margin-bottom:.55rem">Position Open</div>
+          <div style="font-size:.75rem;color:rgba(255,255,255,.38);line-height:1.6">Verra/GS verifier or VCM professional with East Africa market knowledge. Help close our first carbon credit deals.</div>
+        </div>
+      </div>
+
+      <!-- Contact -->
+      <h3 style="margin-bottom:.9rem">📬 Contact</h3>
+      <div class="g3">
+        <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📧</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Email</div><div style="font-size:.83rem;color:var(--mint)">shukriali411@gmail.com</div></div>
+        <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📱</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Phone / WhatsApp</div><div style="font-size:.83rem;color:var(--mint)">+254 705 366 807</div></div>
+        <div class="card" style="text-align:center"><div style="font-size:1.45rem;margin-bottom:.38rem">📍</div><div style="font-size:.67rem;color:rgba(255,255,255,.32);text-transform:uppercase;letter-spacing:.06em;margin-bottom:.2rem">Location</div><div style="font-size:.83rem;color:var(--mint)">Nairobi, Kenya 🇰🇪</div></div>
+      </div>
+    </section>
+
+    <!-- ══════════════ KNCR GATEWAY ══════════════ -->
+    <section class="section" id="kncr-section">
+      <div class="kncr-hero">
+        <div class="kncr-tag">🏛️ Kenya National Carbon Registry · Launched 17 Feb 2026</div>
+        <h2 style="color:#fff;margin-bottom:.35rem">KNCR Full Pipeline</h2>
+        <p style="color:rgba(255,255,255,.62);font-size:.86rem;max-width:600px">Complete automation from Concept Note to Credits Live. Every document required by Kenya's Carbon Markets Regulations 2024 — generated, pre-filled with your calculation data, and ready for NEMA submission.</p>
+        <div class="kncr-badges">
+          <span class="kncr-badge">📋 Carbon Markets Regulations 2024</span>
+          <span class="kncr-badge" style="background:rgba(0,201,167,.12);border-color:rgba(0,201,167,.3);color:var(--teal)">🆕 Carbon Trading Regs 2025</span>
+          <span class="kncr-badge">🌍 Article 6 Paris Agreement</span>
+          <span class="kncr-badge" style="background:rgba(245,166,35,.12);border-color:rgba(245,166,35,.3);color:var(--gold)">⚡ IPCC AR6 Verified</span>
+        </div>
+      </div>
+
+      <!-- ── PIPELINE PROGRESS TRACKER ── -->
+      <div class="card" style="padding:1.4rem;margin-bottom:1.2rem">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+          <h4>📂 My KNCR Projects</h4>
+          <button onclick="openModal('modal-kncr-new')" style="padding:.38rem .88rem;background:rgba(58,170,92,.16);border:1px solid rgba(58,170,92,.3);color:var(--mint);font-size:.72rem;font-weight:600;border-radius:var(--r-sm);cursor:pointer">+ New Project</button>
+        </div>
+        <div id="kncr-projects-list"></div>
+        <div style="margin-top:1.2rem">
+          <div style="font-size:.72rem;font-weight:700;color:var(--mint);margin-bottom:.62rem;text-transform:uppercase;letter-spacing:.06em">Pipeline Progress</div>
+          <div class="kncr-pipeline" id="kncr-pipeline"></div>
+        </div>
+      </div>
+
+      <!-- ── SHARED PROJECT FIELDS ── -->
+      <div class="card" style="margin-bottom:1.2rem;border:1px solid rgba(0,201,167,.25)">
+        <div style="display:flex;align-items:center;gap:.72rem;margin-bottom:1rem">
+          <div style="background:rgba(0,201,167,.18);border:1px solid rgba(0,201,167,.4);color:var(--teal);border-radius:50%;width:28px;height:28px;display:flex;align-items:center;justify-content:center;font-size:.78rem;font-weight:700;flex-shrink:0">📋</div>
+          <div>
+            <div style="font-weight:700;font-size:.95rem">Project Details — shared across all documents</div>
+            <div style="font-size:.72rem;color:rgba(255,255,255,.4)">Fill once, used by all 6 document generators below</div>
+          </div>
+        </div>
+        <!-- Pipeline arrival banner -->
+        <div id="kncr-pipeline-banner" style="display:none;background:rgba(0,201,167,.1);border:1px solid rgba(0,201,167,.35);border-left:3px solid var(--teal);border-radius:var(--r-sm);padding:.72rem .88rem;margin-bottom:.88rem;font-size:.78rem">
+          <div style="font-weight:700;color:var(--teal);margin-bottom:.32rem">✅ Calculation data loaded from your emission calculator</div>
+          <div id="kncr-pipeline-summary" style="color:rgba(255,255,255,.65);line-height:1.7"></div>
+          <div style="font-size:.68rem;color:rgba(255,255,255,.35);margin-top:.25rem">Review and complete the fields below. All documents below will use this verified baseline.</div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:.72rem">
+          <div class="inp" style="margin-bottom:0"><label>Project Name</label><input type="text" id="kncr-proj-name" placeholder="e.g. Turkana Borehole Electrification Project"></div>
+          <div class="inp" style="margin-bottom:0"><label>Project Proponent</label><input type="text" id="kncr-proponent" placeholder="Organisation / County Gov."></div>
+          <div class="inp" style="margin-bottom:0"><label>Project Type</label>
+            <select id="kncr-proj-type">
+              <option value="borehole">💧 Borehole / Water Infrastructure</option>
+              <option value="livestock">🐄 Livestock Management (AFOLU)</option>
+              <option value="transport">🚌 Transport Decarbonisation</option>
+              <option value="construction">🏗️ Low-Carbon Construction</option>
+              <option value="forestry">🌳 Agroforestry / Offset Planting</option>
+              <option value="solar">☀️ Renewable Energy</option>
+              <option value="biogas">🔥 Clean Cooking / Biogas</option>
+            </select>
+          </div>
+          <div class="inp" style="margin-bottom:0"><label>Registry Standard</label>
+            <select id="kncr-standard">
+              <option value="verra">Verra VCS</option>
+              <option value="gs">Gold Standard</option>
+              <option value="kncr-domestic">KNCR Domestic</option>
+              <option value="cdm">CDM</option>
+            </select>
+          </div>
+          <div class="inp" style="margin-bottom:0"><label>County</label>
+            <select id="kncr-county"><option>Baringo</option><option>Bomet</option><option>Bungoma</option><option>Busia</option><option>Elgeyo-Marakwet</option><option>Embu</option><option>Garissa</option><option>Homa Bay</option><option>Isiolo</option><option>Kajiado</option><option>Kakamega</option><option>Kericho</option><option>Kiambu</option><option>Kilifi</option><option>Kirinyaga</option><option>Kisii</option><option>Kisumu</option><option>Kitui</option><option>Kwale</option><option>Laikipia</option><option>Lamu</option><option>Machakos</option><option>Makueni</option><option>Mandera</option><option>Marsabit</option><option>Meru</option><option>Migori</option><option>Mombasa</option><option>Murang'a</option><option>Nairobi</option><option>Nakuru</option><option>Nandi</option><option>Narok</option><option>Nyamira</option><option>Nyandarua</option><option>Nyeri</option><option>Samburu</option><option>Siaya</option><option>Taita-Taveta</option><option>Tana River</option><option>Tharaka-Nithi</option><option>Trans Nzoia</option><option>Turkana</option><option>Uasin Gishu</option><option>Vihiga</option><option>Wajir</option><option>West Pokot</option></select>
+          </div>
+          <div class="inp" style="margin-bottom:0"><label>Land Type <span class="ef-tip" title="CDA required for public/community land (40% mandate). Private land is exempt.">ⓘ</span></label>
+            <select id="kncr-land-type">
+              <option value="community">Community Land (40% CDA mandate)</option>
+              <option value="public">Public Land (40% CDA mandate)</option>
+              <option value="private">Private Land (exempt)</option>
+            </select>
+          </div>
+          <div class="inp" style="margin-bottom:0"><label>Community Name</label><input type="text" id="kncr-community" placeholder="e.g. Turkana Pastoral Community"></div>
+          <div class="inp" style="margin-bottom:0">
+            <label>Est. Annual Credits <span class="unit">(tCO₂e/yr)</span></label>
+            <input type="number" id="kncr-credits" placeholder="e.g. 1500">
+            <div class="hint" id="kncr-credits-hint">From your Netzerra calculation — or enter manually</div>
+          </div>
+          <div class="inp" style="margin-bottom:0"><label>Project Budget <span class="unit">(KES)</span></label><input type="number" id="kncr-budget" placeholder="e.g. 5000000"></div>
+          <div class="inp" style="margin-bottom:0"><label>Project Start Date</label><input type="date" id="kncr-start-date"></div>
+        </div>
+      </div>
+
+      <!-- ═══════════════════════════════════════════════════
+           STEP-BY-STEP DOCUMENT PIPELINE
+      ════════════════════════════════════════════════════ -->
+
+      <!-- STEP 1: CONCEPT NOTE -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">1</div>
+          <div>
+            <div class="kncr-step-title">Project Concept Note (PCN)</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Regulation 21 · First Schedule Form PCN</div>
+          </div>
+          <div class="kncr-step-badge badge-gen">✅ Netzerra generates</div>
+        </div>
+        <p class="kncr-step-desc">The first official submission to NEMA/DNA. Uses the exact First Schedule Form PCN format prescribed in the Kenya Gazette (Legal Notice No. 84 of 2024). DNA issues a Letter of No Objection (LoNO) within 14 days if satisfied.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">📝</div>
+            <div class="doc-name">Form PCN<br><span>Official First Schedule</span></div>
+            <button class="doc-btn" onclick="generatePCN()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🏛️</div>
+            <div class="doc-name">Letter of No Objection<br><span>Issued by NEMA/DNA (14 days)</span></div>
+            <div class="doc-btn-nema">From NEMA</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Timeline: Submit PCN → NEMA reviews → LoNO within 14 days</div>
+      </div>
+
+      <!-- STEP 2: PROJECT DESIGN -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">2</div>
+          <div>
+            <div class="kncr-step-title">Project Design Document (PDD) + Safeguards</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 22 · Must be submitted within 12 months of LoNO</div>
+          </div>
+          <div class="kncr-step-badge badge-gen">✅ Netzerra generates</div>
+        </div>
+        <p class="kncr-step-desc">Full project design submitted after LoNO. Reviewed by an ad hoc committee within 30 days. DNA then issues a Letter of Approval within 14 days. Also requires CDA (mandatory for public/community land), ESCP, and Stakeholder Consultation Report.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">📄</div>
+            <div class="doc-name">PDD / DNA Package<br><span>Baseline + methodology + additionality</span></div>
+            <button class="doc-btn" onclick="generateKNCRPackage()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">📋</div>
+            <div class="doc-name">CDA Fourth Schedule<br><span>40% community mandate — legally binding</span></div>
+            <button class="doc-btn" onclick="generateCDA()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">🌿</div>
+            <div class="doc-name">ESCP<br><span>Env. & Social Commitment Plan</span></div>
+            <button class="doc-btn" onclick="generateESCP()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card gen">
+            <div class="doc-icon">👥</div>
+            <div class="doc-name">Stakeholder Consultation<br><span>FPIC records + community engagement</span></div>
+            <button class="doc-btn" onclick="generateStakeholderReport()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🔬</div>
+            <div class="doc-name">ESIA Report<br><span>NEMA-registered firm required</span></div>
+            <div class="doc-btn-nema">External</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Timeline: Submit PDD → Ad hoc committee review (30 days) → Letter of Approval (14 days)</div>
+      </div>
+
+      <!-- STEP 3: VALIDATION -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">3</div>
+          <div>
+            <div class="kncr-step-title">Third-Party Validation</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 23 · Independent VVB assessment</div>
+          </div>
+          <div class="kncr-step-badge badge-ext">🔍 VVB required</div>
+        </div>
+        <p class="kncr-step-desc">An accredited Validation/Verification Body (VVB) independently reviews and validates your PDD. They confirm the methodology, additionality, baseline, and safeguards are correct. This is the only step Netzerra cannot automate — it requires a qualified third party.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card nema" style="flex:2">
+            <div class="doc-icon">🔍</div>
+            <div class="doc-name">Validation Report<br><span>Issued by NEMA-accredited VVB · Netzerra data quality score reduces VVB time from 6 months to ~2 weeks</span></div>
+            <div class="doc-btn-nema">From VVB</div>
+          </div>
+          <div class="kncr-doc-card gen" style="flex:1">
+            <div class="doc-icon">📊</div>
+            <div class="doc-name">Netzerra DQS Pack<br><span>Data quality evidence for VVB</span></div>
+            <button class="doc-btn" onclick="generateAndDownloadPDF()">PDF Report →</button>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Netzerra audit-ready data reduces VVB time from 6 months to ~2 weeks</div>
+      </div>
+
+      <!-- STEP 4: DNA REVIEW -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">4</div>
+          <div>
+            <div class="kncr-step-title">DNA Review & Letter of Approval</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 24 · Cabinet Secretary approves</div>
+          </div>
+          <div class="kncr-step-badge badge-ext">🏛️ NEMA/DNA</div>
+        </div>
+        <p class="kncr-step-desc">NEMA submits the validated PDD to the Cabinet Secretary for Science, Climate Change and Natural Resources for final approval. The DNA issues the Letter of Approval (LoA) once satisfied. For Article 6 projects, a Letter of Authorisation is also issued.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">✅</div>
+            <div class="doc-name">Letter of Approval (LoA)<br><span>Issued by DNA/NEMA after CS approval</span></div>
+            <div class="doc-btn-nema">From NEMA</div>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🌐</div>
+            <div class="doc-name">Letter of Authorisation<br><span>For Article 6 ITMO transfers only</span></div>
+            <div class="doc-btn-nema">From DNA</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Must commence project within 12 months of Letter of Approval</div>
+      </div>
+
+      <!-- STEP 5: KNCR REGISTRATION -->
+      <div class="kncr-step-block">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num">5</div>
+          <div>
+            <div class="kncr-step-title">KNCR Registration</div>
+            <div class="kncr-step-law">kncr.go.ke · Public listing on Kenya National Carbon Registry</div>
+          </div>
+          <div class="kncr-step-badge badge-ext">📲 KNCR Portal</div>
+        </div>
+        <p class="kncr-step-desc">Project is formally listed on kncr.go.ke with a public project page and unique KNCR ID. All project documents are uploaded and made publicly accessible. Annual reporting to DNA is now mandatory under Regulation 25.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card nema" style="flex:2">
+            <div class="doc-icon">📲</div>
+            <div class="doc-name">KNCR Registration Form<br><span>Submit via kncr.go.ke portal · Upload all Netzerra-generated documents</span></div>
+            <a href="https://kncr.go.ke" target="_blank" rel="noopener" class="doc-btn" style="text-decoration:none">Open Portal →</a>
+          </div>
+        </div>
+        <div class="kncr-step-timeline">⏱ Annual progress reports to DNA due within 60 days of each project year-end</div>
+      </div>
+
+      <!-- STEP 6: MONITORING & CREDITS -->
+      <div class="kncr-step-block" style="border-color:rgba(245,166,35,.35)">
+        <div class="kncr-step-header">
+          <div class="kncr-step-num" style="background:rgba(245,166,35,.25);border-color:rgba(245,166,35,.5);color:var(--gold)">6</div>
+          <div>
+            <div class="kncr-step-title" style="color:var(--gold)">Annual MRV · Credits Issued · Community Disbursement</div>
+            <div class="kncr-step-law">Carbon Markets Regulations 2024, Reg. 25 · VCS Monitoring Report v4.4 format</div>
+          </div>
+          <div class="kncr-step-badge badge-gen">✅ Netzerra generates</div>
+        </div>
+        <p class="kncr-step-desc">After registration, verified emission reductions are monitored annually. The Annual MRV Report documents actual reductions achieved vs the baseline, triggers VVB verification, and upon approval — credits are issued and community disbursements begin.</p>
+        <div class="kncr-doc-row">
+          <div class="kncr-doc-card gen" style="border-color:rgba(245,166,35,.4)">
+            <div class="doc-icon">📊</div>
+            <div class="doc-name">Annual MRV Report<br><span>ISO 14064-1 · VCS MR format · DNA annual submission</span></div>
+            <button class="doc-btn" style="background:rgba(245,166,35,.2);color:var(--gold);border-color:rgba(245,166,35,.5)" onclick="generateMRVReport()">Generate →</button>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🔬</div>
+            <div class="doc-name">VVB Verification Report<br><span>Annual verification by accredited VVB</span></div>
+            <div class="doc-btn-nema">From VVB</div>
+          </div>
+          <div class="kncr-doc-card nema">
+            <div class="doc-icon">🏅</div>
+            <div class="doc-name">Credit Issuance<br><span>KNCR issues credits post-verification</span></div>
+            <div class="doc-btn-nema">KNCR Portal</div>
+          </div>
+        </div>
+        <div class="kncr-step-timeline" style="color:var(--gold)">⏱ Annual cycle: Monitor → MRV Report → VVB Verify → Credits Issued → Community Disbursement</div>
+      </div>
+
+      <!-- Community benefit calculator -->
+      <h3 style="margin:1.4rem 0 .7rem">💰 Community Benefit Calculator</h3>
+      <div class="card" style="margin-bottom:1.2rem">
+        <p style="font-size:.78rem;color:rgba(255,255,255,.48);margin-bottom:1.05rem">Kenya's Carbon Markets Regulations 2024 Reg.23E: <strong style="color:#FFCC80">40% of proceeds</strong> for land-based (public/community land) · <strong style="color:#FFCC80">25%</strong> for non-land-based</p>
+        <div style="display:grid;grid-template-columns:repeat(auto-fill,minmax(160px,1fr));gap:.72rem;margin-bottom:1rem">
+          <div class="inp" style="margin-bottom:0"><label>Project Type</label>
+            <select id="cb-type" onchange="calcCB()">
+              <option value="land">🌳 Land-based — 40%</option>
+              <option value="nonland">⚡ Non-land-based — 25%</option>
+              <option value="private">🏠 Private — exempt</option>
+            </select>
+            <div class="hint" id="cb-rate-label" style="color:var(--gold);font-weight:600;margin-top:.22rem"></div>
+          </div>
+          <div class="inp" style="margin-bottom:0"><label>Annual Credits <span class="unit">(tCO₂e/yr)</span></label><input type="number" id="cb-credits" placeholder="1500" oninput="calcCB()"></div>
+          <div class="inp" style="margin-bottom:0"><label>Credit Price <span class="unit">(USD/t)</span></label><input type="number" id="cb-price" value="12" oninput="calcCB()"></div>
+          <div class="inp" style="margin-bottom:0"><label>Duration <span class="unit">(years)</span></label><input type="number" id="cb-years" value="10" oninput="calcCB()"></div>
+          <div class="inp" style="margin-bottom:0"><label>USD/KES Rate</label><input type="number" id="cb-fx" value="130" oninput="calcCB()"></div>
+        </div>
+        <div class="benefit-calc">
+          <div class="benefit-row"><span>Annual gross revenue</span><span class="benefit-val" id="cb-gross">—</span></div>
+          <div class="benefit-row"><span>Community fund <span id="cb-rate-display" style="color:var(--gold);font-size:.7rem">(select type above)</span></span><span class="benefit-val" id="cb-comm">—</span></div>
+          <div class="benefit-row"><span>Developer share</span><span class="benefit-val" id="cb-dev">—</span></div>
+          <div class="benefit-row"><span>Tax @ 15% preferential</span><span class="benefit-val" id="cb-tax">—</span></div>
+          <div class="benefit-row"><span>Lifetime gross (×years)</span><span class="benefit-val" id="cb-life">—</span></div>
+          <div class="benefit-row"><span style="color:var(--mint)">Net lifetime to developer</span><span class="benefit-val" id="cb-net">—</span></div>
+        </div>
+      </div>
+
+      <!-- Official links -->
+      <div class="g2">
+        <div class="card">
+          <h4 style="margin-bottom:.9rem">🌐 Kenya's Bilateral Carbon Markets</h4>
+          <div style="display:flex;flex-direction:column;gap:.5rem">
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.62rem .88rem;background:rgba(255,255,255,.04);border-radius:6px;font-size:.8rem"><span>🇨🇭 Switzerland</span><span style="color:var(--mint);font-size:.68rem">✅ Active agreement</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.62rem .88rem;background:rgba(255,255,255,.04);border-radius:6px;font-size:.8rem"><span>🇸🇪 Sweden</span><span style="color:#90CAF9;font-size:.68rem">🔄 Negotiating</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.62rem .88rem;background:rgba(255,255,255,.04);border-radius:6px;font-size:.8rem"><span>🇸🇬 Singapore</span><span style="color:#90CAF9;font-size:.68rem">🔄 Negotiating</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.62rem .88rem;background:rgba(255,255,255,.04);border-radius:6px;font-size:.8rem"><span>🇰🇷 South Korea</span><span style="color:#90CAF9;font-size:.68rem">🔄 Negotiating</span></div>
+            <div style="display:flex;justify-content:space-between;align-items:center;padding:.62rem .88rem;background:rgba(255,255,255,.04);border-radius:6px;font-size:.8rem"><span>🇬🇧 United Kingdom</span><span style="color:#FFD54F;font-size:.68rem">📋 Coalition partner</span></div>
+          </div>
+        </div>
+        <div class="card">
+          <h4 style="margin-bottom:.9rem">🔗 Official Submission Links</h4>
+          <div style="display:flex;flex-direction:column;gap:.62rem">
+            <a href="https://kncr.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(58,170,92,.09);border:1px solid rgba(58,170,92,.2);border-radius:7px;color:var(--mint);font-size:.82rem;font-weight:600">🌐 kncr.go.ke — National Registry Portal</a>
+            <a href="https://nema.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🏛️ nema.go.ke — NEMA (DNA / Registry Manager)</a>
+            <a href="https://climate.go.ke" target="_blank" rel="noopener" style="display:flex;align-items:center;gap:.7rem;padding:.82rem 1rem;background:rgba(255,255,255,.04);border:1px solid rgba(255,255,255,.07);border-radius:7px;color:rgba(255,255,255,.68);font-size:.82rem">🌍 climate.go.ke — Climate Change Directorate</a>
+            <div style="padding:.82rem 1rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:7px;font-size:.75rem;color:rgba(255,255,255,.48)">📧 Netzerra prepares all applicant-side documents. Contact <strong style="color:#FFCC80">shukriali411@gmail.com</strong> for guided submission support.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+
+    <!-- ══════════════ DISCLAIMER ══════════════ -->
+    <section class="section" id="disclaimer-section">
+      <div class="sec-header">
+        <h2>📋 Disclaimer & Legal Notice</h2>
+        <p>Please read before using Netzerra for regulatory submissions.</p>
+      </div>
+      <div class="g2" style="margin-bottom:1.4rem">
+        <div style="background:rgba(245,166,35,.08);border:2px solid rgba(245,166,35,.3);border-radius:var(--r);padding:1.4rem">
+          <h3 style="color:var(--gold);margin-bottom:.72rem">🚧 MVP Status</h3>
+          <p style="font-size:.84rem">Netzerra is a <strong style="color:var(--gold)">Minimum Viable Product (Version 1.0)</strong> currently in active development. Features, data, and calculations are subject to change. The platform has not been audited or certified by any regulatory body.</p>
+        </div>
+        <div style="background:rgba(239,83,80,.08);border:2px solid rgba(239,83,80,.28);border-radius:var(--r);padding:1.4rem">
+          <h3 style="color:#EF9A9A;margin-bottom:.72rem">⚠️ Data Accuracy</h3>
+          <p style="font-size:.84rem">Calculations are based on user-inputted data. Netzerra does <strong style="color:#EF9A9A">not independently verify</strong> input data. Results must be reviewed by a qualified carbon auditor before submission to NEMA, KNCR, or any VCM standard.</p>
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">🏢 County Government Data</h3>
+        <p style="font-size:.84rem;margin-bottom:.72rem">All county government data, carbon project pipelines, FLLoCA compliance statuses, community benefit figures, and carbon levy revenue figures shown in the County Dashboard are <strong>illustrative samples created for demonstration purposes</strong>.</p>
+        <div style="background:rgba(239,83,80,.07);border-left:3px solid var(--coral);border-radius:0 var(--r-sm) var(--r-sm) 0;padding:.78rem 1rem;font-size:.82rem;color:#EF9A9A">
+          Netzerra has <strong>no formal partnership, agreement, or data-sharing arrangement</strong> with any of the 47 county governments of Kenya, with the Kenya National Carbon Registry (KNCR), with the National Environment Management Authority (NEMA), with the Kenya Water Industry Association (KWIA), with the World Bank Kenya office, or with any bilateral carbon market partner. County names are used to illustrate how the platform would function when formally deployed with real data.
+        </div>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">📐 Methodology Disclaimer</h3>
+        <p style="font-size:.84rem">Emission factors are sourced from published scientific literature (IPCC 2006, IPCC AR6, IEA 2024, Bath ICE v3.0, World Steel Association 2023, DEFRA/BEIS 2023, KEFRI 2019, GHG Protocol August 2024). These are standard industry references, but:</p>
+        <ul style="font-size:.82rem;color:rgba(255,255,255,.7);margin:.72rem 0 0 1.2rem;line-height:2.1">
+          <li>Kenya-specific emission factors may change as KPLC updates its grid mix annually</li>
+          <li>IPCC Tier 1 defaults carry uncertainty ranges of ±5% to ±50% depending on the source</li>
+          <li>Formal KNCR project registration requires Tier 2 or Tier 3 country-specific data</li>
+          <li>The GWP selector defaults to AR6 — confirm with your VVB which standard they require</li>
+        </ul>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">📱 Payment & Subscriptions</h3>
+        <p style="font-size:.84rem">M-Pesa STK Push billing shown in the platform is <strong>simulated</strong>. No actual payment is processed. Full Safaricom Daraja API integration is on the development roadmap. Membership plan features are indicative of planned functionality.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">🔒 Data Storage</h3>
+        <p style="font-size:.84rem">Netzerra MVP stores all data in your browser session only. No data is sent to any server. Your calculations, scores, and project lists are cleared when you close the browser tab. Persistent cloud storage with user accounts is on the development roadmap.</p>
+      </div>
+
+      <div class="card" style="margin-bottom:1.2rem">
+        <h3 style="color:var(--mint);margin-bottom:.88rem">⚖️ No Legal or Regulatory Advice</h3>
+        <p style="font-size:.84rem">Nothing in this platform constitutes legal, financial, regulatory, or investment advice. Users are responsible for ensuring compliance with Kenya's Climate Change Act 2016 (Amended 2023), the Carbon Markets Regulations 2024, the Carbon Trading Regulations 2025, and all applicable KNCR requirements. Consult qualified legal counsel before making regulatory submissions.</p>
+      </div>
+
+      <div style="background:rgba(58,170,92,.07);border:1px solid rgba(58,170,92,.18);border-radius:var(--r);padding:1.2rem;text-align:center">
+        <div style="font-size:.9rem;font-weight:600;color:var(--mint);margin-bottom:.38rem">Contact the Developer</div>
+        <p style="font-size:.82rem;margin-bottom:.62rem">For partnership enquiries, county government pilots, or technical feedback:</p>
+        <div style="display:flex;gap:.88rem;justify-content:center;flex-wrap:wrap;font-size:.82rem">
+          <a href="mailto:shukriali411@gmail.com" style="color:var(--mint)">📧 shukriali411@gmail.com</a>
+          <span style="color:var(--mint)">📱 +254 705 366 807</span>
+          <span style="color:var(--teal)">🌐 netzerrakenya.com</span>
+        </div>
+        <div style="margin-top:.88rem;font-size:.72rem;color:rgba(255,255,255,.32)">© 2026 Netzerra · Shukri Ali · All rights reserved</div>
+      </div>
+    </section>
+
+  </main><!-- /main -->
+
+  <!-- ══════════════ MOBILE BOTTOM NAV ══════════════ -->
+  <nav id="bottom-nav">
+    <div class="bnav-items">
+      <div class="bnav-item active" onclick="showSection('home');setBottomActive(this)"><div class="bnav-ico">🏠</div><div class="bnav-lbl">Home</div></div>
+      <div class="bnav-item" onclick="showSection('calculator');setBottomActive(this)"><div class="bnav-ico">⚡</div><div class="bnav-lbl">Calculate</div></div>
+      <div class="bnav-item" onclick="showSection('kncr');setBottomActive(this)"><div class="bnav-ico">🏛️</div><div class="bnav-lbl">KNCR</div></div>
+      <div class="bnav-item" onclick="showSection('county');setBottomActive(this)"><div class="bnav-ico">🏢</div><div class="bnav-lbl">County</div></div>
+      <div class="bnav-item" onclick="showSection('passport');setBottomActive(this)"><div class="bnav-ico">🪪</div><div class="bnav-lbl">Passport</div></div>
+    </div>
+  </nav>
+
+</div><!-- /app -->
+
+<!-- ══════════════════════════════════════════════════
+     MODALS
+══════════════════════════════════════════════════ -->
+
+<!-- Profile / Account Modal -->
+<div class="modal-overlay" id="modal-profile">
+  <div class="modal" style="max-width:480px">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1.05rem">
+      <h3>👤 My Profile</h3>
+      <button onclick="closeModal('modal-profile')" class="modal-x">✕</button>
+    </div>
+    <div class="profile-tabs">
+      <div class="profile-tab active" id="ptab-details" onclick="switchProfileTab('details')">Profile Details</div>
+      <div class="profile-tab" id="ptab-account" onclick="switchProfileTab('account')">Sign In / Register</div>
+    </div>
+
+    <!-- Details panel -->
+    <div id="ppanel-details">
+      <div class="fg"><label>Full Name</label><input type="text" id="prof-name" placeholder="Your name"></div>
+      <div class="fg"><label>Organisation / County</label><input type="text" id="prof-org" placeholder="e.g. Laikipia County Government"></div>
+      <div class="fg"><label>Email</label><input type="email" id="prof-email" placeholder="you@organization.ke"></div>
+      <div class="fg"><label>Phone</label><input type="tel" id="prof-phone" placeholder="+254 7XX XXX XXX"></div>
+      <div style="background:rgba(58,170,92,.08);border:1px solid rgba(58,170,92,.18);border-radius:var(--r-sm);padding:.62rem .78rem;font-size:.72rem;color:rgba(109,217,140,.8);margin-bottom:.72rem">
+        💾 Your calculations and projects are <b>automatically saved</b> to this browser. They will be restored on your next visit.
+      </div>
+      <div class="modal-acts" style="flex-wrap:wrap;gap:.38rem">
+        <button class="btn-mc" onclick="closeModal('modal-profile')">Cancel</button>
+        <button style="padding:.55rem .88rem;background:rgba(239,83,80,.15);border:1px solid rgba(239,83,80,.3);color:#EF9A9A;border-radius:var(--r-sm);cursor:pointer;font-size:.78rem" onclick="if(confirm('Clear all saved data?'))clearStorage()">🗑️ Clear Saved Data</button>
+        <button class="btn-mp" onclick="saveProfile()">Save Profile</button>
+      </div>
+    </div>
+
+    <!-- Account panel -->
+    <div id="ppanel-account" style="display:none">
+      <p style="font-size:.8rem;color:rgba(255,255,255,.5);margin-bottom:1rem">Sign in to sync your data, or create a free account to get started.</p>
+      <div class="auth-tabs" style="margin-bottom:1rem">
+        <div class="auth-tab active" onclick="switchAccountTab('signin')">Sign In</div>
+        <div class="auth-tab" onclick="switchAccountTab('create')">Create Account</div>
+      </div>
+      <div id="acc-signin">
+        <div class="fg"><label>Email</label><input type="email" id="acc-email" placeholder="you@organization.ke"></div>
+        <div class="fg"><label>Password</label><input type="password" id="acc-pw" placeholder="••••••••"></div>
+        <div class="modal-acts">
+          <button class="btn-mc" onclick="closeModal('modal-profile')">Cancel</button>
+          <button class="btn-mp" onclick="accountSignIn()">Sign In →</button>
+        </div>
+      </div>
+      <div id="acc-create" style="display:none">
+        <div class="fg"><label>Full Name</label><input type="text" id="acc-name" placeholder="Shukri Ali"></div>
+        <div class="fg"><label>Email</label><input type="email" id="acc-email2" placeholder="you@organization.ke"></div>
+        <div class="fg"><label>Phone</label><input type="tel" id="acc-phone" placeholder="+254 7XX XXX XXX"></div>
+        <div class="fg"><label>Organisation</label>
+          <select id="acc-org">
+            <option value="Individual">Individual / Consultant</option>
+            <option>County Government</option><option>NGO / Development Agency</option>
+            <option>Private Company</option><option>Research Institution</option>
+            <option>World Bank / UN Agency</option>
+          </select>
+        </div>
+        <div class="fg"><label>Password</label><input type="password" id="acc-pw2" placeholder="Min 8 characters"></div>
+        <div class="modal-acts">
+          <button class="btn-mc" onclick="closeModal('modal-profile')">Cancel</button>
+          <button class="btn-mp" onclick="accountCreate()">Create Account →</button>
+        </div>
+      </div>
+      <div style="margin-top:.88rem;padding:.72rem;background:rgba(245,166,35,.07);border:1px solid rgba(245,166,35,.18);border-radius:var(--r-sm);font-size:.72rem;color:#FFD54F">
+        🚧 <b>MVP Note:</b> Full authentication with cloud sync is on the roadmap. Currently your data is stored in this browser session only.
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- M-Pesa Payment Modal -->
+<div class="modal-overlay" id="modal-mpesa">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.88rem">
+      <h3>📱 M-Pesa Payment</h3>
+      <button onclick="closeModal('modal-mpesa')" class="modal-x">✕</button>
+    </div>
+    <p id="modal-plan-label" style="color:rgba(255,255,255,.48)">Upgrading your plan</p>
+    <div style="text-align:center;padding:1rem;background:rgba(0,166,81,.09);border:1px solid rgba(0,166,81,.2);border-radius:var(--r-sm);margin:.7rem 0">
+      <div style="font-size:.67rem;color:rgba(255,255,255,.35)">Amount Due</div>
+      <div style="font-family:'JetBrains Mono',monospace;font-size:1.75rem;font-weight:700;color:#69F0AE" id="modal-plan-amount">KES 0</div>
+    </div>
+    <div class="fg"><label>M-Pesa Number</label><input type="tel" id="mpesa-phone" placeholder="+254 7XX XXX XXX"></div>
+    <p style="font-size:.75rem;color:rgba(255,255,255,.38);margin-bottom:.62rem">An STK Push will be sent to your phone. Approve on your Safaricom line to complete payment.</p>
+    <div style="font-size:.7rem;color:rgba(245,166,35,.7);background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.18);border-radius:var(--r-sm);padding:.52rem .75rem;margin-bottom:.62rem">
+      🚧 MVP: M-Pesa STK Push integration is simulated. Live Safaricom Daraja API is on the development roadmap.
+    </div>
+    <div class="modal-acts">
+      <button class="btn-mc" onclick="closeModal('modal-mpesa')">Cancel</button>
+      <button class="btn-mp" onclick="processMpesa()">📱 Send STK Push →</button>
+    </div>
+  </div>
+</div>
+
+<!-- New KNCR Project Modal -->
+<div class="modal-overlay" id="modal-kncr-new">
+  <div class="modal">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:1rem">
+      <h3>🏛️ Register New KNCR Project</h3>
+      <button onclick="closeModal('modal-kncr-new')" class="modal-x">✕</button>
+    </div>
+    <p style="color:rgba(255,255,255,.48);font-size:.8rem;margin-bottom:.88rem">Add a project to your KNCR pipeline tracker.</p>
+    <div class="fg"><label>Project Name</label><input type="text" id="kn-name" placeholder="e.g. Laikipia Agroforestry Initiative"></div>
+    <div class="fg"><label>Sector</label>
+      <select id="kn-sector">
+        <option value="borehole">💧 Borehole</option>
+        <option value="livestock">🐄 Livestock</option>
+        <option value="transport">🚌 Transport</option>
+        <option value="forestry">🌳 Agroforestry</option>
+        <option value="solar">☀️ Renewable Energy</option>
+        <option value="biogas">🔥 Clean Cooking</option>
+      </select>
+    </div>
+    <div class="fg"><label>County</label>
+      <select id="kn-county"><option>Baringo</option><option>Bomet</option><option>Bungoma</option><option>Busia</option><option>Elgeyo-Marakwet</option><option>Embu</option><option>Garissa</option><option>Homa Bay</option><option>Isiolo</option><option>Kajiado</option><option>Kakamega</option><option>Kericho</option><option>Kiambu</option><option>Kilifi</option><option>Kirinyaga</option><option>Kisii</option><option>Kisumu</option><option>Kitui</option><option>Kwale</option><option>Laikipia</option><option>Lamu</option><option>Machakos</option><option>Makueni</option><option>Mandera</option><option>Marsabit</option><option>Meru</option><option>Migori</option><option>Mombasa</option><option>Murang'a</option><option>Nairobi</option><option>Nakuru</option><option>Nandi</option><option>Narok</option><option>Nyamira</option><option>Nyandarua</option><option>Nyeri</option><option>Samburu</option><option>Siaya</option><option>Taita-Taveta</option><option>Tana River</option><option>Tharaka-Nithi</option><option>Trans Nzoia</option><option>Turkana</option><option>Uasin Gishu</option><option>Vihiga</option><option>Wajir</option><option>West Pokot</option></select>
+    </div>
+    <div class="fg"><label>Est. Credits (tCO₂e/yr)</label><input type="number" id="kn-credits" placeholder="850"></div>
+    <div class="fg"><label>Registry Standard</label>
+      <select id="kn-std">
+        <option>Verra VCS</option>
+        <option>Gold Standard</option>
+        <option>KNCR Domestic</option>
+      </select>
+    </div>
+    <div style="display:flex;gap:.62rem;margin-top:.75rem">
+      <button class="btn-calc" onclick="addKNCRProject()" style="flex:1;justify-content:center;margin-top:0">✅ Add to Pipeline</button>
+      <button onclick="closeModal('modal-kncr-new')" style="flex:1;padding:.7rem;background:transparent;border:1px solid rgba(255,255,255,.12);color:rgba(255,255,255,.52);border-radius:var(--r-sm);cursor:pointer">Cancel</button>
+    </div>
+  </div>
+</div>
+
+<!-- Toast Container -->
+<div id="toast-container"></div>
+
+<!-- ═══════════════════════════════════════════
+     SITE FOOTER — MVP Disclaimer
+═══════════════════════════════════════════ -->
+<footer id="site-footer">
+  <div class="footer-inner">
+    <div class="footer-brand">
+      <div class="footer-logo">N</div>
+      <div>
+        <div class="footer-name">Netzerra</div>
+        <div class="footer-tagline">Kenya's Carbon Intelligence Platform</div>
+      </div>
+    </div>
+    <div class="footer-mvp-badge">🚧 MVP v1.0 — Active Development</div>
+    <div class="footer-links">
+      <span onclick="showSection('methodology')">Methodology</span>
+      <span onclick="showSection('disclaimer')">Legal Disclaimer</span>
+      <span onclick="showSection('about')">About</span>
+      <a href="mailto:shukriali411@gmail.com">Contact</a>
+    </div>
+  </div>
+  <div class="footer-disclaimer">
+    <strong>Important Disclaimer:</strong> Netzerra is a Minimum Viable Product (MVP) currently in active development. 
+    All county government data, project pipelines, and community benefit figures shown are 
+    <strong>illustrative samples</strong> — no formal partnerships with any county government, 
+    NEMA, the Kenya National Carbon Registry, or any other government body have been established. 
+    Emission calculations are based on published IPCC 2006 / AR6 methodology and peer-reviewed emission factors, 
+    but <strong>results have not been independently verified</strong> and should not be submitted to regulatory bodies 
+    without review by a qualified carbon auditor. M-Pesa payment integration is simulated. 
+    This tool does not constitute legal, financial, or regulatory advice. 
+    © 2026 Netzerra · Shukri Ali · <a href="mailto:shukriali411@gmail.com">shukriali411@gmail.com</a>
+  </div>
+</footer>
+
+<!-- Netzerra App Script -->
+<script src="app.js?v=2.6"></script>
+</body>
+</html>
