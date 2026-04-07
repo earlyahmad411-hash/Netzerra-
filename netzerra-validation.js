@@ -354,15 +354,23 @@ window.nvUnitToggle = function(id, toConv, btn) {
 
 /* ─── DOM INJECTION ──────────────────────────────────── */
 function _injectBar() {
-  const calc = document.getElementById('calculator-section'); if(!calc) return;
+  const calc = document.getElementById('calculator-section'); 
+  if(!calc) return;
   if(calc.querySelector('#nv-bar')) return;
-  const bar = document.createElement('div'); bar.id='nv-bar'; bar.className='ok';
-  bar.innerHTML='<span class="nv-bar-ico">✅</span><span class="nv-bar-txt">All values look plausible — ready to calculate</span><span class="nv-bar-tag">✓ Clear</span>';
-  const tabs = calc.querySelector('.calc-tabs');
-  tabs ? calc.insertBefore(bar,tabs) : calc.prepend(bar);
+  
+  const bar = document.createElement('div'); 
+  bar.id = 'nv-bar'; 
+  bar.className = 'ok';
+  bar.innerHTML = '<span class="nv-bar-ico">✅</span><span class="nv-bar-txt">All values look plausible — ready to calculate</span><span class="nv-bar-tag">✓ Clear</span>';
+  
+  // SAFER INJECTION: Instead of insertBefore, we just prepend it to the section
+  // This avoids the "Node not a child of this node" error completely.
+  calc.prepend(bar);
 
-  const prev=document.createElement('div'); prev.id='nv-preview';
-  bar.parentNode.insertBefore(prev, bar.nextSibling);
+  const prev = document.createElement('div'); 
+  prev.id = 'nv-preview';
+  // We attach the preview to the bar instead of the section to keep it grouped
+  bar.appendChild(prev); 
 }
 
 function _injectAuditFAB() {

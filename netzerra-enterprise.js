@@ -734,12 +734,19 @@ function toggleZerra() {
 function renderZerraMessages() {
   const container = document.getElementById('zerra-messages');
   if (!container) return;
-  container.innerHTML = ZERRA.messages.map(m => `
+  
+  container.innerHTML = ZERRA.messages.map(m => {
+    // FIX: We use (m.content || '') 
+    // This means: "Use m.content, but if it's missing/undefined, use an empty string instead."
+    const safeContent = (m.content || '').replace(/\n/g, '<br>');
+    
+    return `
     <div class="zerra-msg ${m.role}">
       <div class="zerra-msg-avatar">${m.role === 'assistant' ? '🌿' : '👤'}</div>
-      <div class="zerra-msg-content">${m.content.replace(/\n/g, '<br>')}</div>
-    </div>
-  `).join('');
+      <div class="zerra-msg-content">${safeContent}</div>
+    </div>`;
+  }).join('');
+  
   container.scrollTop = container.scrollHeight;
 }
 
@@ -804,7 +811,9 @@ function generateSmartResponse(query) {
 }
 
 async function callGeminiAPI(prompt) {
-  const apiKey = 'AIzaSyAWsBmp3w9AlGGrcNQy8NxY-_vMUjUmywQ';
+  // YOUR VALIDATED WORKER URL
+  const PROXY_URL = 'https://delicate-bird-531b.shukriali411.workers.dev/';
+
   const systemContext = `You are Zerra, the AI assistant for Netzerra — Kenya's Carbon Intelligence Platform. You are an expert in:
 - Kenya's Carbon Markets Regulations 2024 and Carbon Trading Regulations 2025
 - KNCR (Kenya National Carbon Registry) compliance
@@ -817,39 +826,41 @@ async function callGeminiAPI(prompt) {
 
 Always provide accurate, Kenya-specific answers. Cite regulations and standards where relevant. Keep responses concise but informative. Respond in the same language the user writes in (English or Swahili).`;
 
-  // Try multiple models in order of preference (handles quota limits)
-  const models = ['gemini-2.5-flash-lite', 'gemini-2.5-flash', 'gemini-2.0-flash-lite', 'gemini-2.0-flash'];
-  const requestBody = JSON.stringify({
-    contents: [{ role: 'user', parts: [{ text: systemContext + '\n\nUser question: ' + prompt }] }],
-    generationConfig: { maxOutputTokens: 500, temperature: 0.7 }
-  });
+  try {
+    const response = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ 
+          role: 'user', 
+          parts: [{ text: systemContext + '\n\nUser question: ' + prompt }] 
+        }],
+        generationConfig: { maxOutputTokens: 800, temperature: 0.7 }
+      })
+    });
 
-  for (const model of models) {
-    try {
-      const response = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: requestBody
-      });
-      if (!response.ok) {
-        const errData = await response.json().catch(() => ({}));
-        console.warn(`Zerra: ${model} failed (${response.status}):`, errData.error?.message || 'Unknown error');
-        continue; // Try next model
-      }
-      const data = await response.json();
-      const text = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (text) {
-        console.log(`Zerra: Response from ${model}`);
-        return text;
-      }
-    } catch (e) {
-      console.warn(`Zerra: ${model} network error:`, e.message);
-      continue;
+    if (!response.ok) {
+        throw new Error(`Server responded with status ${response.status}`);
     }
-  }
-  throw new Error('All Gemini models exhausted or quota exceeded');
-}
 
+    const data = await response.json();
+    
+    // FIX: We add a fallback string here. 
+    // If the API returns an empty result, we return a friendly message instead of 'undefined'.
+    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
+    
+    if (!resultText) {
+        return "I'm sorry, I couldn't generate a response right now. Please try rephrasing your question!";
+    }
+
+    return resultText;
+
+  } catch (e) {
+    console.error("Enterprise AI Error:", e);
+    // FIX: Instead of 'throw e' (which crashes the site), we return a readable error message.
+    return "⚠️ Connection error: I'm having trouble reaching my brain. Please check your internet or try again in a moment.";
+  }
+}
 // ══════════════════════════════════════════════════════
 // 6. SMART DATA PARSING (AI-Lite)
 // ══════════════════════════════════════════════════════

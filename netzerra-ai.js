@@ -1,12 +1,11 @@
 /* ══════════════════════════════════════════════════════
-   NETZERRA AI — netzerra-ai.js  v3.0
-   Uses the same Gemini API already in netzerra-enterprise.js
-   No extra setup — works out of the box.
+   NETZERRA AI — netzerra-ai.js  v3.3 (Clean API Only)
+   Removed all fallbacks to ensure Gemini is actually working.
 ══════════════════════════════════════════════════════ */
 'use strict';
 
 const _GEMINI_KEY    = 'AIzaSyAWsBmp3w9AlGGrcNQy8NxY-_vMUjUmywQ';
-const _GEMINI_MODELS = ['gemini-2.5-flash-lite','gemini-2.5-flash','gemini-2.0-flash-lite','gemini-2.0-flash'];
+const _GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b'];
 
 (function(){const s=document.createElement('style');s.textContent=`
 #ntz-ai-fab{position:fixed;bottom:calc(var(--nav-h,58px) + 18px);right:20px;z-index:8000;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
@@ -77,7 +76,6 @@ const _GEMINI_MODELS = ['gemini-2.5-flash-lite','gemini-2.5-flash','gemini-2.0-f
 .nai-rout.on{display:block}
 .nai-ract{display:flex;gap:.45rem}
 .nai-gen{flex:1;padding:.6rem;background:linear-gradient(135deg,var(--fern,#27733F),var(--leaf,#3AAA5C));border:none;color:#fff;border-radius:9px;font-size:.78rem;font-weight:600;cursor:pointer}
-.nai-gen:disabled{opacity:.38;cursor:default}
 .nai-cpy{padding:.6rem .95rem;background:rgba(255,255,255,.06);border:1px solid rgba(109,217,140,.17);color:rgba(255,255,255,.65);border-radius:9px;font-size:.78rem;cursor:pointer}
 `;document.head.appendChild(s);})();
 
@@ -101,16 +99,15 @@ function _buildAIHTML(){
     <div class="nai-body">
       <div class="nai-pane on" id="nai-chat">
         <div class="nai-msgs" id="nai-msgs">
-          <div class="nai-msg bot"><div class="nai-bub">👋 Habari! I'm Netzerra AI.\n\nI know your emissions data, KNCR projects, and Kenya's carbon regulations. Ask me anything.</div><span class="nai-mt">Now</span></div>
+          <div class="nai-msg bot"><div class="nai-bub">👋 Habari! I'm Netzerra AI. I can help you with carbon calculations, KNCR compliance, or just have a friendly chat in English or Kiswahili. How can I help you today?</div><span class="nai-mt">Now</span></div>
         </div>
         <div class="nai-sugs" id="nai-sugs">
           <button class="nai-sug" onclick="NTZ_AI.qs(this)">How do I register a KNCR project?</button>
-          <button class="nai-sug" onclick="NTZ_AI.qs(this)">Best offsets for my emissions?</button>
-          <button class="nai-sug" onclick="NTZ_AI.qs(this)">How can ETG use Netzerra?</button>
+          <button class="nai-sug" onclick="NTZ_AI.qs(this)">Habari yako, unawezaje kunisaidia?</button>
           <button class="nai-sug" onclick="NTZ_AI.qs(this)">Explain the CDA Fourth Schedule</button>
         </div>
         <div class="nai-inp-row">
-          <textarea class="nai-ta" id="nai-inp" rows="1" placeholder="Ask about carbon, KNCR, offsets…" onkeydown="NTZ_AI.key(event)" oninput="NTZ_AI.resize(this)"></textarea>
+          <textarea class="nai-ta" id="nai-inp" rows="1" placeholder="Ask me anything..." onkeydown="NTZ_AI.key(event)" oninput="NTZ_AI.resize(this)"></textarea>
           <button class="nai-send" id="nai-send" onclick="NTZ_AI.send()">➤</button>
         </div>
       </div>
@@ -142,30 +139,44 @@ function _ctx(){
   const u=(typeof S!=='undefined')?S.user:{};
   const lc=(typeof S!=='undefined')?S.lastCalc:null;
   const kp=(typeof S!=='undefined'&&S.kncr)?S.kncr.projects:[];
-  return `You are Netzerra AI — the built-in carbon intelligence assistant for Netzerra, Kenya's first KNCR-native carbon compliance platform.
-
-USER: ${u.name||'User'} | Org: ${u.org||'N/A'} | Plan: ${u.plan||'Seedling'}
-EMISSIONS: ${u.totalEmissions||0} tCO₂e total | ${u.totalOffsets||0} tCO₂e offset | NTZ Score: ${u.score||0}/100 | Projects: ${u.projects||0}
-LAST CALC: ${lc?`${lc.name} (${lc.sector}) · ${lc.total_t} tCO₂e/yr · S1:${lc.s1_t||0} S2:${lc.s2_t||0} S3:${lc.s3_t||0}`:'None yet'}
-KNCR PROJECTS (${kp.length}): ${kp.length?kp.map(p=>`${p.id} "${p.name}" Step${p.step}/6 ${p.county}`).join('; '):'None'}
-
-EXPERTISE: Kenya Carbon Markets Regulations 2024 · IPCC AR6 GWP100 · KNCR 6-step registration · CDA Fourth Schedule (40% land-based, 25% non-land) · Grevillea 6 tCO₂e/ha/yr, Casuarina 8, Bamboo 17, Biogas 3.5/unit · Kenya grid 0.3174 kgCO₂/kWh (KNCR) · Article 6 ITMOs (Switzerland, Sweden, Japan, Singapore) · ETG, Agriterra, tea factories, county governments · ISO 14064-1:2018 · FLLoCA compliance.
-
-STYLE: Concise, practical, cite sources. Max 300 words unless writing a full report. Respond in English or Swahili matching the user.`;
+  
+  return `You are Zerra, the friendly AI for Netzerra. 
+  
+  CRITICAL RULES:
+  1. LANGUAGE: You are perfectly fluent in English and Kiswahili. ALWAYS respond in the language the user uses. If they speak Swahili, you MUST answer in Swahili.
+  2. PERSONALITY: You are a helpful assistant. You can answer ANY question (general, funny, or technical), but if the topic is about carbon, use your expert knowledge of Kenya's Carbon Markets Regulations 2024 and IPCC AR6.
+  3. KNOWLEDGE: Netzerra is Kenya's Carbon Intelligence Platform. It helps with KNCR registration and carbon footprinting.
+  
+  USER DATA:
+  Name: ${u.name||'User'} | Org: ${u.org||'N/A'} | Plan: ${u.plan||'Seedling'}
+  Emissions: ${u.totalEmissions||0} tCO2e | Offsets: ${u.totalOffsets||0} tCO2e
+  Last Calc: ${lc?`${lc.name} (${lc.sector}) · ${lc.total_t} tCO2e/yr`:'None'}
+  Projects: ${kp.length ? kp.map(p=>`${p.name}`).join(', ') : 'None'}`;
 }
 
 async function _callGemini(prompt){
-  const body=JSON.stringify({contents:[{role:'user',parts:[{text:_ctx()+'\n\nUser message: '+prompt}]}],generationConfig:{maxOutputTokens:800,temperature:0.7}});
-  for(const model of _GEMINI_MODELS){
-    try{
-      const r=await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${_GEMINI_KEY}`,{method:'POST',headers:{'Content-Type':'application/json'},body});
-      if(!r.ok){console.warn(`[NTZ AI] ${model} failed (${r.status})`);continue;}
-      const d=await r.json();
-      const text=d.candidates?.[0]?.content?.parts?.[0]?.text;
-      if(text)return text;
-    }catch(e){console.warn(`[NTZ AI] ${model}:`,e.message);continue;}
+  // YOUR VALIDATED WORKER URL
+  const PROXY_URL = 'https://delicate-bird-531b.shukriali411.workers.dev/'; 
+
+  const body = JSON.stringify({
+    contents: [{role:'user', parts:[{text: _ctx() + '\n\nUser: ' + prompt}]}],
+    generationConfig: {maxOutputTokens: 800, temperature: 0.8}
+  });
+
+  try {
+    const r = await fetch(PROXY_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: body
+    });
+    
+    if(!r.ok) throw new Error(`Server Error: ${r.status}`);
+    
+    const d = await r.json();
+    return d.candidates?.[0]?.content?.parts?.[0]?.text;
+  } catch(e) {
+    throw new Error('Zerra is currently resting. Please try again later!');
   }
-  throw new Error('Gemini quota exceeded. Check console.cloud.google.com');
 }
 
 const NTZ_AI=(()=>{
@@ -194,7 +205,8 @@ const NTZ_AI=(()=>{
     if(_busy)return;const inp=document.getElementById('nai-inp');const txt=inp.value.trim();if(!txt)return;
     inp.value='';inp.style.height='auto';document.getElementById('nai-sugs').style.display='none';
     _msg('user',txt);_hist.push('User: '+txt);
-    _busy=true;document.getElementById('nai-send').disabled=true;_typing();
+    _busy=true;document.getElementById('nai-send').disabled=true;
+    _typing();
     try{const reply=await _callGemini(_hist.slice(-8).join('\n'));document.getElementById('nai-typing')?.remove();_msg('bot',reply);_hist.push('Assistant: '+reply);}
     catch(e){document.getElementById('nai-typing')?.remove();_msg('bot','⚠️ '+e.message);}
     _busy=false;document.getElementById('nai-send').disabled=false;
@@ -205,9 +217,9 @@ const NTZ_AI=(()=>{
     const u=(typeof S!=='undefined')?S.user:{};const lc=(typeof S!=='undefined')?S.lastCalc:null;
     if(!lc&&!u.totalEmissions){b.innerHTML='<div class="nai-card"><h4>📊 No data yet</h4><p>Run a calculation first.</p></div>';return;}
     const offPct=Math.min(((u.totalOffsets||0)/Math.max(u.totalEmissions||1,1)*100),100).toFixed(0);
-    b.innerHTML=`<div class="nai-card"><h4>📈 Emission Profile</h4><p>Total: <strong>${(u.totalEmissions||0).toLocaleString()} tCO₂e</strong> · Offsets: <strong>${(u.totalOffsets||0).toLocaleString()} tCO₂e</strong></p><div class="nai-sbar"><div class="nai-sfill" style="width:${offPct}%"></div></div><p style="font-size:.67rem;margin-top:.25rem;color:rgba(255,255,255,.35)">${offPct}% offset ratio · NTZ ${u.score||0}/100</p></div>${lc?`<div class="nai-card"><h4>🔬 Last: ${lc.name}</h4><p>${lc.sector} · ${lc.total_t} tCO₂e/yr<br>S1:${lc.s1_t||0} · S2:${lc.s2_t||0} · S3:${lc.s3_t||0}</p></div>`:''}<div class="nai-card" id="nai-ai-ins"><h4>🤖 AI Analysis</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>`;
+    b.innerHTML=`<div class="nai-card"><h4>📈 Emission Profile</h4><p>Total: <strong>${(u.totalEmissions||0).toLocaleString()} tCO₂e</strong> · Offsets: <strong>${(u.totalOffsets||0).toLocaleString()} tCO₂e</strong></p><div class="nai-sbar"><div class="nai-sfill" style="width:${offPct}%"></div></div><p style="font-size:.67rem;margin-top:.25rem;color:rgba(255,255,255,.35)">${offPct}% offset ratio · NTZ ${u.score||0}/100</p></div>${lc?`<div class="nai-card"><h4>🔬 Last: ${lc.name}</h4><p>${lc.sector} · ${lc.total_t} tCO₂e/yr</p></div>`:''}<div class="nai-card" id="nai-ai-ins"><h4>🤖 AI Analysis</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>`;
     try{
-      const reply=await _callGemini(`3 sharp actionable insights for: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100, last calc: ${lc?lc.sector+' '+lc.total_t+' tCO₂e/yr':'none'}, KNCR projects: ${(typeof S!=='undefined'&&S.kncr)?S.kncr.projects.length:0}. Cite KNCR opportunities. Max 110 words.`);
+      const reply=await _callGemini(`Analyze these numbers and give 3 sharp, friendly insights: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Max 100 words.`);
       const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').innerHTML=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     }catch(e){const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').textContent='⚠️ '+e.message;}
   }
@@ -217,25 +229,24 @@ const NTZ_AI=(()=>{
     b.innerHTML='<div class="nai-card"><h4>💡 Loading…</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>';
     const u=(typeof S!=='undefined')?S.user:{};const lc=(typeof S!=='undefined')?S.lastCalc:null;
     try{
-      const reply=await _callGemini(`Give exactly 4 recommendations. Format:\nTITLE: [title]\nPRIORITY: [high/medium/low]\nDETAIL: [1-2 sentences]\n\nData: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100, last calc: ${lc?lc.sector+' '+lc.total_t:' none'}, KNCR projects: ${(typeof S!=='undefined'&&S.kncr)?S.kncr.projects.length:0}`);
+      const reply=await _callGemini(`Give 4 friendly recommendations based on: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`);
       const items=reply.split(/(?=TITLE:)/g).filter(s=>s.trim());
-      if(items.length){b.innerHTML=items.map(item=>{const T=(item.match(/TITLE:\s*(.+)/)?.[1]||'').trim();const P=(item.match(/PRIORITY:\s*(\w+)/i)?.[1]||'med').toLowerCase().replace('medium','med');const D=(item.match(/DETAIL:\s*([\s\S]+)/)?.[1]||'').trim();const L=P==='high'?'🔴 High Priority':P==='med'?'🟡 Medium':'🟢 Quick Win';return `<div class="nai-sitem ${P}"><h4>${T}</h4><p>${D}</p><span class="nai-stag ${P}">${L}</span></div>`;}).join('');}
-      else b.innerHTML=`<div class="nai-card"><h4>💡</h4><p>${reply.replace(/\n/g,'<br>')}</p></div>`;
+      if(items.length){b.innerHTML=items.map(item=>{const T=(item.match(/TITLE:\s*(.+)/)?.[1]||'').trim();const P=(item.match(/PRIORITY:\s*(\w+)/i)?.[1]||'med').toLowerCase();const D=(item.match(/DETAIL:\s*([\s\S]+)/)?.[1]||'').trim();const L=P==='high'?'🔴 High':P==='med'?'🟡 Med':'🟢 Quick';return `<div class="nai-sitem ${P}"><h4>${T}</h4><p>${D}</p><span class="nai-stag ${P}">${L}</span></div>`;}).join('');}
+      else b.innerHTML=`<div class="nai-card"><h4>💡</h4><p>${reply}</p></div>`;
     }catch(e){b.innerHTML=`<div class="nai-card"><h4>⚠️</h4><p>${e.message}</p></div>`;}
   }
 
   function rtype(el){document.querySelectorAll('.nai-ropt').forEach(o=>o.classList.remove('on'));el.classList.add('on');_rtype=el.dataset.t;document.getElementById('nai-rout').classList.remove('on');document.getElementById('nai-cpy').style.display='none';}
 
   async function genReport(){
-    const u=(typeof S!=='undefined')?S.user:{};const lc=(typeof S!=='undefined')?S.lastCalc:null;const kp=(typeof S!=='undefined'&&S.kncr)?S.kncr.projects:[];
-    const ha=Math.ceil((u.totalEmissions||100)/8);
+    const u=(typeof S!=='undefined')?S.user:{};
     const btn=document.getElementById('nai-gen');const out=document.getElementById('nai-rout');
     btn.disabled=true;btn.textContent='⏳ Generating…';out.classList.remove('on');
     const prompts={
-      executive:`Write a 200-word Executive Summary for ${u.org||'this organisation'}: emissions ${u.totalEmissions||0} tCO₂e, NTZ ${u.score||0}/100, main source ${lc?lc.sector+' '+lc.total_t+' tCO₂e/yr':'N/A'}, offsets ${u.totalOffsets||0} tCO₂e. Board-ready tone, include next steps.`,
-      esg:`Write a 220-word ESG Disclosure for ${u.org||'this organisation'}: GHG inventory, totals, IPCC AR6, ISO 14064, KNCR status, offsets, targets. Investor/donor audience.`,
-      kncr:`Write a 180-word KNCR Brief for ${u.org||'this organisation'}: ${kp.length} projects (${kp.map(p=>p.name+' Step'+p.step+'/6').join(', ')||'none'}), CDA obligations, next milestone under Kenya Carbon Markets Regulations 2024.`,
-      offset:`Write a 200-word Agroforestry Roadmap for ${u.org||'this organisation'}: ${ha} hectares targeting ${u.totalEmissions||0} tCO₂e/yr. Species mix (Grevillea/Casuarina/Bamboo), KNCR path, CDA, revenue at USD 20/tCO₂e.`
+      executive:`Professional 200-word Executive Summary for ${u.org||'this org'}: emissions ${u.totalEmissions||0} tCO2e, NTZ ${u.score||0}/100.`,
+      esg:`220-word ESG Disclosure for ${u.org||'this org'}: GHG inventory, IPCC AR6, KNCR status.`,
+      kncr:`180-word KNCR Brief for ${u.org||'this org'}: Registration status, CDA obligations.`,
+      offset:`200-word Agroforestry Roadmap for ${u.org||'this org'}: targeting ${u.totalEmissions||0} tCO2e/yr.`
     };
     try{_rtext=await _callGemini(prompts[_rtype]);out.textContent=_rtext;out.classList.add('on');document.getElementById('nai-cpy').style.display='block';}
     catch(e){out.textContent='⚠️ '+e.message;out.classList.add('on');}
