@@ -244,12 +244,68 @@ const NTZ_AI=(()=>{
 
   async function _loadInsights(){
     const b=document.getElementById('nai-ins-cards');if(!b)return;
-    const u=(typeof S!=='undefined')?S.user:{};const lc=(typeof S!=='undefined')?S.lastCalc:null;
-    if(!lc&&!u.totalEmissions){b.innerHTML='<div class="nai-card"><h4>📊 No data yet</h4><p>Run a calculation first.</p></div>';return;}
+    const u=(typeof AUTH!=='undefined'&&AUTH.currentUser)?AUTH.currentUser:((typeof S!=='undefined')?S.user:{});
+    const role=u.role||'developer';
+    const lc=(typeof S!=='undefined')?S.lastCalc:null;
+    const isGov=['nema_national','nema_county','nema_reviewer','county_floca'].includes(role);
+
+    // ── GOVERNMENT ROLES: State of the Registry / County ──────────────
+    if(isGov){
+      const projects=(typeof NEMA_DATA!=='undefined')?NEMA_DATA.projects:[];
+      const county=u.county;
+      const myProjects=county?projects.filter(p=>p.county===county):projects;
+
+      // Red-flag detection (Change 4)
+      const nonCompliant=myProjects.filter(p=>!p.cdaCompliant);
+      const stalledDNA=myProjects.filter(p=>p.step===4&&p.lastAudit&&((new Date()-new Date(p.lastAudit))/(1000*60*60*24))>30);
+      const conceptStalled=myProjects.filter(p=>p.step===1&&!p.lastAudit);
+
+      let flagHTML='';
+      if(nonCompliant.length>0){
+        flagHTML+=nonCompliant.map(p=>`<div class="nai-sitem high"><h4>🚨 CDA Non-Compliant: ${p.name}</h4><p>${p.county} · ${p.cda}% CDA declared — requires minimum 40% for land-based projects. Developer must amend CDA or face Regulation 23E enforcement action.</p><span class="nai-stag high">Action Required</span></div>`).join('');
+      }
+      if(stalledDNA.length>0){
+        flagHTML+=stalledDNA.map(p=>`<div class="nai-sitem med"><h4>⚠️ DNA Review Stalled: ${p.name}</h4><p>${p.county} · Entered DNA Review ${p.lastAudit}. Over 30 days elapsed. Regulations require the ad hoc committee to complete review within 30 days. Issue a formal notice to the developer.</p><span class="nai-stag med">Follow Up</span></div>`).join('');
+      }
+      if(conceptStalled.length>0){
+        flagHTML+=conceptStalled.map(p=>`<div class="nai-sitem med"><h4>⏳ Concept Note Inactive: ${p.name}</h4><p>${p.county} · No audit activity recorded. Developer has 12 months from LoNO to submit PDD. Verify LoNO issue date and send reminder.</p><span class="nai-stag med">Monitor</span></div>`).join('');
+      }
+
+      const totalCredits=myProjects.reduce((s,p)=>s+p.credits,0);
+      const compliantCount=myProjects.filter(p=>p.cdaCompliant).length;
+      const registeredCount=myProjects.filter(p=>p.step>=5).length;
+      const scope=county?county+' County':'National Registry';
+
+      b.innerHTML=`
+        <div class="nai-card"><h4>📊 ${scope} — State of the Registry</h4>
+          <p>Projects: <strong>${myProjects.length}</strong> · Credits tracked: <strong>${totalCredits.toLocaleString()} tCO₂e</strong><br>
+          CDA compliant: <strong>${compliantCount}/${myProjects.length}</strong> · Registered on KNCR: <strong>${registeredCount}</strong></p>
+          <div class="nai-sbar"><div class="nai-sfill" style="width:${myProjects.length>0?Math.round(compliantCount/myProjects.length*100):0}%"></div></div>
+          <p style="font-size:.67rem;margin-top:.25rem;color:rgba(255,255,255,.35)">${compliantCount}/${myProjects.length} CDA compliant · ${nonCompliant.length+stalledDNA.length} flags requiring action</p>
+        </div>
+        ${flagHTML?`<div style="font-size:.71rem;font-weight:700;color:var(--coral,#EF5350);padding:.4rem .1rem">🚩 Regulatory Red Flags</div>${flagHTML}`:'<div class="nai-card"><h4>✅ No Red Flags</h4><p>All projects within this scope are CDA compliant and progressing normally through the pipeline.</p></div>'}
+        <div class="nai-card" id="nai-ai-ins"><h4>🤖 AI Registry Analysis</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>`;
+
+      const prompt=role==='nema_national'
+        ?`As Senior Policy Advisor, give a 3-point State of the National Carbon Registry summary: ${myProjects.length} projects, ${totalCredits.toLocaleString()} tCO₂e tracked, ${nonCompliant.length} CDA non-compliant, ${stalledDNA.length} stalled in DNA Review. Focus on national sovereignty and Article 6 readiness. Max 120 words.`
+        :role==='nema_reviewer'
+        ?`As Technical Auditor, identify the top 3 MRV and methodology risks from this project list: ${myProjects.map(p=>p.name+' ('+p.sector+', Step '+p.step+', CDA '+p.cda+'%)').join('; ')}. Max 120 words, technical tone.`
+        :`As County Compliance Officer for ${county||'your county'}, summarise compliance status: ${myProjects.length} projects, ${nonCompliant.length} CDA violations, ${stalledDNA.length} stalled reviews. Give top 2 enforcement actions. Max 100 words.`;
+
+      try{
+        const reply=await window.ZerraQuery(prompt,false);
+        const card=document.getElementById('nai-ai-ins');
+        if(card)card.querySelector('p').innerHTML=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      }catch(e){const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').textContent='⚠️ '+e.message;}
+      return;
+    }
+
+    // ── STANDARD ROLES: Personal footprint analysis ────────────────────
+    if(!lc&&!u.totalEmissions){b.innerHTML='<div class="nai-card"><h4>📊 No data yet</h4><p>Run a calculation first to see your insights.</p></div>';return;}
     const offPct=Math.min(((u.totalOffsets||0)/Math.max(u.totalEmissions||1,1)*100),100).toFixed(0);
     b.innerHTML=`<div class="nai-card"><h4>📈 Emission Profile</h4><p>Total: <strong>${(u.totalEmissions||0).toLocaleString()} tCO₂e</strong> · Offsets: <strong>${(u.totalOffsets||0).toLocaleString()} tCO₂e</strong></p><div class="nai-sbar"><div class="nai-sfill" style="width:${offPct}%"></div></div><p style="font-size:.67rem;margin-top:.25rem;color:rgba(255,255,255,.35)">${offPct}% offset ratio · NTZ ${u.score||0}/100</p></div>${lc?`<div class="nai-card"><h4>🔬 Last: ${lc.name}</h4><p>${lc.sector} · ${lc.total_t} tCO₂e/yr</p></div>`:''}<div class="nai-card" id="nai-ai-ins"><h4>🤖 AI Analysis</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>`;
     try{
-      const reply=await window.ZerraQuery(`Analyze these numbers and give 3 sharp, friendly insights: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Max 100 words.`);
+      const reply=await window.ZerraQuery(`Analyze these emission figures and give 3 actionable insights in a friendly tone: total ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0} tCO₂e, NTZ score ${u.score||0}/100, last calc: ${lc?lc.name+' '+lc.total_t+'tCO₂e':'none'}. Reference Kenya offset options. Max 110 words.`,false);
       const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').innerHTML=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     }catch(e){const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').textContent='⚠️ '+e.message;}
   }
@@ -257,9 +313,25 @@ const NTZ_AI=(()=>{
   async function _loadSuggest(){
     const b=document.getElementById('nai-sug-cards');if(!b)return;
     b.innerHTML='<div class="nai-card"><h4>💡 Loading…</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>';
-    const u=(typeof S!=='undefined')?S.user:{};const lc=(typeof S!=='undefined')?S.lastCalc:null;
+    const u=(typeof AUTH!=='undefined'&&AUTH.currentUser)?AUTH.currentUser:((typeof S!=='undefined')?S.user:{});
+    const role=u.role||'developer';
+    const lc=(typeof S!=='undefined')?S.lastCalc:null;
+    const projects=(typeof NEMA_DATA!=='undefined')?NEMA_DATA.projects:[];
+    const county=u.county;
+    const myProjects=county?projects.filter(p=>p.county===county):projects;
+    const isGov=['nema_national','nema_county','nema_reviewer','county_floca'].includes(role);
+
+    const govPrompts={
+      nema_national:`Give 4 strategic actions for the NEMA National Director based on: ${myProjects.length} projects nationwide, ${myProjects.filter(p=>!p.cdaCompliant).length} CDA violations, ${myProjects.filter(p=>p.step===4).length} in DNA Review. Focus on national carbon sovereignty, Article 6 ITMO transfers, and registry governance. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`,
+      nema_reviewer:`Give 4 technical audit recommendations for a NEMA Reviewer based on projects: ${myProjects.map(p=>p.name+' ('+p.sector+', Step '+p.step+')').join('; ')}. Focus on IPCC methodology gaps, MRV risks, PDD quality issues. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`,
+      nema_county:`Give 4 enforcement actions for the NEMA County Officer in ${county||'this county'}: ${myProjects.length} local projects, ${myProjects.filter(p=>!p.cdaCompliant).length} CDA non-compliant. Focus on Regulation 23E enforcement, community disbursement verification, and developer compliance. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`,
+      county_floca:`Give 4 revenue and compliance actions for the County Government: FLLoCA reporting, carbon levy collection, community benefit tracking. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`,
+    };
+
+    const prompt=isGov?(govPrompts[role]||govPrompts.nema_national)
+      :`Give 4 recommendations based on: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100${lc?' last calc '+lc.name+' '+lc.total_t+'tCO₂e':''}. Include Kenya-specific offset options and KNCR registration steps. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`;
     try{
-      const reply=await window.ZerraQuery(`Give 4 friendly recommendations based on: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`);
+      const reply=await window.ZerraQuery(prompt,false);
       const items=reply.split(/(?=TITLE:)/g).filter(s=>s.trim());
       if(items.length){b.innerHTML=items.map(item=>{const T=(item.match(/TITLE:\s*(.+)/)?.[1]||'').trim();const P=(item.match(/PRIORITY:\s*(\w+)/i)?.[1]||'med').toLowerCase();const D=(item.match(/DETAIL:\s*([\s\S]+)/)?.[1]||'').trim();const L=P==='high'?'🔴 High':P==='med'?'🟡 Med':'🟢 Quick';return `<div class="nai-sitem ${P}"><h4>${T}</h4><p>${D}</p><span class="nai-stag ${P}">${L}</span></div>`;}).join('');}
       else b.innerHTML=`<div class="nai-card"><h4>💡</h4><p>${reply}</p></div>`;

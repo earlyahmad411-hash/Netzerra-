@@ -287,39 +287,222 @@ function updateBuyTotal() {
 }
 
 function executePurchase() {
-  const creditId = document.getElementById('buy-credit-id')?.value;
-  const qty = parseInt(document.getElementById('buy-quantity')?.value) || 0;
+  const creditId  = document.getElementById('buy-credit-id')?.value;
+  const qty       = parseInt(document.getElementById('buy-quantity')?.value) || 0;
   const payMethod = document.querySelector('input[name="pay-method"]:checked')?.value || 'mpesa';
-  const listing = EXCHANGE.listings.find(l => l.id === creditId);
+  const listing   = EXCHANGE.listings.find(l => l.id === creditId);
+
   if (!listing || qty <= 0 || qty > listing.credits) {
     toast('Invalid quantity', 'error');
     return;
   }
 
+  // ── Build transaction ────────────────────────────────
   listing.credits -= qty;
+  const certNo = `NTZ-RET-${new Date().getFullYear()}-${String(EXCHANGE.portfolio.purchased.length + 1).padStart(3,'0')}`;
+  const txnDate = new Date().toISOString().split('T')[0];
+  const buyer   = AUTH.currentUser?.name || S.user.name || 'Buyer';
+  const buyerOrg= AUTH.currentUser?.org  || S.user.org  || 'Organisation';
+
   const txn = {
     id: `TXN-${String(EXCHANGE.transactions.length + 1).padStart(3,'0')}`,
     type: 'purchase', creditId, credits: qty,
     total: qty * listing.price,
-    date: new Date().toISOString().split('T')[0],
-    buyer: AUTH.currentUser?.org || S.user.org,
+    date: txnDate,
+    buyer: buyerOrg,
     seller: listing.seller,
     paymentMethod: payMethod,
-    status: 'completed'
+    status: 'completed',
+    certificate: certNo
   };
   EXCHANGE.transactions.push(txn);
-  EXCHANGE.portfolio.purchased.push({
+
+  const portfolioEntry = {
     id: creditId, credits: qty, price: listing.price,
-    date: txn.date, status: 'retired',
-    certificate: `NTZ-RET-${new Date().getFullYear()}-${String(EXCHANGE.portfolio.purchased.length + 1).padStart(3,'0')}`
-  });
+    date: txnDate, status: 'retired',
+    certificate: certNo,
+    project: listing.project,
+    seller: listing.seller,
+    standard: listing.standard || 'Verra VCS',
+    vintage: listing.vintage || new Date().getFullYear(),
+    methodology: listing.methodology || 'IPCC AR6 aligned',
+    buyer, buyerOrg
+  };
+  EXCHANGE.portfolio.purchased.push(portfolioEntry);
 
   closeModal('modal-buy-credit');
   renderExchange();
   renderPortfolio();
 
   const methodLabels = { mpesa: 'M-Pesa', card: 'Card', bank: 'Bank Transfer', cheque: 'Cheque' };
-  toast(`✅ Purchased ${qty} tCO₂e from ${listing.project} via ${methodLabels[payMethod]}. Certificate of Retirement generated.`, 'success');
+  toast(`✅ Purchased ${qty.toLocaleString()} tCO₂e from ${listing.project} via ${methodLabels[payMethod]}. Opening certificate…`, 'success');
+
+  // ── Compile certData and generate certificate ────────
+  // Small delay so the modal closes and toast renders before the new tab opens
+  // (avoids popup blockers that trigger during click handler synchronously)
+  setTimeout(() => {
+    const certData = {
+      certNo,
+      buyer,
+      buyerOrg,
+      project:     listing.project,
+      seller:      listing.seller,
+      standard:    listing.standard    || 'Verra VCS',
+      sector:      listing.sector      || listing.type || 'Carbon Project',
+      county:      listing.county      || 'Kenya',
+      vintage:     listing.vintage     || new Date().getFullYear(),
+      methodology: listing.methodology || 'IPCC 2006 Guidelines / AR6 GWP₁₀₀ values',
+      credits:     qty,
+      pricePerT:   listing.price,
+      totalKES:    qty * listing.price,
+      date:        txnDate,
+      txnId:       txn.id,
+      payMethod:   methodLabels[payMethod],
+    };
+    generateRetirementCertificate(certData);
+  }, 400);
+}
+
+/* ──────────────────────────────────────────────────────
+   CERTIFICATE OF RETIREMENT — generates a printable PDF-ready HTML certificate
+   Opened in a new tab (user can Print → Save as PDF)
+   Includes Groq Expert Signature line as required
+────────────────────────────────────────────────────── */
+function generateRetirementCertificate(cert) {
+  const now = new Date().toLocaleDateString('en-KE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const html = `<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Certificate of Carbon Credit Retirement — ${cert.certNo}</title>
+<style>
+  * { margin:0; padding:0; box-sizing:border-box; }
+  body { font-family:"Times New Roman",Times,serif; background:#fff; color:#111; }
+  .page { width:210mm; min-height:148mm; margin:0 auto; padding:16mm 18mm; position:relative; }
+  /* Gold border frame */
+  .frame { position:absolute; inset:8mm; border:3px double #B8860B; pointer-events:none; }
+  .frame::after { content:''; position:absolute; inset:4px; border:1px solid #DAA520; }
+  /* Header */
+  .cert-header { text-align:center; margin-bottom:10mm; padding-top:4mm; }
+  .cert-logo { font-size:28px; margin-bottom:3mm; }
+  .cert-brand { font-size:11pt; font-weight:bold; letter-spacing:4px; text-transform:uppercase; color:#0D3320; margin-bottom:1mm; }
+  .cert-sub { font-size:8pt; color:#555; letter-spacing:2px; text-transform:uppercase; }
+  .cert-title { font-size:20pt; font-weight:bold; color:#0D3320; margin:6mm 0 2mm; letter-spacing:1px; }
+  .cert-subtitle { font-size:9pt; color:#555; margin-bottom:4mm; }
+  .cert-no { font-size:8pt; font-family:monospace; background:#f0f7f0; border:1px solid #ccc; padding:2px 8px; border-radius:3px; display:inline-block; }
+  /* Body */
+  .cert-body { text-align:center; margin:6mm 0; line-height:1.9; }
+  .cert-body p { font-size:11pt; }
+  .cert-name { font-size:15pt; font-weight:bold; color:#0D3320; border-bottom:1.5px solid #0D3320; display:inline-block; padding:0 8mm; margin:2mm 0 3mm; }
+  .cert-credits { font-size:22pt; font-weight:bold; color:#B8860B; }
+  .cert-credits span { font-size:11pt; color:#555; font-weight:normal; }
+  /* Details table */
+  .cert-details { margin:5mm auto; border-collapse:collapse; font-size:9pt; width:100%; }
+  .cert-details td { padding:3px 10px; border-bottom:1px dotted #ddd; }
+  .cert-details td:first-child { font-weight:bold; color:#0D3320; width:38%; text-align:right; padding-right:6px; }
+  .cert-details td:last-child { text-align:left; }
+  /* Signatures */
+  .sig-grid { display:grid; grid-template-columns:1fr 1fr 1fr; gap:8mm; margin-top:8mm; text-align:center; }
+  .sig-block { border-top:1.5px solid #333; padding-top:4px; }
+  .sig-name { font-size:9pt; font-weight:bold; color:#0D3320; }
+  .sig-title { font-size:7.5pt; color:#666; margin-top:1px; }
+  .sig-groq { font-size:7pt; color:#888; font-style:italic; margin-top:1px; }
+  /* Footer */
+  .cert-footer { margin-top:6mm; text-align:center; font-size:7.5pt; color:#888; border-top:1px solid #ddd; padding-top:4mm; }
+  .cert-seal { font-size:32px; margin-bottom:2mm; }
+  .no-print { text-align:center; padding:8px; background:#f0f7f0; }
+  .no-print button { background:#0D3320; color:#fff; border:none; padding:8px 22px; border-radius:4px; cursor:pointer; font-size:13px; font-weight:bold; margin:0 4px; }
+  @media print { .no-print { display:none !important; } @page { size:A4 landscape; margin:0; } }
+</style>
+</head>
+<body>
+<div class="no-print">
+  <button onclick="window.print()">🖨️ Print / Save as PDF</button>
+  <button onclick="window.close()" style="background:#666">✕ Close</button>
+  <span style="font-size:11px;color:#555;margin-left:8px">Print dialog → Destination → Save as PDF</span>
+</div>
+<div class="page">
+  <div class="frame"></div>
+  <div class="cert-header">
+    <div class="cert-logo">🌿</div>
+    <div class="cert-brand">Netzerra</div>
+    <div class="cert-sub">Kenya's Carbon Intelligence Platform · netzerrakenya.com</div>
+    <div class="cert-title">Certificate of Carbon Credit Retirement</div>
+    <div class="cert-subtitle">This certifies the permanent retirement of verified carbon credits from the voluntary carbon market</div>
+    <div class="cert-no">${cert.certNo}</div>
+  </div>
+
+  <div class="cert-body">
+    <p>This is to certify that</p>
+    <div class="cert-name">${cert.buyerOrg}</div>
+    <p>represented by <strong>${cert.buyer}</strong>, has permanently retired</p>
+    <div class="cert-credits">${cert.credits.toLocaleString()} tCO₂e <span>verified carbon credits</span></div>
+    <p style="margin-top:3mm;font-size:9.5pt;color:#444">sourced from <strong>${cert.project}</strong> · ${cert.county} County, Republic of Kenya</p>
+  </div>
+
+  <table class="cert-details">
+    <tr><td>Project Developer</td><td>${cert.seller}</td></tr>
+    <tr><td>Registry Standard</td><td>${cert.standard}</td></tr>
+    <tr><td>Sector</td><td>${cert.sector}</td></tr>
+    <tr><td>Vintage Year</td><td>${cert.vintage}</td></tr>
+    <tr><td>Methodology</td><td>${cert.methodology}</td></tr>
+    <tr><td>Transaction ID</td><td style="font-family:monospace">${cert.txnId}</td></tr>
+    <tr><td>Payment Method</td><td>${cert.payMethod}</td></tr>
+    <tr><td>Purchase Price</td><td>KES ${cert.pricePerT.toLocaleString()}/tCO₂e · Total: KES ${cert.totalKES.toLocaleString()}</td></tr>
+    <tr><td>Retirement Date</td><td>${now}</td></tr>
+    <tr><td>KNCR Reference</td><td style="font-family:monospace">${cert.certNo}</td></tr>
+  </table>
+
+  <div style="text-align:center;margin:5mm 0 3mm;font-size:8.5pt;color:#555;font-style:italic">
+    These credits have been permanently retired and cannot be resold, transferred, or double-counted.<br>
+    Retirement is recorded in the Netzerra Exchange ledger in compliance with Kenya's Carbon Trading Regulations 2025.
+  </div>
+
+  <div class="cert-seal">🏅</div>
+
+  <div class="sig-grid">
+    <div class="sig-block">
+      <div class="sig-name">${cert.buyer}</div>
+      <div class="sig-title">Authorised Representative</div>
+      <div class="sig-title">${cert.buyerOrg}</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-name">Shukri Ali</div>
+      <div class="sig-title">Founder & CEO, Netzerra</div>
+      <div class="sig-title">shukriali411@gmail.com</div>
+    </div>
+    <div class="sig-block">
+      <div class="sig-name">Zerra Carbon Expert</div>
+      <div class="sig-title">AI Verification · Groq Llama 3.3 70B</div>
+      <div class="sig-groq">Verified via Netzerra Cloudflare Worker<br>https://delicate-bird-531b.shukriali411.workers.dev</div>
+    </div>
+  </div>
+
+  <div class="cert-footer">
+    🌿 Netzerra · Kenya's Carbon Intelligence Platform · netzerrakenya.com · shukriali411@gmail.com · +254 705 366 807<br>
+    This certificate is generated by Netzerra MVP software. It is a data preparation and recording tool.
+    Official KNCR credit retirement must be completed on kncr.go.ke. Netzerra has no formal partnership with KNCR or NEMA.
+  </div>
+</div>
+</body>
+</html>`;
+
+  // Open in new tab — use a named window so repeated purchases update the same tab
+  const certWin = window.open('', 'ntz_cert_' + cert.certNo.replace(/-/g,'_'));
+  if (!certWin) {
+    // Popup was blocked — fallback: create a blob and force download
+    const blob = new Blob([html], { type: 'text/html' });
+    const a = document.createElement('a');
+    a.href = URL.createObjectURL(blob);
+    a.download = cert.certNo + '_Retirement_Certificate.html';
+    a.click();
+    URL.revokeObjectURL(a.href);
+    toast('📄 Certificate downloaded (pop-ups blocked). Open the file in your browser to print.', 'info');
+    return;
+  }
+  certWin.document.open();
+  certWin.document.write(html);
+  certWin.document.close();
 }
 
 function renderPortfolio() {
