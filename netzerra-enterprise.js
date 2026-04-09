@@ -771,9 +771,9 @@ async function sendZerraMessage() {
     renderZerraMessages();
   } catch (e) {
     if (typing) typing.style.display = 'none';
-    // Fallback: try local knowledge base, then smart response
-    const localAnswer = searchKnowledgeBase(text);
-    ZERRA.messages.push({ role: 'assistant', content: localAnswer || generateSmartResponse(text) });
+    console.error('[Zerra sendMessage] failed:', e.message);
+    // Show the actual error in chat so we can diagnose — not a silent knowledge-base fallback
+    ZERRA.messages.push({ role: 'assistant', content: '⚠️ ' + e.message + '\n\nIf this keeps happening, check the browser console (F12) for the exact error.' });
     renderZerraMessages();
   }
 }
@@ -810,56 +810,33 @@ function generateSmartResponse(query) {
   return 'That\'s a great question! While I don\'t have a specific answer in my knowledge base for that query, I can help with:\n\n• **KNCR compliance** — registration, documents, penalties\n• **Emission factors** — Kenya grid, diesel, livestock, cement\n• **Offset strategies** — bamboo, biogas, mangrove, solar\n• **Carbon credit trading** — prices, standards, verification\n• **B2B trading** — RFQs, contracts, enterprise directory\n\nTry rephrasing your question or ask about one of these topics!';
 }
 
+/* ──────────────────────────────────────────────────────
+   callGeminiAPI — delegates to window.ZerraQuery (netzerra-ai.js)
+   Secure Worker proxy · no API key in frontend
+   Worker URL: https://delicate-bird-531b.shukriali411.workers.dev/
+   Worker picks: llama-3.3-70b-versatile (text) automatically.
+────────────────────────────────────────────────────── */
 async function callGeminiAPI(prompt) {
-  // YOUR VALIDATED WORKER URL
-  const PROXY_URL = 'https://delicate-bird-531b.shukriali411.workers.dev/';
-
-  const systemContext = `You are Zerra, the AI assistant for Netzerra — Kenya's Carbon Intelligence Platform. You are an expert in:
-- Kenya's Carbon Markets Regulations 2024 and Carbon Trading Regulations 2025
-- KNCR (Kenya National Carbon Registry) compliance
-- IPCC AR6 methodology and GHG Protocol
-- Kenya-specific emission factors (KNCR grid: 0.3174 kgCO₂/kWh UNFCCC CDM ASB0050-2020, diesel: 2.68 kgCO₂e/L)
-- Carbon credit trading in East Africa
-- Community Development Agreements (CDA) — 40% land-based, 25% non-land
-- Offset strategies for Kenya (bamboo, biogas, mangrove, solar)
-- B2B carbon credit trading and enterprise compliance
-
-Always provide accurate, Kenya-specific answers. Cite regulations and standards where relevant. Keep responses concise but informative. Respond in the same language the user writes in (English or Swahili).`;
-
-  try {
-    const response = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        contents: [{ 
-          role: 'user', 
-          parts: [{ text: systemContext + '\n\nUser question: ' + prompt }] 
-        }],
-        generationConfig: { maxOutputTokens: 800, temperature: 0.7 }
-      })
-    });
-
-    if (!response.ok) {
-        throw new Error(`Server responded with status ${response.status}`);
-    }
-
-    const data = await response.json();
-    
-    // FIX: We add a fallback string here. 
-    // If the API returns an empty result, we return a friendly message instead of 'undefined'.
-    const resultText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-    
-    if (!resultText) {
-        return "I'm sorry, I couldn't generate a response right now. Please try rephrasing your question!";
-    }
-
-    return resultText;
-
-  } catch (e) {
-    console.error("Enterprise AI Error:", e);
-    // FIX: Instead of 'throw e' (which crashes the site), we return a readable error message.
-    return "⚠️ Connection error: I'm having trouble reaching my brain. Please check your internet or try again in a moment.";
+  if (typeof window.ZerraQuery === 'function') {
+    return await window.ZerraQuery(prompt, false); // stateless — no chat history for enterprise calls
   }
+  // ZerraQuery not yet available (load order issue) — post directly
+  const WORKER = 'https://delicate-bird-531b.shukriali411.workers.dev/';
+  const r = await fetch(WORKER, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      messages: [
+        { role: 'system', content: 'You are Zerra, AI assistant for Netzerra Kenya carbon platform. Expert in KNCR, IPCC AR6, CDA regulations, Kenya emissions. Cite sources. Respond in user language.' },
+        { role: 'user',   content: prompt }
+      ]
+    })
+  });
+  if (!r.ok) { const t = await r.text().catch(()=>''); throw new Error(`Worker ${r.status}: ${t.slice(0,100)}`); }
+  const d = await r.json();
+  const text = d.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty response from Worker');
+  return text;
 }
 // ══════════════════════════════════════════════════════
 // 6. SMART DATA PARSING (AI-Lite)
@@ -1343,82 +1320,86 @@ Keep it practical and Kenya-specific.`;
 async function handleOCRUpload(input) {
   const file = input.files?.[0];
   if (!file) return;
-  if (!file.type.startsWith('image/')) { toast('Please upload an image file (JPG, PNG)', 'error'); return; }
+  if (!file.type.startsWith('image/')) { toast('Please upload a JPG or PNG', 'error'); return; }
 
-  // Show preview
   const preview = document.getElementById('ocr-preview');
-  if (preview) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
-
   const statusEl = document.getElementById('ocr-status');
-  if (statusEl) { statusEl.textContent = '🔍 Reading receipt with AI vision...'; statusEl.style.color = 'var(--mint)'; }
+  if (preview) { preview.src = URL.createObjectURL(file); preview.style.display = 'block'; }
+  if (statusEl) { statusEl.textContent = '🔍 Scanning & Extracting...'; statusEl.style.color = 'var(--mint)'; }
   document.getElementById('ocr-results').innerHTML = '';
 
-  // Convert to base64
-  const base64 = await new Promise(resolve => {
-    const reader = new FileReader();
-    reader.onload = e => resolve(e.target.result.split(',')[1]);
-    reader.readAsDataURL(file);
-  });
-
-  const prompt = `You are an emission data extraction assistant for Netzerra, Kenya's carbon intelligence platform.
-
-Carefully read this receipt, bill, invoice, or delivery note image and extract ALL emission-relevant quantities. Look for:
-- Fuel: diesel, petrol, kerosene, LPG, HFO, CNG (in litres, kg, or m³)
-- Electricity: kWh consumed (from KPLC or any utility bill)
-- Materials: cement (bags or tonnes), steel/rebar (kg or tonnes), concrete (m³), timber (m³)
-- Transport: distance in km, number of trips, vehicle type
-- Waste: tonnes of solid waste, m³ of wastewater
-- Refrigerants: kg of HFC-134a, R-404A, R-22
-
-Return ONLY a JSON object with this exact format (include only fields where you found data):
-{
-  "extracted": [
-    { "type": "diesel", "value": 500, "unit": "litres", "confidence": "high", "raw_text": "500L AGO" },
-    { "type": "electricity", "value": 12000, "unit": "kWh", "confidence": "high", "raw_text": "Units: 12,000 kWh" }
-  ],
-  "document_type": "fuel receipt",
-  "vendor": "Total Energies Nairobi",
-  "date": "2026-03-15",
-  "notes": "any important caveats or unclear items"
-}
-
-Types must be one of: diesel, petrol, lpg, hfo, cng, kerosene, electricity, cement, steel, rebar, concrete, timber, distance, solid_waste, wastewater, hfc134a, r404a`;
-
   try {
-    const apiKey = 'AIzaSyAWsBmp3w9AlGGrcNQy8NxY-_vMUjUmywQ';
-    const models = ['gemini-2.0-flash', 'gemini-1.5-flash'];
-    let data = null;
+    // 1. High-Quality Compression (1600px for better text recognition)
+    const compressedBase64 = await new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          const canvas = document.createElement('canvas');
+          let width = img.width; let height = img.height;
+          const MAX_SIZE = 1600; // Increased from 1200
+          if (width > height && width > MAX_SIZE) { height *= MAX_SIZE / width; width = MAX_SIZE; }
+          else if (height > MAX_SIZE) { width *= MAX_SIZE / height; height = MAX_SIZE; }
+          canvas.width = width; canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx.drawImage(img, 0, 0, width, height);
+          resolve(canvas.toDataURL('image/jpeg', 0.85)); // Higher quality
+        };
+        img.src = e.target.result;
+      };
+      reader.readAsDataURL(file);
+    });
 
-    for (const model of models) {
-      try {
-        const resp = await fetch(`https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent?key=${apiKey}`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            contents: [{ parts: [
-              { inline_data: { mime_type: file.type, data: base64 } },
-              { text: prompt }
-            ]}],
-            generationConfig: { maxOutputTokens: 800, temperature: 0.1 }
-          })
-        });
-        if (!resp.ok) continue;
-        const result = await resp.json();
-        const text = result.candidates?.[0]?.content?.parts?.[0]?.text || '';
-        const jsonMatch = text.match(/\{[\s\S]*\}/);
-        if (jsonMatch) { data = JSON.parse(jsonMatch[0]); break; }
-      } catch(e) { continue; }
+    // 2. Specialized Kenya-Context OCR Prompt
+    const ocrPrompt = `Act as an expert OCR data extractor for Kenyan carbon audits. 
+    Read this document (e.g. KPLC bill, Fuel receipt, Delivery note) and find quantities.
+    
+    IMPORTANT: You must return a JSON object. Even if you only find one number, return it.
+    Format: {"extracted": [{"type": "diesel/petrol/electricity/cement", "value": 0.0, "unit": "L/kWh/kg"}], "vendor": "Company Name", "date": "YYYY-MM-DD"}`;
+
+    const WORKER = 'https://delicate-bird-531b.shukriali411.workers.dev/';
+
+    const resp = await fetch(WORKER, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        messages: [{
+          role: 'user',
+          content: [
+            { type: 'text', text: ocrPrompt },
+            { type: 'image_url', image_url: { url: compressedBase64 } }
+          ]
+        }]
+      })
+    });
+
+    const result = await resp.json();
+    const rawContent = result.choices?.[0]?.message?.content || '';
+
+    // 3. Robust "Search-and-Extract" JSON Logic
+    const jsonStart = rawContent.indexOf('{');
+    const jsonEnd = rawContent.lastIndexOf('}');
+    
+    if (jsonStart !== -1 && jsonEnd !== -1) {
+        const jsonString = rawContent.substring(jsonStart, jsonEnd + 1);
+        const data = JSON.parse(jsonString);
+        renderOCRResults(data);
+        if (statusEl) statusEl.textContent = `✅ Data extracted successfully`;
+    } else {
+        // FALLBACK: If AI didn't give JSON, show its text explanation (Still looks good for a demo!)
+        document.getElementById('ocr-results').innerHTML = `
+        <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:10px; border-left:4px solid var(--gold);">
+            <div style="color:var(--gold); font-size:10px; font-weight:800; margin-bottom:5px;">AI OBSERVATION</div>
+            <div style="font-size:13px; color:rgba(255,255,255,0.8); line-height:1.5;">${rawContent}</div>
+            <div style="margin-top:10px; font-size:11px; color:rgba(255,255,255,0.3);">⚠️ Document structure was too complex for automated mapping. Values listed above.</div>
+        </div>`;
+        if (statusEl) statusEl.textContent = 'ℹ️ AI generated a text summary instead of raw data';
     }
 
-    if (!data) throw new Error('Could not parse AI response');
-    renderOCRResults(data);
-    if (statusEl) { statusEl.textContent = `✅ Extracted ${data.extracted?.length || 0} data points from ${data.document_type || 'document'}`; }
-
   } catch(e) {
-    if (statusEl) { statusEl.textContent = '⚠️ AI vision unavailable — use text paste below'; statusEl.style.color = '#FFD54F'; }
-    document.getElementById('ocr-results').innerHTML = `<div style="color:rgba(255,165,0,.7);font-size:.8rem;padding:.5rem">
-      AI vision could not process this image. Try: (1) better lighting, (2) clearer photo, (3) paste the text manually in the Smart Parse tab.
-    </div>`;
+    console.error('[OCR] Error:', e);
+    if (statusEl) statusEl.textContent = '⚠️ Scan unavailable';
+    document.getElementById('ocr-results').innerHTML = `<div style="color:var(--coral); font-size:12px; padding:1rem;">Error: ${e.message}</div>`;
   }
 }
 

@@ -1,11 +1,10 @@
 /* ══════════════════════════════════════════════════════
-   NETZERRA AI — netzerra-ai.js  v3.3 (Clean API Only)
-   Removed all fallbacks to ensure Gemini is actually working.
+   NETZERRA AI — netzerra-ai.js  v4.0
+   Secure Worker Proxy · No API key in frontend
+   Groq Llama 3.3 70B (text) + Llama 3.2 11B Vision (OCR)
+   Chat Memory · ZerraQuery global · Swahili + English
 ══════════════════════════════════════════════════════ */
 'use strict';
-
-const _GEMINI_KEY    = 'AIzaSyAWsBmp3w9AlGGrcNQy8NxY-_vMUjUmywQ';
-const _GEMINI_MODELS = ['gemini-1.5-flash', 'gemini-1.5-flash-8b'];
 
 (function(){const s=document.createElement('style');s.textContent=`
 #ntz-ai-fab{position:fixed;bottom:calc(var(--nav-h,58px) + 18px);right:20px;z-index:8000;display:flex;flex-direction:column;align-items:flex-end;gap:10px}
@@ -87,7 +86,7 @@ function _buildAIHTML(){
   <div id="ntz-ai-panel">
     <div class="nai-hdr">
       <div class="nai-av">🤖</div>
-      <div><div class="nai-hname">Netzerra AI</div><div class="nai-hst">Online · Gemini</div></div>
+      <div><div class="nai-hname">Netzerra AI</div><div class="nai-hst">Online · Groq via Worker</div></div>
       <button class="nai-close" onclick="NTZ_AI.toggle()">✕</button>
     </div>
     <div class="nai-tabs">
@@ -136,52 +135,76 @@ function _buildAIHTML(){
 }
 
 function _ctx(){
-  const u=(typeof S!=='undefined')?S.user:{};
-  const lc=(typeof S!=='undefined')?S.lastCalc:null;
-  const kp=(typeof S!=='undefined'&&S.kncr)?S.kncr.projects:[];
-  
-  return `You are Zerra, the friendly AI for Netzerra. 
-  
-  CRITICAL RULES:
-  1. LANGUAGE: You are perfectly fluent in English and Kiswahili. ALWAYS respond in the language the user uses. If they speak Swahili, you MUST answer in Swahili.
-  2. PERSONALITY: You are a helpful assistant. You can answer ANY question (general, funny, or technical), but if the topic is about carbon, use your expert knowledge of Kenya's Carbon Markets Regulations 2024 and IPCC AR6.
-  3. KNOWLEDGE: Netzerra is Kenya's Carbon Intelligence Platform. It helps with KNCR registration and carbon footprinting.
-  
-  USER DATA:
-  Name: ${u.name||'User'} | Org: ${u.org||'N/A'} | Plan: ${u.plan||'Seedling'}
-  Emissions: ${u.totalEmissions||0} tCO2e | Offsets: ${u.totalOffsets||0} tCO2e
-  Last Calc: ${lc?`${lc.name} (${lc.sector}) · ${lc.total_t} tCO2e/yr`:'None'}
-  Projects: ${kp.length ? kp.map(p=>`${p.name}`).join(', ') : 'None'}`;
+  const u  = (typeof S !== 'undefined') ? S.user  : {};
+  const lc = (typeof S !== 'undefined') ? S.lastCalc : null;
+  const kp = (typeof S !== 'undefined' && S.kncr) ? S.kncr.projects : [];
+  return `You are Zerra, the AI assistant for Netzerra — Kenya's Carbon Intelligence Platform.
+
+CRITICAL RULES:
+1. LANGUAGE: Respond ONLY in the language the user writes in. English → English. Kiswahili → Kiswahili.
+2. PERSONALITY: Friendly, concise, expert. Can answer any question but prioritise carbon/KNCR topics.
+3. EXPERTISE: Kenya Carbon Markets Regulations 2024 (Reg 22, 23E, 37) · KNCR 6-step registration · IPCC AR6 GWP100 · ISO 14064-1:2018 · Kenya grid EF 0.3174 kgCO₂/kWh (UNFCCC CDM ASB0050-2020) · diesel 2.68 · petrol 2.31 · CDA: 40% land-based, 25% non-land · bamboo 17 tCO₂e/ha/yr · casuarina 8 · grevillea 6 · mangrove 6.4–9.8 · biogas 3.5/unit · Article 6 ITMOs (Switzerland, Sweden) · FLLoCA World Bank.
+
+USER CONTEXT:
+Name: ${u.name||'User'} | Org: ${u.org||'N/A'} | Plan: ${u.plan||'Seedling'}
+Emissions: ${u.totalEmissions||0} tCO₂e | Offsets: ${u.totalOffsets||0} tCO₂e | NTZ Score: ${u.score||0}/100
+Last Calc: ${lc ? lc.name+' ('+lc.sector+') · '+lc.total_t+' tCO₂e/yr · DQS:'+lc.dqs+'/100' : 'None'}
+KNCR Projects: ${kp.length ? kp.map(p=>p.name+' Step'+p.step+'/6').join(', ') : 'None'}`;
 }
 
-async function _callGemini(prompt){
-  // YOUR VALIDATED WORKER URL
-  const PROXY_URL = 'https://delicate-bird-531b.shukriali411.workers.dev/'; 
+/* ── WORKER URL — single source of truth, no API key in frontend ── */
+const _WORKER = 'https://delicate-bird-531b.shukriali411.workers.dev/';
 
-  const body = JSON.stringify({
-    contents: [{role:'user', parts:[{text: _ctx() + '\n\nUser: ' + prompt}]}],
-    generationConfig: {maxOutputTokens: 800, temperature: 0.8}
+/* ── Global chat history — persists across tab switches ── */
+const chatHistory = [];
+
+/**
+ * _postWorker(messages)
+ * Low-level POST to the CF Worker.
+ * Worker inspects messages: if any message has image_url content → picks vision model.
+ * Otherwise picks llama-3.3-70b-versatile. No model specified from frontend.
+ */
+async function _postWorker(messages) {
+  const r = await fetch(_WORKER, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages })
   });
-
-  try {
-    const r = await fetch(PROXY_URL, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: body
-    });
-    
-    if(!r.ok) throw new Error(`Server Error: ${r.status}`);
-    
-    const d = await r.json();
-    return d.candidates?.[0]?.content?.parts?.[0]?.text;
-  } catch(e) {
-    throw new Error('Zerra is currently resting. Please try again later!');
+  if (!r.ok) {
+    let msg = `Worker ${r.status}`;
+    try { const e = await r.json(); msg = e.error?.message || msg; } catch(_) {}
+    throw new Error(msg);
   }
+  const d = await r.json();
+  const text = d.choices?.[0]?.message?.content;
+  if (!text) throw new Error('Empty response from Worker');
+  return text;
 }
+
+/**
+ * window.ZerraQuery(prompt, useHistory)
+ * Global AI query function — exposed for enterprise.js and app.js to call.
+ * useHistory: if true, sends the full chatHistory for context-aware responses.
+ * Always prepends the system prompt as the first message.
+ */
+window.ZerraQuery = async function(prompt, useHistory = false) {
+  const systemMsg = { role: 'system', content: _ctx() };
+  let messages;
+
+  if (useHistory && chatHistory.length > 0) {
+    // System + last 10 history entries + current prompt
+    messages = [systemMsg, ...chatHistory.slice(-10), { role: 'user', content: prompt }];
+  } else {
+    // Stateless call — system + single user message
+    messages = [systemMsg, { role: 'user', content: prompt }];
+  }
+
+  return await _postWorker(messages);
+};
 
 const NTZ_AI=(()=>{
   let _open=false,_curTab='chat',_busy=false,_rtype='executive',_rtext='';
-  const _hist=[];
+  // chatHistory is defined globally above — shared with ZerraQuery
 
   function toggle(){_open=!_open;document.getElementById('ntz-ai-panel').classList.toggle('open',_open);if(_open){if(_curTab==='insights')_loadInsights();if(_curTab==='suggest')_loadSuggest();document.getElementById('nai-inp')?.focus();}}
 
@@ -204,11 +227,18 @@ const NTZ_AI=(()=>{
   async function send(){
     if(_busy)return;const inp=document.getElementById('nai-inp');const txt=inp.value.trim();if(!txt)return;
     inp.value='';inp.style.height='auto';document.getElementById('nai-sugs').style.display='none';
-    _msg('user',txt);_hist.push('User: '+txt);
+    _msg('user',txt);
+    // Add to global chatHistory for memory
+    chatHistory.push({role:'user', content:txt});
     _busy=true;document.getElementById('nai-send').disabled=true;
     _typing();
-    try{const reply=await _callGemini(_hist.slice(-8).join('\n'));document.getElementById('nai-typing')?.remove();_msg('bot',reply);_hist.push('Assistant: '+reply);}
-    catch(e){document.getElementById('nai-typing')?.remove();_msg('bot','⚠️ '+e.message);}
+    try{
+      // useHistory=true so the model sees the full conversation context
+      const reply=await window.ZerraQuery(txt, true);
+      document.getElementById('nai-typing')?.remove();
+      _msg('bot',reply);
+      chatHistory.push({role:'assistant', content:reply});
+    }catch(e){document.getElementById('nai-typing')?.remove();_msg('bot','⚠️ '+e.message);}
     _busy=false;document.getElementById('nai-send').disabled=false;
   }
 
@@ -219,7 +249,7 @@ const NTZ_AI=(()=>{
     const offPct=Math.min(((u.totalOffsets||0)/Math.max(u.totalEmissions||1,1)*100),100).toFixed(0);
     b.innerHTML=`<div class="nai-card"><h4>📈 Emission Profile</h4><p>Total: <strong>${(u.totalEmissions||0).toLocaleString()} tCO₂e</strong> · Offsets: <strong>${(u.totalOffsets||0).toLocaleString()} tCO₂e</strong></p><div class="nai-sbar"><div class="nai-sfill" style="width:${offPct}%"></div></div><p style="font-size:.67rem;margin-top:.25rem;color:rgba(255,255,255,.35)">${offPct}% offset ratio · NTZ ${u.score||0}/100</p></div>${lc?`<div class="nai-card"><h4>🔬 Last: ${lc.name}</h4><p>${lc.sector} · ${lc.total_t} tCO₂e/yr</p></div>`:''}<div class="nai-card" id="nai-ai-ins"><h4>🤖 AI Analysis</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>`;
     try{
-      const reply=await _callGemini(`Analyze these numbers and give 3 sharp, friendly insights: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Max 100 words.`);
+      const reply=await window.ZerraQuery(`Analyze these numbers and give 3 sharp, friendly insights: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Max 100 words.`);
       const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').innerHTML=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     }catch(e){const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').textContent='⚠️ '+e.message;}
   }
@@ -229,7 +259,7 @@ const NTZ_AI=(()=>{
     b.innerHTML='<div class="nai-card"><h4>💡 Loading…</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>';
     const u=(typeof S!=='undefined')?S.user:{};const lc=(typeof S!=='undefined')?S.lastCalc:null;
     try{
-      const reply=await _callGemini(`Give 4 friendly recommendations based on: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`);
+      const reply=await window.ZerraQuery(`Give 4 friendly recommendations based on: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`);
       const items=reply.split(/(?=TITLE:)/g).filter(s=>s.trim());
       if(items.length){b.innerHTML=items.map(item=>{const T=(item.match(/TITLE:\s*(.+)/)?.[1]||'').trim();const P=(item.match(/PRIORITY:\s*(\w+)/i)?.[1]||'med').toLowerCase();const D=(item.match(/DETAIL:\s*([\s\S]+)/)?.[1]||'').trim();const L=P==='high'?'🔴 High':P==='med'?'🟡 Med':'🟢 Quick';return `<div class="nai-sitem ${P}"><h4>${T}</h4><p>${D}</p><span class="nai-stag ${P}">${L}</span></div>`;}).join('');}
       else b.innerHTML=`<div class="nai-card"><h4>💡</h4><p>${reply}</p></div>`;
@@ -248,7 +278,7 @@ const NTZ_AI=(()=>{
       kncr:`180-word KNCR Brief for ${u.org||'this org'}: Registration status, CDA obligations.`,
       offset:`200-word Agroforestry Roadmap for ${u.org||'this org'}: targeting ${u.totalEmissions||0} tCO2e/yr.`
     };
-    try{_rtext=await _callGemini(prompts[_rtype]);out.textContent=_rtext;out.classList.add('on');document.getElementById('nai-cpy').style.display='block';}
+    try{_rtext=await window.ZerraQuery(prompts[_rtype]);out.textContent=_rtext;out.classList.add('on');document.getElementById('nai-cpy').style.display='block';}
     catch(e){out.textContent='⚠️ '+e.message;out.classList.add('on');}
     btn.disabled=false;btn.textContent='✨ Generate with AI';
   }
