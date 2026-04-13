@@ -10,6 +10,8 @@
 const AUTH = {
   currentUser: null,
   roles: {
+    proponent:     { label: 'Project Proponent', sections: ['home','dashboard','gcis-wizard','my-projects','messages','passport','calculator','offsets','sequestration','county','leaderboard','community','methodology','docs','marketplace','education','membership','about','profile','disclaimer','kncr'] },
+    consultant:    { label: 'Carbon Consultant', sections: ['home','dashboard','review-queue','messages','registry','methodology','docs','about','profile','disclaimer'] },
     developer:     { label: 'Project Developer', sections: 'all' },
     enterprise:    { label: 'Enterprise',        sections: ['home','dashboard','passport','calculator','offsets','enterprise','exchange','b2b','county','leaderboard','community','methodology','docs','marketplace','education','membership','about','profile','disclaimer'] },
     nema_national: { label: 'NEMA National Director', sections: ['home','dashboard','nema-oversight','leaderboard','methodology','profile'] },
@@ -18,11 +20,13 @@ const AUTH = {
     personal:      { label: 'Personal',          sections: ['home','dashboard','passport','calculator','offsets','county','leaderboard','community','methodology','docs','education','membership','about','profile','disclaimer'] },
   },
   demoAccounts: {
-    'demo-dev':  { name: 'Shukri Ali',       org: 'Netzerra',                role: 'developer',     county: null,   plan: '🏔️ Canopy (Demo)' },
-    'demo-ent':  { name: 'Amara Osei',        org: 'GreenLeaf Industries',   role: 'enterprise',    county: null,   plan: '🏢 Enterprise' },
-    'demo-nema': { name: 'Dr. Faith Karanja',  org: 'NEMA Kenya',            role: 'nema_national', county: null,   plan: '🏛️ NEMA National Director' },
-    'demo-co':   { name: 'Joseph Kiplagat',    org: 'Narok County',          role: 'nema_county',   county: 'Narok',plan: '📋 NEMA County Officer' },
-    'demo-rev':  { name: 'Halima Abdi',        org: 'NEMA Kenya',            role: 'nema_reviewer', county: null,   plan: '🔍 NEMA Technical Reviewer' },
+    'demo-proponent':  { name: 'Shukri Ali',       org: 'Netzerra',                role: 'proponent',     county: null,   plan: 'Project Proponent' },
+    'demo-consultant': { name: 'Dr. Amina Hassan',  org: 'Carbon Advisory Ltd',    role: 'consultant',    county: null,   plan: 'Carbon Consultant' },
+    'demo-dev':  { name: 'Shukri Ali',       org: 'Netzerra',                role: 'developer',     county: null,   plan: 'Canopy (Demo)' },
+    'demo-ent':  { name: 'Amara Osei',        org: 'GreenLeaf Industries',   role: 'enterprise',    county: null,   plan: 'Enterprise' },
+    'demo-nema': { name: 'Dr. Faith Karanja',  org: 'NEMA Kenya',            role: 'nema_national', county: null,   plan: 'NEMA National Director' },
+    'demo-co':   { name: 'Joseph Kiplagat',    org: 'Narok County',          role: 'nema_county',   county: 'Narok',plan: 'NEMA County Officer' },
+    'demo-rev':  { name: 'Halima Abdi',        org: 'NEMA Kenya',            role: 'nema_reviewer', county: null,   plan: 'NEMA Technical Reviewer' },
   }
 };
 
@@ -102,10 +106,15 @@ function registerAccount() {
 function loginAs(demoId) {
   const user = AUTH.demoAccounts[demoId];
   if (!user) return;
-  AUTH.currentUser = { ...user };
-  applyLogin(user);
-  hideAuthScreen();
-  toast(`Logged in as ${user.name} (${AUTH.roles[user.role]?.label})`, 'success');
+  // Use nuclear login for all roles (handles nav, pipeline, sections)
+  if (typeof nuclearLogin === 'function') {
+    nuclearLogin(user);
+  } else {
+    AUTH.currentUser = { ...user };
+    applyLogin(user);
+    hideAuthScreen();
+    toast(`Logged in as ${user.name} (${AUTH.roles[user.role]?.label})`, 'success');
+  }
 }
 
 function applyLogin(user) {

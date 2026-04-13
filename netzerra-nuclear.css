@@ -1,0 +1,253 @@
+/* ══════════════════════════════════════════════════════
+   NETZERRA NUCLEAR UPGRADE v2.0 — CSS
+   Pipeline · Wizard · Documents · Messaging · Registry
+   ══════════════════════════════════════════════════════ */
+
+/* ── GCIS WIZARD ── */
+.gcis-progress { height: 4px; background: rgba(255,255,255,.08); border-radius: 2px; margin-bottom: 1.5rem; overflow: hidden; }
+.gcis-progress-bar { height: 100%; background: linear-gradient(90deg, #4ade80, #2d5a3d); border-radius: 2px; transition: width .4s ease; }
+
+.gcis-step-indicator { display: flex; align-items: center; justify-content: center; margin-bottom: 2rem; gap: 0; flex-wrap: wrap; }
+.gcis-step-dot { width: 28px; height: 28px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .65rem; font-weight: 700; background: rgba(255,255,255,.06); color: rgba(255,255,255,.3); border: 2px solid rgba(255,255,255,.1); transition: all .3s; flex-shrink: 0; }
+.gcis-step-dot.active { background: rgba(74,222,128,.15); color: #4ade80; border-color: #4ade80; box-shadow: 0 0 12px rgba(74,222,128,.25); }
+.gcis-step-dot.completed { background: #4ade80; color: #0a1f14; border-color: #4ade80; cursor: pointer; }
+.gcis-step-dot.completed:hover { transform: scale(1.1); }
+.gcis-step-line { width: 16px; height: 2px; background: rgba(255,255,255,.1); flex-shrink: 0; }
+
+.gcis-step-header { text-align: center; margin-bottom: 2rem; }
+.gcis-step-count { font-size: .7rem; font-weight: 600; color: #4ade80; text-transform: uppercase; letter-spacing: .08em; margin-bottom: .4rem; }
+.gcis-step-title { font-size: 1.3rem; font-weight: 700; color: #fff; margin-bottom: .4rem; }
+.gcis-step-subtitle { font-size: .82rem; color: rgba(255,255,255,.5); }
+
+.gcis-step-body { max-width: 640px; margin: 0 auto 2rem; }
+
+.gcis-field { margin-bottom: 1.25rem; }
+.gcis-label { display: block; font-size: .78rem; font-weight: 600; color: rgba(255,255,255,.75); margin-bottom: .4rem; }
+.gcis-required { color: #EF5350; }
+.gcis-input { width: 100%; padding: .65rem .85rem; background: rgba(255,255,255,.06); border: 1px solid rgba(255,255,255,.12); border-radius: 8px; color: #fff; font-size: .84rem; font-family: inherit; transition: border-color .2s, box-shadow .2s; outline: none; box-sizing: border-box; }
+.gcis-input:focus { border-color: #4ade80; box-shadow: 0 0 0 3px rgba(74,222,128,.12); }
+.gcis-input::placeholder { color: rgba(255,255,255,.25); }
+.gcis-select { appearance: none; background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='12' height='12' viewBox='0 0 24 24' fill='none' stroke='rgba(255,255,255,.4)' stroke-width='2'%3E%3Cpolyline points='6 9 12 15 18 9'/%3E%3C/svg%3E"); background-repeat: no-repeat; background-position: right 12px center; padding-right: 36px; cursor: pointer; }
+.gcis-select option { background: #0a1f14; color: #fff; }
+.gcis-textarea { resize: vertical; min-height: 80px; line-height: 1.55; }
+
+.gcis-ai-suggest-btn { display: inline-flex; align-items: center; gap: 6px; margin-top: .5rem; padding: .45rem .9rem; background: linear-gradient(135deg, rgba(74,222,128,.12), rgba(45,90,61,.2)); border: 1px solid rgba(74,222,128,.3); border-radius: 6px; color: #4ade80; font-size: .74rem; font-weight: 600; cursor: pointer; transition: all .2s; }
+.gcis-ai-suggest-btn:hover { background: linear-gradient(135deg, rgba(74,222,128,.2), rgba(45,90,61,.3)); border-color: #4ade80; box-shadow: 0 0 12px rgba(74,222,128,.15); }
+.gcis-ai-suggest-btn:disabled, .gcis-ai-suggest-btn.loading { opacity: .6; cursor: not-allowed; pointer-events: none; }
+
+.gcis-spinner { display: inline-block; width: 14px; height: 14px; border: 2px solid rgba(74,222,128,.3); border-top-color: #4ade80; border-radius: 50%; animation: gcis-spin .6s linear infinite; }
+@keyframes gcis-spin { to { transform: rotate(360deg); } }
+
+.gcis-nav-buttons { display: flex; justify-content: space-between; max-width: 640px; margin: 0 auto; padding-top: 1rem; border-top: 1px solid rgba(255,255,255,.06); }
+
+.gcis-btn { padding: .6rem 1.4rem; border: none; border-radius: 8px; font-size: .82rem; font-weight: 600; cursor: pointer; transition: all .2s; display: inline-flex; align-items: center; gap: 6px; font-family: inherit; }
+.gcis-btn-primary { background: linear-gradient(135deg, #4ade80, #2d5a3d); color: #0a1f14; }
+.gcis-btn-primary:hover { box-shadow: 0 4px 16px rgba(74,222,128,.3); transform: translateY(-1px); }
+.gcis-btn-secondary { background: rgba(255,255,255,.08); color: rgba(255,255,255,.7); border: 1px solid rgba(255,255,255,.12); }
+.gcis-btn-secondary:hover { background: rgba(255,255,255,.12); color: #fff; }
+.gcis-btn-submit { background: linear-gradient(135deg, #4ade80, #22c55e); color: #0a1f14; font-weight: 700; padding: .7rem 2rem; }
+.gcis-btn-submit:hover { box-shadow: 0 4px 20px rgba(74,222,128,.4); }
+.gcis-btn-approve { background: linear-gradient(135deg, #1B5E20, #2E7D32); color: #4ade80; border: 1px solid rgba(74,222,128,.3); }
+.gcis-btn-approve:hover { background: #2E7D32; color: #fff; }
+.gcis-btn-disabled { background: rgba(255,255,255,.04); color: rgba(255,255,255,.2); cursor: not-allowed; border: 1px solid rgba(255,255,255,.06); }
+.gcis-btn-scan { background: rgba(128,222,234,.1); color: #80DEEA; border: 1px solid rgba(128,222,234,.25); width: 100%; justify-content: center; margin-top: .6rem; }
+.gcis-btn-scan:hover { background: rgba(128,222,234,.18); border-color: #80DEEA; }
+
+/* ── GIS / Receipt Scan ── */
+.gcis-scan-field { margin-bottom: 1.5rem; }
+.gcis-scan-box { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 1rem; }
+.gcis-scan-preview { min-height: 120px; display: flex; align-items: center; justify-content: center; }
+.gcis-scan-placeholder { text-align: center; color: rgba(255,255,255,.3); }
+.gcis-scan-placeholder span { display: block; font-size: .82rem; margin-top: .5rem; font-weight: 600; }
+.gcis-scan-placeholder small { display: block; font-size: .7rem; margin-top: .25rem; opacity: .6; }
+.gcis-scan-loading { text-align: center; color: rgba(255,255,255,.6); }
+.gcis-scan-loading span { display: block; font-size: .82rem; margin-top: .8rem; font-weight: 600; }
+.gcis-scan-loading small { display: block; font-size: .7rem; margin-top: .25rem; opacity: .6; }
+.gcis-scan-radar { width: 60px; height: 60px; border: 3px solid rgba(74,222,128,.2); border-top-color: #4ade80; border-radius: 50%; margin: 0 auto; animation: gcis-spin 1s linear infinite; }
+.gcis-scan-results { width: 100%; }
+.gcis-scan-header { display: flex; align-items: center; gap: 8px; font-size: .82rem; font-weight: 600; color: #4ade80; margin-bottom: .8rem; }
+.gcis-scan-grid { display: grid; grid-template-columns: repeat(3, 1fr); gap: .8rem; margin-bottom: .8rem; }
+.gcis-scan-metric { text-align: center; padding: .6rem; background: rgba(255,255,255,.04); border-radius: 8px; }
+.gcis-scan-metric-val { font-size: 1.1rem; font-weight: 700; }
+.gcis-scan-metric-lbl { font-size: .65rem; color: rgba(255,255,255,.4); margin-top: .2rem; text-transform: uppercase; letter-spacing: .04em; }
+.gcis-scan-detail { font-size: .76rem; color: rgba(255,255,255,.6); line-height: 1.7; padding: .6rem; background: rgba(255,255,255,.03); border-radius: 6px; }
+
+/* GIS Map + Coords */
+.gis-scan-container { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 16px; }
+.gis-map-frame { width: 100%; height: 280px; border: 1px solid rgba(255,255,255,.1); border-radius: 6px; overflow: hidden; margin-bottom: 12px; }
+.gis-map-frame iframe { width: 100%; height: 100%; border: none; }
+.gis-coord-row { display: flex; gap: 10px; margin-bottom: 10px; }
+.gis-coord-row .gcis-field { flex: 1; margin-bottom: 0; }
+.gis-presets { display: flex; gap: 6px; flex-wrap: wrap; margin-bottom: 12px; }
+.gis-preset-btn { padding: 4px 10px; background: rgba(74,222,128,.08); border: 1px solid rgba(74,222,128,.15); border-radius: 4px; color: #4ade80; font-size: .68rem; cursor: pointer; transition: all .2s; }
+.gis-preset-btn:hover { background: rgba(74,222,128,.2); }
+.gis-scan-btn { display: flex; align-items: center; gap: 6px; padding: 8px 16px; background: rgba(74,222,128,.12); border: 1px solid rgba(74,222,128,.3); border-radius: 5px; color: #4ade80; font-size: .75rem; font-weight: 600; cursor: pointer; margin-top: 8px; }
+.gis-scan-btn:hover { background: rgba(74,222,128,.25); }
+.gis-results { margin-top: 12px; padding: 12px; background: rgba(74,222,128,.05); border: 1px solid rgba(74,222,128,.15); border-radius: 6px; }
+.gis-results table { width: 100%; font-size: .75rem; }
+.gis-results td { padding: 3px 8px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.gis-results td:first-child { color: rgba(255,255,255,.5); width: 40%; }
+.gis-ai-analysis { margin-top: 10px; padding: 10px; background: rgba(74,222,128,.08); border-radius: 5px; font-size: .75rem; color: rgba(255,255,255,.8); line-height: 1.5; }
+
+/* Receipt Scan */
+.receipt-scan-container { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 16px; }
+.receipt-upload-zone { border: 2px dashed rgba(255,255,255,.15); border-radius: 8px; padding: 24px; text-align: center; cursor: pointer; transition: all .2s; margin-bottom: 12px; }
+.receipt-upload-zone:hover { border-color: #4ade80; background: rgba(74,222,128,.03); }
+.receipt-upload-icon { font-size: 2rem; color: rgba(255,255,255,.2); margin-bottom: 8px; }
+.receipt-upload-text { font-size: .75rem; color: rgba(255,255,255,.4); }
+.receipt-results { padding: 12px; background: rgba(74,222,128,.05); border: 1px solid rgba(74,222,128,.15); border-radius: 6px; }
+.receipt-results table { width: 100%; font-size: .75rem; }
+.receipt-results td { padding: 4px 8px; border-bottom: 1px solid rgba(255,255,255,.05); }
+.receipt-results td:first-child { color: rgba(255,255,255,.5); width: 40%; }
+
+/* ── GCIS Review ── */
+.gcis-review { max-width: 640px; margin: 0 auto; }
+.gcis-review-section { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; margin-bottom: 1rem; overflow: hidden; }
+.gcis-review-section-header { display: flex; justify-content: space-between; align-items: center; padding: .8rem 1rem; background: rgba(255,255,255,.04); cursor: pointer; }
+.gcis-review-section-header h4 { font-size: .84rem; color: #fff; margin: 0; }
+.gcis-review-edit { font-size: .7rem; color: #4ade80; font-weight: 600; }
+.gcis-review-fields { padding: .6rem 1rem; }
+.gcis-review-field { display: flex; justify-content: space-between; padding: .4rem 0; border-bottom: 1px solid rgba(255,255,255,.04); font-size: .78rem; }
+.gcis-review-field:last-child { border-bottom: none; }
+.gcis-review-label { color: rgba(255,255,255,.5); flex-shrink: 0; margin-right: 1rem; }
+.gcis-review-value { color: rgba(255,255,255,.85); text-align: right; max-width: 60%; word-break: break-word; }
+.gcis-review-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.gcis-review-item { padding: 8px 12px; background: rgba(255,255,255,.04); border-radius: 5px; border-left: 3px solid #2d5a3d; }
+.gcis-review-item .gcis-review-label { font-size: .65rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; }
+.gcis-review-item .gcis-review-value { font-size: .8rem; color: #fff; margin-top: 2px; word-break: break-word; text-align: left; max-width: 100%; }
+.gcis-review-full { grid-column: 1 / -1; }
+
+/* ── PIPELINE TRACKER ── */
+.pipeline-tracker { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 12px 16px; margin: 10px 0; }
+.pipeline-title { font-size: .7rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1px; margin-bottom: 10px; font-weight: 600; }
+.pipeline-stages { display: flex; align-items: center; overflow-x: auto; padding-bottom: 4px; }
+.pipeline-stage { display: flex; flex-direction: column; align-items: center; gap: 4px; min-width: 48px; cursor: default; flex-shrink: 0; }
+.pipeline-stage-icon { width: 26px; height: 26px; border-radius: 50%; display: flex; align-items: center; justify-content: center; font-size: .6rem; font-weight: 700; border: 2px solid rgba(255,255,255,.1); background: rgba(255,255,255,.04); color: rgba(255,255,255,.3); transition: all .3s; }
+.pipeline-stage-label { font-size: .55rem; color: rgba(255,255,255,.3); text-align: center; white-space: nowrap; }
+.pipeline-stage-current .pipeline-stage-icon { background: #2d5a3d; color: #4ade80; border-color: #4ade80; box-shadow: 0 0 8px rgba(74,222,128,.2); }
+.pipeline-stage-current .pipeline-stage-label { color: #4ade80; }
+.pipeline-stage-approved .pipeline-stage-icon { background: #4ade80; color: #0a1f14; border-color: #4ade80; cursor: pointer; }
+.pipeline-stage-approved .pipeline-stage-label { color: #4ade80; }
+.pipeline-stage-past .pipeline-stage-icon { background: rgba(74,222,128,.15); color: #4ade80; border-color: rgba(74,222,128,.3); cursor: pointer; }
+.pipeline-stage-past .pipeline-stage-label { color: rgba(74,222,128,.5); }
+.pipeline-stage-future .pipeline-stage-icon { background: rgba(255,255,255,.04); color: rgba(255,255,255,.2); border-color: rgba(255,255,255,.08); }
+.pipeline-connector { width: 12px; height: 2px; background: rgba(255,255,255,.1); flex-shrink: 0; }
+.pipeline-connector-done { background: rgba(74,222,128,.4); }
+
+/* ── REVIEW QUEUE (CONSULTANT) ── */
+.rq-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.rq-header h3 { font-size: 1.1rem; color: #4ade80; margin: 0; }
+.rq-count { font-size: .76rem; color: rgba(255,255,255,.4); background: rgba(255,255,255,.06); padding: 3px 10px; border-radius: 12px; }
+
+.rq-card { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 12px; padding: 1.2rem; margin-bottom: 1rem; transition: border-color .2s; }
+.rq-card:hover { border-color: rgba(74,222,128,.2); }
+.rq-card-header { display: flex; justify-content: space-between; align-items: flex-start; }
+.rq-card-header h4 { color: #fff; margin: 0 0 4px; font-size: .92rem; }
+.rq-meta { font-size: .72rem; color: rgba(255,255,255,.4); }
+
+.rq-prl { width: 52px; height: 52px; border-radius: 50%; display: flex; flex-direction: column; align-items: center; justify-content: center; border: 3px solid; flex-shrink: 0; }
+.rq-prl-score { font-size: .85rem; font-weight: 800; line-height: 1; }
+.rq-prl-label { font-size: .5rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: 1px; }
+
+.rq-prl-meter { height: 4px; background: rgba(255,255,255,.06); border-radius: 4px; margin: 8px 0; overflow: hidden; }
+.rq-prl-fill { height: 100%; border-radius: 4px; transition: width .4s; }
+
+.rq-detail-panel { margin-top: 12px; padding-top: 12px; border-top: 1px solid rgba(255,255,255,.06); }
+.rq-detail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 6px; font-size: .75rem; color: rgba(255,255,255,.6); }
+.rq-detail-section { margin-top: 8px; font-size: .75rem; color: rgba(255,255,255,.5); }
+.rq-detail-section strong { color: rgba(255,255,255,.7); }
+
+.rq-actions { display: flex; gap: 6px; flex-wrap: wrap; margin-top: 12px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); }
+.rq-actions .gcis-btn { padding: 5px 12px; font-size: .72rem; }
+
+.rq-query-box { margin-top: 10px; display: flex; gap: 8px; align-items: flex-end; }
+.rq-query-box textarea { flex: 1; }
+.rq-query-box .gcis-btn { white-space: nowrap; }
+
+.rq-messages { margin-top: 10px; padding-top: 10px; border-top: 1px solid rgba(255,255,255,.06); }
+.rq-messages-title { font-size: .68rem; color: rgba(255,255,255,.35); text-transform: uppercase; letter-spacing: .5px; margin-bottom: 6px; }
+.rq-unread-alert { margin-top: 8px; padding: 6px 12px; background: rgba(245,166,35,.1); border: 1px solid rgba(245,166,35,.25); border-radius: 5px; font-size: .72rem; color: #F5A623; font-weight: 600; }
+
+/* ── MESSAGING ── */
+.msg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 1.5rem; }
+.msg-header h3 { font-size: 1.1rem; color: #4ade80; margin: 0; }
+.msg-unread-badge { background: #EF5350; color: #fff; font-size: .68rem; font-weight: 700; padding: .25rem .7rem; border-radius: 12px; }
+.msg-empty { text-align: center; padding: 3rem 1rem; color: rgba(255,255,255,.3); font-size: .85rem; }
+
+.msg-thread { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 10px; padding: 1rem; margin-bottom: 1rem; }
+.msg-thread-header { font-size: .88rem; font-weight: 700; color: #fff; margin-bottom: .8rem; padding-bottom: .6rem; border-bottom: 1px solid rgba(255,255,255,.06); }
+.msg-thread-id { font-size: .68rem; color: rgba(255,255,255,.3); font-weight: 400; margin-left: .5rem; }
+
+.msg-bubble { padding: .6rem .85rem; border-radius: 10px; margin-bottom: .5rem; max-width: 85%; }
+.msg-own { background: rgba(74,222,128,.1); border: 1px solid rgba(74,222,128,.15); margin-left: auto; }
+.msg-other { background: rgba(255,255,255,.05); border: 1px solid rgba(255,255,255,.08); }
+.msg-meta { font-size: .65rem; color: rgba(255,255,255,.35); margin-bottom: .3rem; }
+.msg-text { font-size: .8rem; color: rgba(255,255,255,.85); line-height: 1.5; }
+
+.msg-reply-box { margin-top: .8rem; padding-top: .8rem; border-top: 1px solid rgba(255,255,255,.06); display: flex; gap: .5rem; align-items: flex-end; }
+.msg-reply-box textarea { flex: 1; }
+.msg-reply-box button { flex-shrink: 0; }
+
+/* ── NEMA OVERSIGHT ── */
+.nema-stats { display: grid; grid-template-columns: repeat(4, 1fr); gap: 12px; margin-bottom: 20px; }
+.nema-stat { background: rgba(255,255,255,.04); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; padding: 14px; text-align: center; }
+.nema-stat-val { font-size: 1.5rem; font-weight: 800; color: #fff; }
+.nema-stat-lbl { font-size: .65rem; color: rgba(255,255,255,.4); text-transform: uppercase; letter-spacing: .5px; margin-top: 2px; }
+
+.nema-table { width: 100%; border-collapse: collapse; font-size: .75rem; }
+.nema-table th { background: rgba(255,255,255,.06); color: rgba(255,255,255,.5); text-align: left; padding: 8px 10px; font-weight: 600; text-transform: uppercase; font-size: .65rem; letter-spacing: .5px; border-bottom: 1px solid rgba(255,255,255,.1); }
+.nema-table td { padding: 8px 10px; border-bottom: 1px solid rgba(255,255,255,.05); color: rgba(255,255,255,.7); }
+.nema-table tr:hover { background: rgba(255,255,255,.03); }
+
+/* ── REGISTRY / LEDGER ── */
+.reg-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 16px; flex-wrap: wrap; gap: 8px; }
+.reg-header h3 { color: #4ade80; margin: 0; }
+.reg-stats { display: flex; gap: 10px; }
+.reg-stat { font-size: .68rem; color: rgba(255,255,255,.4); background: rgba(255,255,255,.06); padding: 3px 10px; border-radius: 12px; }
+
+.reg-chain { max-width: 700px; }
+.reg-block { background: rgba(255,255,255,.03); border: 1px solid rgba(255,255,255,.08); border-radius: 8px; overflow: hidden; }
+.reg-block-header { display: flex; justify-content: space-between; padding: 8px 12px; background: rgba(255,255,255,.04); border-bottom: 1px solid rgba(255,255,255,.06); }
+.reg-block-num { font-size: .7rem; font-weight: 700; color: #4ade80; }
+.reg-block-time { font-size: .65rem; color: rgba(255,255,255,.35); }
+.reg-block-body { padding: 10px 12px; }
+.reg-block-action { font-size: .72rem; font-weight: 700; margin-bottom: 4px; }
+.reg-block-detail { font-size: .75rem; color: rgba(255,255,255,.6); margin-bottom: 4px; }
+.reg-block-actor, .reg-block-project { font-size: .65rem; color: rgba(255,255,255,.35); }
+.reg-block-footer { display: flex; justify-content: space-between; padding: 6px 12px; background: rgba(0,0,0,.15); border-top: 1px solid rgba(255,255,255,.04); flex-wrap: wrap; gap: 4px; }
+.reg-hash { font-size: .58rem; color: rgba(255,255,255,.25); font-family: 'Courier New', monospace; }
+.reg-chain-link { display: flex; justify-content: center; padding: 2px 0; }
+
+/* ── LOGOUT BUTTON ── */
+.nuclear-logout-btn { display: flex; align-items: center; gap: 6px; padding: 7px 14px; background: rgba(239,83,80,.08); border: 1px solid rgba(239,83,80,.2); border-radius: 6px; color: #EF5350; font-size: .72rem; font-weight: 600; cursor: pointer; transition: all .2s; margin: 8px 12px; }
+.nuclear-logout-btn:hover { background: rgba(239,83,80,.15); border-color: #EF5350; }
+
+/* ── DUPLICATE FLAG ── */
+.dup-warning { background: rgba(245,166,35,.08); border: 1px solid rgba(245,166,35,.25); border-radius: 6px; padding: 8px 12px; margin-top: 6px; font-size: .72rem; color: #F5A623; }
+
+/* ── TOAST ── */
+.ntz-toast { position: fixed; top: 20px; right: 20px; padding: 12px 20px; border-radius: 8px; font-size: .78rem; font-weight: 600; z-index: 99999; animation: toastIn .3s ease; max-width: 400px; }
+.ntz-toast.success { background: #1B5E20; color: #4ade80; border: 1px solid rgba(74,222,128,.3); }
+.ntz-toast.error { background: #4A1515; color: #EF5350; border: 1px solid rgba(239,83,80,.3); }
+.ntz-toast.info { background: #0D3B66; color: #80DEEA; border: 1px solid rgba(128,222,234,.3); }
+@keyframes toastIn { from { transform: translateX(100%); opacity: 0; } to { transform: translateX(0); opacity: 1; } }
+
+/* ── RESPONSIVE ── */
+@media (max-width: 768px) {
+  .gcis-review-grid { grid-template-columns: 1fr; }
+  .rq-card-header { flex-direction: column; gap: 8px; }
+  .nema-stats { grid-template-columns: repeat(2, 1fr); }
+  .rq-detail-grid { grid-template-columns: 1fr; }
+  .gis-coord-row { flex-direction: column; }
+  .pipeline-stages { gap: 0; }
+  .rq-actions { gap: 4px; }
+  .rq-actions .gcis-btn { padding: 4px 8px; font-size: .65rem; }
+  .gcis-scan-grid { grid-template-columns: 1fr 1fr; }
+}
+
+@media (max-width: 480px) {
+  .nema-stats { grid-template-columns: 1fr 1fr; }
+  .gcis-step-dot { width: 22px; height: 22px; font-size: .55rem; }
+  .gcis-step-line { width: 8px; }
+  .gcis-scan-grid { grid-template-columns: 1fr; }
+}

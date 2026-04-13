@@ -386,7 +386,12 @@ const LABELS = {
   disclaimer:'Disclaimer & Legal',
   enterprise:'Enterprise Dashboard',
   exchange:'Carbon Credit Exchange',
-  'nema-oversight':'NEMA Oversight Portal'
+  'nema-oversight':'NEMA Oversight Portal',
+  'gcis-wizard':'GCIS Application Wizard',
+  'my-projects':'My Projects',
+  'messages':'Message Center',
+  'review-queue':'Review Queue',
+  'registry':'National Registry Ledger'
 };
 
 function showSection(id) {

@@ -18,6 +18,7 @@
   <!-- Netzerra Styles -->
   <link rel="stylesheet" href="style.css?v=2.6">
   <link rel="stylesheet" href="netzerra-enterprise.css?v=1.0">
+  <link rel="stylesheet" href="netzerra-nuclear.css?v=1.0">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -74,6 +75,27 @@
       <div class="nav-item active" onclick="showSection('home')"><span class="ico">🏠</span> Home</div>
       <div class="nav-item" onclick="showSection('dashboard')"><span class="ico">📊</span> Dashboard</div>
       <div class="nav-item" onclick="showSection('passport')"><span class="ico">🪪</span> Carbon Passport</div>
+
+      <div class="nav-label" style="color:#4ade80">GCIS Pipeline</div>
+      <div class="nav-item" id="nav-gcis-wizard" onclick="showSection('gcis-wizard')" style="display:none;background:rgba(74,222,128,.06)">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> GCIS Wizard
+        <span class="nav-badge" style="background:#4ade80;color:#0a1f14">NEW</span>
+      </div>
+      <div class="nav-item" id="nav-my-projects" onclick="showSection('my-projects')" style="display:none">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"/></svg></span> My Projects
+      </div>
+      <div class="nav-item" id="nav-messages" onclick="showSection('messages')" style="display:none">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></span> Messages
+        <span class="nav-badge" id="msg-badge" style="display:none;background:#EF5350;color:#fff">0</span>
+      </div>
+      <div class="nav-item" id="nav-review-queue" onclick="showSection('review-queue')" style="display:none;background:rgba(128,222,234,.06)">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></span> Review Queue
+        <span class="nav-badge" style="background:#80DEEA;color:#0a1f14">NEW</span>
+      </div>
+      <div class="nav-item" id="nav-registry" onclick="showSection('registry')" style="display:none;background:rgba(74,222,128,.04)">
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="1" y="4" width="22" height="16" rx="2"/><line x1="1" y1="10" x2="23" y2="10"/></svg></span> National Registry
+        <span class="nav-badge" style="background:#4ade80;color:#0a1f14">LEDGER</span>
+      </div>
 
       <div class="nav-label">Calculate</div>
       <div class="nav-item" onclick="showSection('calculator')">
@@ -2015,25 +2037,42 @@
     <div id="auth-login-tab">
       <p style="color:rgba(255,255,255,.55);font-size:.82rem;text-align:center;margin-bottom:1rem">Select your account type to continue</p>
       <div class="auth-roles">
-        <div class="auth-role-btn" onclick="loginAs('demo-dev')">
-          <div class="auth-role-icon">👤</div>
+        <div class="auth-role-btn" onclick="loginAs('demo-proponent')" style="border-left:3px solid #4ade80">
+          <div class="auth-role-icon" style="color:#4ade80">&#x1F4CB;</div>
           <div class="auth-role-info">
-            <h3>Personal / Project Developer</h3>
-            <p>Calculate emissions, register KNCR projects, generate reports</p>
+            <h3>Project Proponent</h3>
+            <p>Submit GCIS applications, generate PCN/PDD, track project status</p>
+          </div>
+        </div>
+        <div class="auth-role-btn" onclick="loginAs('demo-consultant')" style="border-left:3px solid #80DEEA">
+          <div class="auth-role-icon" style="color:#80DEEA">&#x1F50D;</div>
+          <div class="auth-role-info">
+            <h3>Carbon Consultant</h3>
+            <p>Review submissions, download documents, request information</p>
+          </div>
+        </div>
+        <div class="auth-role-btn" onclick="loginAs('demo-nema')" style="border-left:3px solid #F5A623">
+          <div class="auth-role-icon" style="color:#F5A623">&#x1F3DB;</div>
+          <div class="auth-role-info">
+            <h3>NEMA Regulator</h3>
+            <p>Oversee carbon projects, verify CDA compliance, national registry</p>
+          </div>
+        </div>
+        <div style="border-top:1px solid rgba(255,255,255,.08);padding-top:.8rem;margin-top:.4rem">
+          <p style="font-size:.68rem;color:rgba(255,255,255,.3);text-align:center;margin-bottom:.6rem">Additional Roles</p>
+        </div>
+        <div class="auth-role-btn" onclick="loginAs('demo-dev')">
+          <div class="auth-role-icon">&#x1F464;</div>
+          <div class="auth-role-info">
+            <h3>Developer (Full Access)</h3>
+            <p>Calculate emissions, all features, KNCR gateway, full platform</p>
           </div>
         </div>
         <div class="auth-role-btn" onclick="loginAs('demo-ent')">
-          <div class="auth-role-icon">🏢</div>
+          <div class="auth-role-icon">&#x1F3E2;</div>
           <div class="auth-role-info">
             <h3>Enterprise</h3>
-            <p>Buy & sell carbon credits, manage portfolio, B2B trading</p>
-          </div>
-        </div>
-        <div class="auth-role-btn" onclick="loginAs('demo-nema')">
-          <div class="auth-role-icon">🏛️</div>
-          <div class="auth-role-info">
-            <h3>NEMA Officer</h3>
-            <p>Oversee carbon projects, verify CDA compliance, audit trail</p>
+            <p>Buy and sell carbon credits, manage portfolio, B2B trading</p>
           </div>
         </div>
       </div>
@@ -2047,6 +2086,8 @@
         <div class="fg"><label>Organisation *</label><input type="text" id="reg-org" placeholder="e.g., GreenTech Solutions Ltd"></div>
         <div class="fg"><label>Account Type *</label>
           <select id="reg-role" onchange="toggleCountyField()">
+            <option value="proponent">Project Proponent</option>
+            <option value="consultant">Carbon Consultant</option>
             <option value="developer">Personal / Project Developer</option>
             <option value="enterprise">Enterprise</option>
             <option value="nema-national">NEMA — National Director</option>
@@ -2189,6 +2230,8 @@
 <script src="netzerra-validation.js"></script>
 <!-- Netzerra AI Assistant: Claude-powered chat, insights, reports -->
 <script src="netzerra-ai.js"></script>
+<!-- Netzerra Nuclear Upgrade: Auth, GCIS Wizard, Document Engine, Messaging, Registry -->
+<script src="netzerra-nuclear.js?v=1.0"></script>
 <!-- Service Worker Registration -->
 <script>
 if ('serviceWorker' in navigator) {
