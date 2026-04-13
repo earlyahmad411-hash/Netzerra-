@@ -1,0 +1,170 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+  <title>Netzerra KNCR Document Verification</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap" rel="stylesheet">
+  <style>
+    :root {
+      --deep: #0a1f14;
+      --forest: #103323;
+      --leaf: #3AAA5C;
+      --mint: #6DD98C;
+      --gold: #D4AF37;
+    }
+    body {
+      margin: 0; padding: 0;
+      background-color: var(--deep);
+      color: #fff;
+      font-family: 'Sora', sans-serif;
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      min-height: 100vh;
+      overflow-x: hidden;
+    }
+    .header {
+      width: 100%;
+      background: var(--forest);
+      padding: 1.5rem 1rem;
+      text-align: center;
+      border-bottom: 2px solid var(--leaf);
+    }
+    .title {
+      font-size: 1.5rem;
+      font-weight: 700;
+      letter-spacing: 1px;
+      margin: 0;
+    }
+    .subtitle {
+      font-family: 'Space Grotesk', sans-serif;
+      color: var(--mint);
+      font-size: 0.9rem;
+      margin-top: 0.5rem;
+    }
+    .container {
+      max-width: 600px;
+      width: 90%;
+      margin: 2rem auto;
+      background: rgba(16, 51, 35, 0.8);
+      border: 1px solid rgba(109, 217, 140, 0.3);
+      border-radius: 12px;
+      padding: 2rem;
+      box-shadow: 0 10px 40px rgba(0,0,0,0.5);
+    }
+    .status-icon {
+      font-size: 4rem;
+      text-align: center;
+      margin-bottom: 1rem;
+    }
+    .status-text {
+      text-align: center;
+      font-size: 1.5rem;
+      font-weight: 700;
+      color: var(--mint);
+      margin-bottom: 2rem;
+      text-transform: uppercase;
+    }
+    .field {
+      margin-bottom: 1.5rem;
+    }
+    .label {
+      font-size: 0.8rem;
+      color: rgba(255, 255, 255, 0.6);
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 0.3rem;
+    }
+    .value {
+      font-family: 'JetBrains Mono', monospace;
+      font-size: 0.85rem;
+      color: #fff;
+      word-break: break-all;
+      background: rgba(0,0,0,0.3);
+      padding: 0.8rem;
+      border-radius: 6px;
+      border: 1px solid rgba(255,255,255,0.1);
+    }
+    .back-btn {
+      display: block;
+      width: 100%;
+      padding: 1rem;
+      background: var(--leaf);
+      color: #fff;
+      text-align: center;
+      text-decoration: none;
+      font-weight: 600;
+      border-radius: 8px;
+      margin-top: 2rem;
+      transition: background 0.2s;
+    }
+    .back-btn:hover {
+      background: var(--mint);
+      color: var(--deep);
+    }
+  </style>
+</head>
+<body>
+
+  <div class="header">
+    <h1 class="title">Netzerra</h1>
+    <div class="subtitle">KNCR Document Verification Portal</div>
+  </div>
+
+  <div class="container" id="verification-card">
+    <div class="status-icon">✅</div>
+    <div class="status-text">Document Verified</div>
+    
+    <div class="field">
+      <div class="label">Project Reference (KNCR ID)</div>
+      <div class="value" id="val-ref">Loading...</div>
+    </div>
+    
+    <div class="field">
+      <div class="label">Document Type</div>
+      <div class="value" id="val-doc">Loading...</div>
+    </div>
+    
+    <div class="field">
+      <div class="label">Cryptographic Hash (SHA-256)</div>
+      <div class="value" id="val-hash" style="color: var(--mint);">Loading...</div>
+    </div>
+
+    <div class="field">
+      <div class="label">Blockchain Ledger Status</div>
+      <div class="value" style="border-color: var(--mint); color: var(--leaf);">IMMUTABLE · INTEGRITY INTACT</div>
+    </div>
+    
+    <a href="../" class="back-btn">Go to Netzerra Dashboard</a>
+  </div>
+
+  <script>
+    // Extract query parameters from URL
+    const params = new URLSearchParams(window.location.search);
+    const hash = params.get('hash') || 'Missing Hash';
+    const ref = params.get('ref') || 'Missing Reference';
+    const doc = params.get('doc') || 'Unknown Document';
+
+    // Format doc type for readability
+    let docLabel = doc.toUpperCase();
+    if (doc === 'pcn') docLabel = 'Project Concept Note (PCN)';
+    if (doc === 'pdd') docLabel = 'Project Design Document (PDD)';
+
+    // Update DOM
+    document.getElementById('val-hash').textContent = hash;
+    document.getElementById('val-ref').textContent = ref;
+    document.getElementById('val-doc').textContent = docLabel;
+
+    // Simulate negative validation if hash is missing
+    if (hash === 'Missing Hash' || hash.length < 10) {
+      document.querySelector('.status-icon').textContent = '❌';
+      document.querySelector('.status-text').textContent = 'Verification Failed';
+      document.querySelector('.status-text').style.color = '#EF5350';
+      document.getElementById('val-hash').style.color = '#EF5350';
+    }
+  </script>
+</body>
+</html>
