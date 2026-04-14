@@ -1057,7 +1057,7 @@ ${flagsHTML}
     <span style="display:block;margin-top:2px">${ref} &middot; ${now}</span>
   </div>
   <div style="text-align:right">
-    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://netzerra.com/verify/${ref}" style="width:60px;height:60px;border:1px solid #C5E1A5;padding:2px;border-radius:4px" alt="QR Code">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=${encodeURIComponent('https://www.netzerra.co.ke/verify?hash=' + ref + '&ref=' + ref + '&doc=calc')}" style="width:60px;height:60px;border:1px solid #C5E1A5;padding:2px;border-radius:4px" alt="QR Code">
     <div style="font-size:7px;margin-top:2px;color:#607D8B">SCAN TO VERIFY<br>GCIS PAYLOAD</div>
   </div>
 </div>

@@ -489,7 +489,7 @@ function generateRetirementCertificate(cert) {
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8mm; padding-top:4mm; border-top:1px dashed #ccc;">
     <div style="text-align:left">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://netzerra.com/verify/${cert.certNo}" style="width:70px;height:70px;padding:3px;border:1px solid #ccc;border-radius:4px" alt="QR">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('https://www.netzerra.co.ke/verify?hash=' + cert.certNo + '&ref=' + cert.certNo + '&doc=ret')}" style="width:70px;height:70px;padding:3px;border:1px solid #ccc;border-radius:4px" alt="QR">
       <div style="font-size:7pt;color:#666;margin-top:2px;font-family:monospace">PAYLOAD HASH: ${cert.certNo}</div>
     </div>
     <div style="text-align:right; font-size:8pt; color:#555;">
@@ -839,7 +839,7 @@ function showCertificateOfRetirement(certId, amount, buyer, seller, ref) {
         
         <div style="display:flex;justify-content:space-between;align-items:center;border-top:1px dashed rgba(255,255,255,.2);padding-top:20px;">
           <div style="text-align:left">
-            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=https://netzerra.com/verify/${certId}" style="width:80px;height:80px;background:#fff;padding:4px;border-radius:4px" alt="QR">
+            <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('https://www.netzerra.co.ke/verify?hash=' + certId + '&ref=' + certId + '&doc=ret')}" style="width:80px;height:80px;background:#fff;padding:4px;border-radius:4px" alt="QR">
             <div style="font-size:9px;color:rgba(255,255,255,.5);margin-top:5px;font-family:monospace">Payload Hash: ${certId}</div>
           </div>
           <div style="text-align:right">
