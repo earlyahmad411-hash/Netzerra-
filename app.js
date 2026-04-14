@@ -1051,9 +1051,15 @@ ${flagsHTML}
 </div>
 
 <!-- FOOTER -->
-<div class="foot">
-  <span>Netzerra &middot; shukriali411@gmail.com &middot; +254 705 366 807 &middot; netzerrakenya.com</span>
-  <span>${ref} &middot; ${now}</span>
+<div class="foot" style="display:flex;align-items:end">
+  <div style="flex-grow:1">
+    <span style="display:block">Netzerra &middot; shukriali411@gmail.com &middot; +254 705 366 807</span>
+    <span style="display:block;margin-top:2px">${ref} &middot; ${now}</span>
+  </div>
+  <div style="text-align:right">
+    <img src="https://api.qrserver.com/v1/create-qr-code/?size=60x60&data=https://netzerra.com/verify/${ref}" style="width:60px;height:60px;border:1px solid #C5E1A5;padding:2px;border-radius:4px" alt="QR Code">
+    <div style="font-size:7px;margin-top:2px;color:#607D8B">SCAN TO VERIFY<br>GCIS PAYLOAD</div>
+  </div>
 </div>
 <div class="box-mvp">
   MVP DISCLAIMER: County data shown is illustrative. No formal partnerships established with county governments, NEMA, or KNCR.
@@ -2062,15 +2068,28 @@ function loadCountyData() {
     `<div style="display:flex;justify-content:space-between;align-items:center;padding:.5rem 0;border-bottom:1px solid rgba(255,255,255,.04);font-size:.78rem"><span style="color:rgba(255,255,255,.68)">${l}</span><span class="floca-badge ${st}">${val}</span></div>`
   ).join('');
 
-  // Community benefit breakdown
+  // Community benefit breakdown - FLLoCA Ward Climate Committee Router
+  const wccpcRoutings = d.wards.slice(0, 4).map((w, i) => {
+    const fraction = [0.4, 0.3, 0.2, 0.1][i] || 0;
+    const amt = d.community * fraction;
+    return `<div style="background:rgba(255,255,255,.03);padding:.6rem;border-radius:6px;border-left:2px solid var(--gold);display:flex;justify-content:space-between;align-items:center;margin-bottom:.4rem;">
+      <div style="display:flex;flex-direction:column;">
+        <span style="color:var(--gold);font-weight:600;">${w} WCCPC</span>
+        <span style="color:rgba(255,255,255,.4);font-size:0.65rem;margin-top:2px;">FLLoCA Registered Ward Account</span>
+      </div>
+      <div style="color:var(--mint);font-family:'JetBrains Mono',monospace;font-size:0.75rem;">KES ${amt.toLocaleString()}</div>
+    </div>`;
+  }).join('');
+
   document.getElementById('community-benefit-tracking').innerHTML = `
-    <div style="margin-bottom:.75rem">
-      <div style="display:flex;justify-content:space-between;font-size:.76rem;color:rgba(255,255,255,.5);margin-bottom:.28rem"><span>Received to date</span><span style="color:var(--mint);font-family:'JetBrains Mono',monospace">KES ${d.community.toLocaleString()}</span></div>
-      <div style="height:6px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden"><div style="height:100%;background:var(--leaf);border-radius:999px;width:${Math.min(100,d.community/d.revenue*100).toFixed(0)}%"></div></div>
-      <div style="font-size:.66rem;color:rgba(255,255,255,.3);margin-top:.18rem">${(d.community/d.revenue*100).toFixed(1)}% of total revenue channelled</div>
+    <div style="margin-bottom:.8rem; background:rgba(0,0,0,.2); padding:.8rem; border-radius:8px;">
+      <div style="display:flex;justify-content:space-between;font-size:.76rem;color:rgba(255,255,255,.5);margin-bottom:.4rem"><span>CDA Mandate (40%) Captured</span><span style="color:var(--mint);font-family:'JetBrains Mono',monospace;font-weight:bold;font-size:.85rem">KES ${d.community.toLocaleString()}</span></div>
+      <div style="height:6px;background:rgba(255,255,255,.07);border-radius:999px;overflow:hidden"><div style="height:100%;background:var(--gold);border-radius:999px;width:${Math.min(100,d.community/d.revenue*100).toFixed(0)}%"></div></div>
+      <div style="font-size:.66rem;color:rgba(255,255,255,.4);margin-top:.3rem;line-height:1.4">Directing 100% of captured CDA funds to statutory Ward Climate Change Planning Committees. Bypassing unverified third-party NGOs.</div>
     </div>
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:.45rem;font-size:.73rem">
-      ${[['🌊 Clean Water','38%'],['📚 Education','22%'],['🏥 Healthcare','18%'],['⚡ Energy Access','12%'],['🌳 Reforestation','10%']].map(([n,p])=>`<div style="background:rgba(255,255,255,.04);padding:.48rem .62rem;border-radius:5px;display:flex;justify-content:space-between"><span>${n}</span><span style="color:var(--mint)">${p}</span></div>`).join('')}
+    <h4 style="font-size:0.75rem;color:rgba(255,255,255,.8);margin-bottom:0.5rem;display:flex;align-items:center;gap:5px;"><svg width="14" height="14" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7h12m0 0l-4-4m4 4l-4 4m0 6H4m0 0l4 4m-4-4l4-4"></path></svg> Ward Level Disbursements</h4>
+    <div>
+      ${wccpcRoutings}
     </div>`;
 
   // Levy timeline

@@ -24,6 +24,11 @@
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
   <!-- html2pdf — true client-side PDF generation -->
   <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+  <!-- js-sha256 for verifiable hashes -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/js-sha256/0.9.0/sha256.min.js"></script>
+  <!-- Leaflet for Real Satellite Imagery (No API key needed for World Imagery) -->
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 </head>
 <body>
 
@@ -64,10 +69,10 @@
     </div>
 
     <div class="sb-nav">
-      <div class="nav-label">🇰🇪 Registry</div>
+      <div class="nav-label">🇰🇪 Registry Integration</div>
       <div class="nav-item" onclick="showSection('kncr')"
            style="background:rgba(0,100,0,.12);border-left:3px solid var(--leaf)">
-        <span class="ico">🏛️</span> KNCR Gateway
+        <span class="ico">🏛️</span> KNCR Preparation Gateway
         <span class="nav-badge new">NEW</span>
       </div>
 
@@ -76,9 +81,9 @@
       <div class="nav-item" onclick="showSection('dashboard')"><span class="ico">📊</span> Dashboard</div>
       <div class="nav-item" onclick="showSection('passport')"><span class="ico">🪪</span> Carbon Passport</div>
 
-      <div class="nav-label" style="color:#4ade80">GCIS Pipeline</div>
+      <div class="nav-label" style="color:#4ade80">KNCR Factory / IDE</div>
       <div class="nav-item" id="nav-gcis-wizard" onclick="showSection('gcis-wizard')" style="display:none;background:rgba(74,222,128,.06)">
-        <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> GCIS Wizard
+        <span class="ico"><svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/></svg></span> Project IDE Wizard
         <span class="nav-badge" style="background:#4ade80;color:#0a1f14">NEW</span>
       </div>
       <div class="nav-item" id="nav-my-projects" onclick="showSection('my-projects')" style="display:none">
@@ -174,7 +179,7 @@
       <div class="hero">
         <div class="hero-eyebrow">🏛️ National Carbon Compliance Infrastructure</div>
         <h1>The KNCR-Native<br><em>Compliance Layer</em> for Kenya.</h1>
-        <p>80+ carbon projects stalled. Zero have automated MRV. Every manual entry carries a <strong>KES 500M penalty</strong> under Regulation 37. Netzerra is the first platform built specifically to automate Kenya's Carbon Markets Regulations 2024 — from IPCC-verified calculations to CDA Fourth Schedule generation to KNCR submission.</p>
+        <p>Navigating Kenya's Carbon Markets Regulations 2024 requires absolute precision. Manual data preparation creates critical bottlenecks and exposes projects to <strong style="color:#EF5350">KES 500M penalties</strong> for inaccurate or unverified reporting. Netzerra is the first intelligence platform built to automate the entire compliance lifecycle — from IPCC-verified calculations to CDA Fourth Schedule generation to KNCR API submission.</p>
         <div class="hero-actions">
           <button class="btn-hero-p" onclick="showSection('calculator')">⚡ Start Calculating</button>
           <button class="btn-hero-s" onclick="showSection('county')">🏢 County Dashboard</button>
@@ -802,7 +807,7 @@
             <button class="btn-report" onclick="generateFLoCAReport()">📄 Generate FLLoCA Report</button>
           </div>
           <div class="card" style="margin-bottom:1.05rem">
-            <h3 style="margin-bottom:.9rem">👥 Community Benefit Fund Tracking</h3>
+            <h3 style="margin-bottom:.9rem">🏦 FLLoCA Ward Committee Disbursement Router</h3>
             <div id="community-benefit-tracking"></div>
           </div>
           <div class="card">
@@ -1796,9 +1801,69 @@
 
       <div class="g4" id="nema-kpis" style="margin-bottom:1.2rem"></div>
 
+      <!-- AI Greenwash Screener -->
+      <div class="card" style="margin-bottom:1.2rem; border: 1px solid rgba(239,83,80,.4); background: linear-gradient(135deg, rgba(239,83,80,.03) 0%, rgba(10,31,20,1) 100%);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
+          <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" fill="none" stroke="#EF5350" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path></svg>
+            AI Plagiarism & Greenwash Screener
+          </h3>
+          <span class="trust-badge" style="background:rgba(239,83,80,.1);color:#EF5350;border-color:rgba(239,83,80,.2)">1 High-Risk Flag Detected</span>
+        </div>
+        <div style="background:rgba(0,0,0,.3);border:1px solid rgba(239,83,80,.2);border-radius:10px;padding:1.2rem;">
+          <div style="display:flex;gap:15px;align-items:flex-start">
+            <div style="background:rgba(239,83,80,.1); padding:10px; border-radius:8px; font-size:1.5rem">🚨</div>
+            <div style="flex:1">
+              <h4 style="margin:0 0 4px 0;color:#EF5350;font-size:.9rem">Failed Additionality & Plagiarism Protocol</h4>
+              <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+                <span style="font-size:0.75rem;color:rgba(255,255,255,.5);">Project Reference: <strong>KNCR-PCN-481 (Rift Valley Solar)</strong></span>
+                <span style="font-size:0.7rem;color:rgba(255,255,255,.4);">Scanned: 2 mins ago</span>
+              </div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;line-height:1.5;color:rgba(255,255,255,.6);background:var(--deep);padding:12px;border-radius:6px;border-left:3px solid #EF5350">
+                <strong style="color:rgba(255,255,255,.8)">Targeted Excerpt:</strong> <i>"The project activity would not have occurred without carbon revenue due to institutional barriers..."</i><br><br>
+                <strong style="color:var(--mint)">AI Auditor Analysis:</strong> This exact paragraph methodology matches 98% with an existing registered PDD (KNCR-882-2021). Furthermore, solar PV in Rift Valley is now the least-cost option (LCOE < grid), violating additionality baseline requirements under IPCC AR6.<br>
+                <strong style="color:#EF5350">Recommendation:</strong> Block PCN progression. High risk of greenwashing.
+              </div>
+              <div style="margin-top:12px;display:flex;gap:8px;">
+                <button class="btn btn-sm" onclick="toast('PCN Blocked & Logged to KNCR Immutable Ledger', 'success')" style="background:#EF5350;color:#fff;border:none;font-weight:600;padding:.4rem .8rem;cursor:pointer">Block & Reject PCN</button>
+                <button class="btn btn-sm" onclick="toast('Revision requested. Developer notified via email.', 'success')" style="background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:.4rem .8rem;cursor:pointer">Request Developer Revision</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Live Satellite Reversal Monitor -->
+      <div class="card" style="margin-bottom:1.2rem; border: 1px solid rgba(245,166,35,.4); background: linear-gradient(135deg, rgba(245,166,35,.03) 0%, rgba(10,31,20,1) 100%);">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
+          <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+            <svg width="20" height="20" fill="none" stroke="#F5A623" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+            Sentinel-2 Live Reversal Scanning
+          </h3>
+          <span class="trust-badge" style="background:rgba(245,166,35,.1);color:#F5A623;border-color:rgba(245,166,35,.2)">⚠️ 1 Deforestation Alert</span>
+        </div>
+        <div style="background:rgba(0,0,0,.3);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:1.2rem;display:flex;gap:15px;align-items:stretch">
+          <div id="nema-satellite-map" style="width:160px; height:120px; border-radius:8px; overflow:hidden; border:1px solid rgba(245,166,35,.4); flex-shrink:0;"></div>
+          <div style="flex:1">
+            <h4 style="margin:0 0 4px 0;color:#F5A623;font-size:.9rem">Forest Canopy Reversal Detected</h4>
+            <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
+              <span style="font-size:0.75rem;color:rgba(255,255,255,.5);">Project: <strong>KNCR-102 (Samburu REDD+)</strong></span>
+              <span style="font-size:0.7rem;color:rgba(255,255,255,.4);">ESA Sentinel-2 · 4 hours ago</span>
+            </div>
+            <div style="font-family:'JetBrains Mono',monospace;font-size:0.72rem;line-height:1.5;color:rgba(255,255,255,.6);">
+              <span style="color:#EF5350">Drop in NDVI Index over Sector 4 (Coordinates: 1.2N, 36.8E).</span> Estimated 14% canopy loss within the protected polygon. Suspected illegal logging or fire. Recommended immediate freeze on issuance of pending buffer pool credits.
+            </div>
+            <div style="margin-top:12px;display:flex;gap:8px;">
+              <button class="btn btn-sm" onclick="toast('Credit issuance frozen! Notifications dispatched to KNCR compliance team.', 'success')" style="background:#F5A623;color:#111;border:none;font-weight:600;padding:.4rem .8rem;cursor:pointer">Freeze Issuance</button>
+              <button class="btn btn-sm" onclick="toast('Ground inspection ordered for Sector 4 coordinates.', 'success')" style="background:transparent;border:1px solid rgba(255,255,255,.2);color:rgba(255,255,255,.7);padding:.4rem .8rem;cursor:pointer">Dispatch Ground Inspector</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
       <div class="card" style="margin-bottom:1.2rem">
         <h3 style="margin-bottom:.9rem">📋 Project Pipeline — All KNCR Projects</h3>
-        <div style="overflow-x:auto" id="nema-projects-table"></div>
+        <div id="nema-container"></div>
       </div>
 
       <div style="display:grid;grid-template-columns:1fr 1fr;gap:1rem">
@@ -1817,9 +1882,9 @@
     <!-- ══════════════ B2B TRADING HUB ══════════════ -->
     <section class="section" id="b2b-section">
       <div class="b2b-hero">
-        <div class="trust-badge" style="margin-bottom:.8rem;border-color:rgba(0,201,167,.3);color:var(--teal)">🤝 Enterprise-to-Enterprise Carbon Trading</div>
-        <h2>🤝 B2B Trading Hub</h2>
-        <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:580px;margin:0 auto;margin-top:.4rem">Post RFQs, negotiate bulk deals, browse the enterprise directory, and execute B2B carbon credit contracts with full audit trails.</p>
+        <div class="trust-badge" style="margin-bottom:.8rem;border-color:rgba(0,201,167,.3);color:var(--teal)">🌐 Article 6 UNFCCC Integration Engine</div>
+        <h2>🤝 B2B Trading & Article 6 Hub</h2>
+        <p style="color:rgba(255,255,255,.55);font-size:.85rem;max-width:580px;margin:0 auto;margin-top:.4rem">Execute enterprise carbon credit contracts with full audit trails. International transfers automatically trigger <strong>Corresponding Adjustments</strong> to Kenya's national NDC ledger to prevent double counting.</p>
       </div>
 
       <div class="g4" id="b2b-kpis" style="margin-bottom:1.2rem"></div>
@@ -1827,6 +1892,7 @@
       <div class="b2b-tabs">
         <div class="b2b-tab active" data-tab="b2b-rfq-view">📩 RFQ Board</div>
         <div class="b2b-tab" data-tab="b2b-contracts-view">📝 Contracts</div>
+        <div class="b2b-tab" data-tab="b2b-article6-view" style="color:var(--teal);font-weight:600;">🌍 Article 6 Engine</div>
         <div class="b2b-tab" data-tab="b2b-directory-view">🏢 Enterprise Directory</div>
         <div class="b2b-tab" data-tab="b2b-post-rfq-view">➕ Post RFQ</div>
       </div>
@@ -1842,6 +1908,61 @@
         <div class="card">
           <h3 style="margin-bottom:.9rem">📝 B2B Contracts</h3>
           <div id="contracts-list"></div>
+        </div>
+      </div>
+
+      <div id="b2b-article6-view" class="b2b-tab-content" style="display:none">
+        <div class="card" style="border:1px solid rgba(0,201,167,.3); background:linear-gradient(180deg, rgba(0,201,167,.05) 0%, transparent 100%)">
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
+            <h3 style="margin-bottom:0; color:var(--teal)">🌍 Article 6 Corresponding Adjustment Engine</h3>
+            <span class="trust-badge" style="background:rgba(0,201,167,.1);color:var(--teal);border-color:rgba(0,201,167,.2)">UNFCCC Integration Active</span>
+          </div>
+          <p style="font-size:.78rem;color:rgba(255,255,255,.6);margin-bottom:1.2rem">When Kenyan carbon credits (ITMOs) are sold to international buyers, Netzerra automatically deducts them from Kenya's domestic NDC ledger to prevent double counting. The live tracker below aggregates all cross-border B2B transactions.</p>
+          
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:15px;margin-bottom:15px">
+             <div style="background:rgba(0,0,0,.3);padding:1rem;border-radius:8px">
+               <div style="font-size:0.75rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">Kenya Domestic NDC Ledger</div>
+               <div style="font-size:1.4rem;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace">-24,850 <span style="font-size:0.8rem;color:var(--teal)">tCO₂e adjusted YTD</span></div>
+             </div>
+             <div style="background:rgba(0,0,0,.3);padding:1rem;border-radius:8px">
+               <div style="font-size:0.75rem;color:rgba(255,255,255,.5);text-transform:uppercase;letter-spacing:1px;margin-bottom:4px">International Transfers (ITMOs)</div>
+               <div style="font-size:1.4rem;font-weight:700;color:#fff;font-family:'JetBrains Mono',monospace">12 <span style="font-size:0.8rem;color:var(--mint)">authorized transactions</span></div>
+             </div>
+          </div>
+          
+          <h4 style="font-size:0.8rem; margin-bottom:8px; color:#fff;">Recent Article 6 Ledger Adjustments</h4>
+          <div style="font-size:0.75rem;">
+            <table style="width:100%; border-collapse:collapse; background:rgba(0,0,0,.2); border-radius:6px; overflow:hidden">
+              <tr style="background:rgba(255,255,255,.05); text-align:left; color:rgba(255,255,255,.6)">
+                <th style="padding:8px;font-weight:600">Timestamp</th>
+                <th style="padding:8px;font-weight:600">Transaction Ref</th>
+                <th style="padding:8px;font-weight:600">Volume</th>
+                <th style="padding:8px;font-weight:600">Buyer Country</th>
+                <th style="padding:8px;font-weight:600">Status</th>
+              </tr>
+              <tr style="border-top:1px solid rgba(255,255,255,.05)">
+                <td style="padding:8px; color:rgba(255,255,255,.4)">Today, 09:12 AM</td>
+                <td style="padding:8px; font-family:'JetBrains Mono',monospace; color:var(--teal)">NTZ-ITMO-489</td>
+                <td style="padding:8px; font-weight:600; color:#fff">5,000 tCO₂e</td>
+                <td style="padding:8px; color:rgba(255,255,255,.8)">Switzerland 🇨🇭</td>
+                <td style="padding:8px"><span style="color:var(--mint);font-weight:600">✓ Adjusted in KNCR</span></td>
+              </tr>
+              <tr style="border-top:1px solid rgba(255,255,255,.05)">
+                <td style="padding:8px; color:rgba(255,255,255,.4)">Yesterday, 14:30 PM</td>
+                <td style="padding:8px; font-family:'JetBrains Mono',monospace; color:var(--teal)">NTZ-ITMO-488</td>
+                <td style="padding:8px; font-weight:600; color:#fff">1,250 tCO₂e</td>
+                <td style="padding:8px; color:rgba(255,255,255,.8)">Sweden 🇸🇪</td>
+                <td style="padding:8px"><span style="color:var(--mint);font-weight:600">✓ Adjusted in KNCR</span></td>
+              </tr>
+              <tr style="border-top:1px solid rgba(255,255,255,.05)">
+                <td style="padding:8px; color:rgba(255,255,255,.4)">Oct 12, 10:05 AM</td>
+                <td style="padding:8px; font-family:'JetBrains Mono',monospace; color:var(--teal)">NTZ-ITMO-487</td>
+                <td style="padding:8px; font-weight:600; color:#fff">800 tCO₂e</td>
+                <td style="padding:8px; color:rgba(255,255,255,.8)">Japan 🇯🇵</td>
+                <td style="padding:8px"><span style="color:var(--mint);font-weight:600">✓ Adjusted in KNCR</span></td>
+              </tr>
+            </table>
+          </div>
         </div>
       </div>
 
