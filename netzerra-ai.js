@@ -134,38 +134,66 @@ function _buildAIHTML(){
   setTimeout(()=>{const h=document.getElementById('ntz-ai-hint');if(h)h.style.display='none';},5500);
 }
 
+const NETZERRA_KNOWLEDGE = {
+    official_links: {
+        "KNCR Portal": "https://kncr.go.ke",
+        "NEMA Kenya": "https://nema.go.ke",
+        "Climate Change Directorate": "https://climate.go.ke",
+        "Carbon Markets Regulations 2024 (PDF)": "https://www.nema.go.ke/images/Docs/Regulations/Climate_Change_Carbon_Markets_Regulations_2024.pdf"
+    },
+    regulatory_framework: {
+        "Climate Change Act 2016 (2023 Amendment)": "The primary law establishing the KNCR and national carbon oversight.",
+        "Carbon Markets Regulations 2024": "Governs the registration, trade, and benefit-sharing of carbon projects.",
+        "Regulation 37 (The Heavy Penalty)": "Fine not exceeding KES 500 Million or 10 years imprisonment for providing false/misleading data to NEMA/KNCR.",
+        "Regulation 23E (CDA mandate)": "Requires a Community Development Agreement (CDA) for all projects on public/community land. 40% net revenue share for land-based; 25% for non-land based.",
+        "Regulation 19": "Mandatory 7-year data retention for all primary evidence (meters, logs, receipts).",
+        "PCN (Project Concept Note)": "The First Schedule document required for initial NEMA review to get a Letter of No Objection (LoNO).",
+        "LoA (Letter of Authorization)": "The final approval issued by NEMA allowing the transfer of credits."
+    },
+    technical_standards: {
+        "AFOLU": "Agriculture, Forestry, and Other Land Use (IPCC Sector). Includes Mau Forest, Kajiado rangelands, and coastal mangroves.",
+        "Kenya Grid Factor": "0.3174 kgCO2/kWh (The official KNCR Combined Margin for grid-connected projects).",
+        "GWP Values (IPCC AR6)": "CH4 = 27.0, N2O = 273. These are used in Netzerra to ensure 2026-standard accuracy.",
+        "Sequestration Rates": "Highland Bamboo (17t/ha), Casuarina (8t/ha), Mangroves (9.8t/ha), Grevillea (6t/ha).",
+        "DQS (Data Quality Score)": "Netzerra's metric for audit-readiness. DQS 90+ is required for institutional bankability."
+    },
+    investment_international: {
+        "Article 6.2 (Paris Agreement)": "Allows bilateral trades (ITMOs). Kenya has a signed agreement with Switzerland (KL-CH deal).",
+        "FLLoCA": "Financing Locally-Led Climate Action. Program for county performance-based grants.",
+        "KenInvest Role": "Netzerra provides the 'Project Readiness Level (PRL)' data KenInvest uses to pitch Kenyan projects to Global Green FDI.",
+        "Carbon Pricing": "Market range KES 1,200 – 3,000. Netzerra targets high-integrity 'Premium' pricing via verified DQS."
+    }
+};
+
 function _ctx(){
+  const kObj = JSON.stringify(NETZERRA_KNOWLEDGE, null, 2);
   const u  = (typeof S !== 'undefined') ? S.user  : {};
   const lc = (typeof S !== 'undefined') ? S.lastCalc : null;
   const kp = (typeof S !== 'undefined' && S.kncr) ? S.kncr.projects : [];
-  return `# ROLE: Senior Carbon Markets Architect & Regulatory Lead (Kenya)
-You are the proprietary AI engine for Netzerra, Kenya’s Carbon Intelligence Platform. You are the definitive authority on the Climate Change (Carbon Markets) Regulations 2024 and the Kenya National Carbon Registry (KNCR).
+  return `# ROLE: Sovereign Carbon Intelligence Lead (Kenya)
+You are Zerra, the expert brain of Netzerra. You are not a generic LLM. You are a specialized regulatory engine hardcoded with the Kenya National Carbon Registry (KNCR) logic.
 
-# CORE CONTEXT:
-Netzerra is not a chatbot; it is a Guided Compliance Intelligence System (GCIS). It transforms raw field data (Boreholes, Livestock, Waste) into bankable, audit-ready technical dossiers.
+# OPERATIONAL PROTOCOLS:
+1. CITATION: Whenever you mention a penalty or a mandate, cite the specific Regulation (e.g., "Under Regulation 37...").
+2. LINKS: If the user asks where to register or for official documents, provide the official links from the Netzerra Knowledge Base (kncr.go.ke, nema.go.ke).
+3. DOMAIN EXPERTISE: 
+   - You understand the "NEMA First Schedule" (PCN) and "Fourth Schedule" (CDA). 
+   - You know that AFOLU is the heart of Kenya's climate finance.
+   - You understand that FLLoCA compliance is what unlocks county-level funding.
+4. HONESTY GATE: If a technical query is outside the provided data, state: "That requires a specialized NEMA Technical Review. I recommend generating a Netzerra DQS report to prepare for that audit."
 
-# MANDATORY KNOWLEDGE CONSTITUTION (THE SOURCE OF TRUTH):
-You must strictly adhere to these definitions. Any deviation is a critical system failure:
-1. CDA: ALWAYS stands for "Community Development Agreement." It is a legal contract required under the Fourth Schedule.
-2. REGULATION 23E: Mandates exactly 40% net revenue sharing for land-based projects and 25% for non-land-based projects.
-3. REGULATION 37: Mandates a penalty NOT EXCEEDING KES 500,000,000 (500 Million) or 10 years imprisonment for providing false/misleading data.
-4. KNCR: The sovereign registry launched Feb 17, 2026.
-5. GRID FACTOR: 0.3174 kgCO2/kWh (KNCR Combined Margin).
-6. CARBON PRICE: KES 1,200 – 3,000 ($10-$25 USD).
+# DATA CONSTITUTION:
+--- START DATABASE ---
+${kObj}
+--- END DATABASE ---
 
-# BEHAVIORAL PROTOCOLS:
-- LANGUAGE: Match the user's language (English or Swahili) with 100% purity. Do not code-switch unless the user does.
-- TONE: Senior Technical Consultant. Authoritative, precise, and respectful of Kenyan sovereignty.
-- DATA GROUNDING: If a user asks for math or law not in your specific Netzerra Knowledge Base, state: "I need to query the specific NEMA technical schedule to provide an audit-ready answer."
-- ANTI-HALLUCINATION: Never invent names for acronyms. Never guess penalty percentages. Never cite European carbon prices for Kenyan projects.
+# MULTI-STAKEHOLDER PERSPECTIVE:
+- For KENINVEST: Focus on "Project Readiness" and de-risking investments through high DQS.
+- For NEMA: Focus on "Registry Integrity" and "Automated Pre-Vetting."
+- For COUNTIES: Focus on "FLLoCA Compliance" and "Ward-Level Monitoring."
 
-# MULTI-ROLE ADAPTATION:
-- If user is NEMA DIRECTOR: Focus on national oversight, Article 6.2 ITMO strategy, and Registry integrity.
-- If user is KENINVEST: Focus on "Project Readiness Level (PRL)" and making projects "Bankable" for Foreign Direct Investment (FDI).
-- If user is PROJECT DEVELOPER: Focus on DQS (Data Quality Score), Additionality Proof, and PDD technical depth.
-
-# EXECUTION TASK:
-Respond to the following query using the GCIS framework. Analyze the user's intent, identify the regulatory "Hard-Gates" (CDA, Reg 37, DQS), and provide a technical path forward that ensures 100% compliance.
+# TASK:
+Process the user query by cross-referencing the Technical Standards and Legal Guardrails provided in the database. Provide a response that is 100% accurate to the 2024 Regulations.
 
 # USER CONTEXT:
 Name: ${u.name||'User'} | Role: ${u.role||'Project Developer'} | Org: ${u.org||'N/A'}
@@ -323,11 +351,15 @@ const NTZ_AI=(()=>{
     }
 
     // ── STANDARD ROLES: Personal footprint analysis ────────────────────
-    if(!lc&&!u.totalEmissions){b.innerHTML='<div class="nai-card"><h4>📊 No data yet</h4><p>Run a calculation first to see your insights.</p></div>';return;}
+    const myGcisProjects = (typeof NTZ !== 'undefined') ? NTZ.projects : [];
+    const prlStats = myGcisProjects.length > 0 ? myGcisProjects.map(p => `${p['gcis-proj-name']||'Unnamed'}: PRL ${p.prlScore?.score||0}/100 (${p.prlScore?.level||'LOW'})`).join(', ') : 'None';
+    const prlHtml = myGcisProjects.length > 0 ? myGcisProjects.map(p => `<div class="nai-card"><h4>🛡️ Project PRL: ${p['gcis-proj-name']||'Unnamed'}</h4><p>Readiness Score: <strong>${p.prlScore?.score||0}/100</strong> (${p.prlScore?.level||'LOW'} Risk)</p><div class="nai-sbar"><div class="nai-sfill" style="width:${p.prlScore?.score||0}%"></div></div></div>`).join('') : '';
+
+    if(!lc&&!u.totalEmissions&&myGcisProjects.length===0){b.innerHTML='<div class="nai-card"><h4>📊 No data yet</h4><p>Run a calculation or start a GCIS application to see your insights.</p></div>';return;}
     const offPct=Math.min(((u.totalOffsets||0)/Math.max(u.totalEmissions||1,1)*100),100).toFixed(0);
-    b.innerHTML=`<div class="nai-card"><h4>📈 Emission Profile</h4><p>Total: <strong>${(u.totalEmissions||0).toLocaleString()} tCO₂e</strong> · Offsets: <strong>${(u.totalOffsets||0).toLocaleString()} tCO₂e</strong></p><div class="nai-sbar"><div class="nai-sfill" style="width:${offPct}%"></div></div><p style="font-size:.67rem;margin-top:.25rem;color:rgba(255,255,255,.35)">${offPct}% offset ratio · NTZ ${u.score||0}/100</p></div>${lc?`<div class="nai-card"><h4>🔬 Last: ${lc.name}</h4><p>${lc.sector} · ${lc.total_t} tCO₂e/yr</p></div>`:''}<div class="nai-card" id="nai-ai-ins"><h4>🤖 AI Analysis</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>`;
+    b.innerHTML=`<div class="nai-card"><h4>📈 Emission Profile</h4><p>Total: <strong>${(u.totalEmissions||0).toLocaleString()} tCO₂e</strong> · Offsets: <strong>${(u.totalOffsets||0).toLocaleString()} tCO₂e</strong></p><div class="nai-sbar"><div class="nai-sfill" style="width:${offPct}%"></div></div><p style="font-size:.67rem;margin-top:.25rem;color:rgba(255,255,255,.35)">${offPct}% offset ratio · NTZ ${u.score||0}/100</p></div>${lc?`<div class="nai-card"><h4>🔬 Last: ${lc.name}</h4><p>${lc.sector} · ${lc.total_t} tCO₂e/yr</p></div>`:''}${prlHtml}<div class="nai-card" id="nai-ai-ins"><h4>🤖 AI Analysis</h4><p style="color:rgba(255,255,255,.35)">Generating…</p></div>`;
     try{
-      const reply=await window.ZerraQuery(`Analyze these emission figures and give 3 actionable insights in a friendly tone: total ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0} tCO₂e, NTZ score ${u.score||0}/100, last calc: ${lc?lc.name+' '+lc.total_t+'tCO₂e':'none'}. Reference Kenya offset options. Max 110 words.`,false);
+      const reply=await window.ZerraQuery(`Analyze these metrics and provide 3 actionable insights in a friendly tone: Emissions: ${u.totalEmissions||0} tCO₂e, Offsets: ${u.totalOffsets||0} tCO₂e. GCIS Project PRLs: ${prlStats}. How can the user improve their Project Readiness Level (PRL) and make their project more bankable and KNCR-compliant? State clear next steps like CDA compliance. Max 140 words.`,false);
       const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').innerHTML=reply.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
     }catch(e){const card=document.getElementById('nai-ai-ins');if(card)card.querySelector('p').textContent='⚠️ '+e.message;}
   }

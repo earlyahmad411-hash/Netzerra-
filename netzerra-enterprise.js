@@ -10,23 +10,23 @@
 const AUTH = {
   currentUser: null,
   roles: {
-    proponent:     { label: 'Project Proponent', sections: ['home','dashboard','gcis-wizard','my-projects','messages','passport','calculator','offsets','sequestration','county','leaderboard','community','methodology','docs','marketplace','education','membership','about','profile','disclaimer','kncr'] },
-    consultant:    { label: 'Carbon Consultant', sections: ['home','dashboard','review-queue','messages','registry','methodology','docs','about','profile','disclaimer'] },
-    developer:     { label: 'Project Developer', sections: 'all' },
-    enterprise:    { label: 'Enterprise',        sections: ['home','dashboard','passport','calculator','offsets','enterprise','exchange','b2b','county','leaderboard','community','methodology','docs','marketplace','education','membership','about','profile','disclaimer'] },
-    nema_national: { label: 'NEMA National Director', sections: ['home','dashboard','nema-oversight','leaderboard','methodology','profile'] },
-    nema_county:   { label: 'NEMA County Officer',    sections: ['home','dashboard','nema-oversight','leaderboard','methodology','profile'] },
-    nema_reviewer: { label: 'NEMA Technical Reviewer', sections: ['home','dashboard','nema-oversight','leaderboard','methodology','profile'] },
-    personal:      { label: 'Personal',          sections: ['home','dashboard','passport','calculator','offsets','county','leaderboard','community','methodology','docs','education','membership','about','profile','disclaimer'] },
+    proponent: { label: 'Project Proponent', sections: ['home', 'dashboard', 'gcis-wizard', 'my-projects', 'messages', 'passport', 'calculator', 'offsets', 'sequestration', 'county', 'leaderboard', 'community', 'methodology', 'docs', 'marketplace', 'education', 'membership', 'about', 'profile', 'disclaimer', 'kncr'] },
+    consultant: { label: 'Carbon Consultant', sections: ['home', 'dashboard', 'review-queue', 'messages', 'registry', 'methodology', 'docs', 'about', 'profile', 'disclaimer'] },
+    developer: { label: 'Project Developer', sections: 'all' },
+    enterprise: { label: 'Enterprise', sections: ['home', 'dashboard', 'passport', 'calculator', 'offsets', 'enterprise', 'exchange', 'b2b', 'county', 'leaderboard', 'community', 'methodology', 'docs', 'marketplace', 'education', 'membership', 'about', 'profile', 'disclaimer'] },
+    nema_national: { label: 'NEMA National Director', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'profile'] },
+    nema_county: { label: 'NEMA County Officer', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'profile'] },
+    nema_reviewer: { label: 'NEMA Technical Reviewer', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'profile'] },
+    personal: { label: 'Personal', sections: ['home', 'dashboard', 'passport', 'calculator', 'offsets', 'county', 'leaderboard', 'community', 'methodology', 'docs', 'education', 'membership', 'about', 'profile', 'disclaimer'] },
   },
   demoAccounts: {
-    'demo-proponent':  { name: 'Shukri Ali',       org: 'Netzerra',                role: 'proponent',     county: null,   plan: 'Project Proponent' },
-    'demo-consultant': { name: 'Dr. Amina Hassan',  org: 'Carbon Advisory Ltd',    role: 'consultant',    county: null,   plan: 'Carbon Consultant' },
-    'demo-dev':  { name: 'Shukri Ali',       org: 'Netzerra',                role: 'developer',     county: null,   plan: 'Canopy (Demo)' },
-    'demo-ent':  { name: 'Amara Osei',        org: 'GreenLeaf Industries',   role: 'enterprise',    county: null,   plan: 'Enterprise' },
-    'demo-nema': { name: 'Dr. Faith Karanja',  org: 'NEMA Kenya',            role: 'nema_national', county: null,   plan: 'NEMA National Director' },
-    'demo-co':   { name: 'Joseph Kiplagat',    org: 'Narok County',          role: 'nema_county',   county: 'Narok',plan: 'NEMA County Officer' },
-    'demo-rev':  { name: 'Halima Abdi',        org: 'NEMA Kenya',            role: 'nema_reviewer', county: null,   plan: 'NEMA Technical Reviewer' },
+    'demo-proponent': { name: 'Shukri Ali', org: 'Netzerra', role: 'proponent', county: null, plan: 'Project Proponent' },
+    'demo-consultant': { name: 'Dr. Amina Hassan', org: 'Carbon Advisory Ltd', role: 'consultant', county: null, plan: 'Carbon Consultant' },
+    'demo-dev': { name: 'Shukri Ali', org: 'Netzerra', role: 'developer', county: null, plan: 'Canopy (Demo)' },
+    'demo-ent': { name: 'Amara Osei', org: 'GreenLeaf Industries', role: 'enterprise', county: null, plan: 'Enterprise' },
+    'demo-nema': { name: 'Dr. Faith Karanja', org: 'NEMA Kenya', role: 'nema_national', county: null, plan: 'NEMA National Director' },
+    'demo-co': { name: 'Joseph Kiplagat', org: 'Narok County', role: 'nema_county', county: 'Narok', plan: 'NEMA County Officer' },
+    'demo-rev': { name: 'Halima Abdi', org: 'NEMA Kenya', role: 'nema_reviewer', county: null, plan: 'NEMA Technical Reviewer' },
   }
 };
 
@@ -127,12 +127,12 @@ function applyLogin(user) {
 
   // Show/hide nav items based on role
   const navEnt = document.getElementById('nav-enterprise');
-  const navEx  = document.getElementById('nav-exchange');
+  const navEx = document.getElementById('nav-exchange');
   const navB2B = document.getElementById('nav-b2b');
   const navNema = document.getElementById('nav-nema-oversight');
 
   if (navEnt) navEnt.style.display = (user.role === 'enterprise') ? 'flex' : 'none';
-  if (navEx)  navEx.style.display  = (user.role === 'enterprise') ? 'flex' : 'none';
+  if (navEx) navEx.style.display = (user.role === 'enterprise') ? 'flex' : 'none';
   if (navB2B) navB2B.style.display = (user.role === 'enterprise') ? 'flex' : 'none';
   if (navNema) navNema.style.display = (user.role.startsWith('nema')) ? 'flex' : 'none';
 
@@ -184,7 +184,7 @@ function logout() {
     item.style.opacity = '1';
     item.style.pointerEvents = 'auto';
   });
-  ['nav-enterprise','nav-exchange','nav-b2b','nav-nema-oversight'].forEach(id => {
+  ['nav-enterprise', 'nav-exchange', 'nav-b2b', 'nav-nema-oversight'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.style.display = 'none';
   });
@@ -199,12 +199,12 @@ function logout() {
 
 const EXCHANGE = {
   listings: [
-    { id: 'CRD-001', project: 'Turkana Solar Borehole Cluster',  seller: 'Turkana Water Trust',        county: 'Turkana',  type: 'Renewable Energy', standard: 'Verra VCS',     vintage: 2025, credits: 420,  price: 1200, coBenefits: ['Clean Water','Jobs','Gender Equality'], status: 'verified' },
-    { id: 'CRD-002', project: 'Kwale Mangrove Restoration',      seller: 'Coastal Green Alliance',     county: 'Kwale',    type: 'Blue Carbon',      standard: 'Gold Standard', vintage: 2025, credits: 850,  price: 1800, coBenefits: ['Biodiversity','Fisheries','Coastal Protection'], status: 'verified' },
-    { id: 'CRD-003', project: 'Narok Bamboo Plantation Phase I',  seller: 'Mara Green Initiative',      county: 'Narok',    type: 'Agroforestry',     standard: 'KNCR Domestic', vintage: 2026, credits: 1200, price: 950,  coBenefits: ['Soil Health','Community Income','Biodiversity'], status: 'verified' },
-    { id: 'CRD-004', project: 'Nakuru Biogas Community Project',  seller: 'Rift Valley Clean Energy',   county: 'Nakuru',   type: 'Clean Cooking',    standard: 'Gold Standard', vintage: 2025, credits: 340,  price: 1100, coBenefits: ['Health','Deforestation Reduction','Gender Equality'], status: 'pending' },
-    { id: 'CRD-005', project: 'Laikipia Acacia Reforestation',    seller: 'Laikipia Conservancy Trust', county: 'Laikipia', type: 'Agroforestry',     standard: 'Verra VCS',     vintage: 2026, credits: 2100, price: 1050, coBenefits: ['Wildlife Habitat','Pastoralist Livelihoods','Soil Carbon'], status: 'verified' },
-    { id: 'CRD-006', project: 'Mombasa Electric Boda Fleet',      seller: 'Coast E-Mobility Co.',       county: 'Mombasa',  type: 'Transport',        standard: 'KNCR Domestic', vintage: 2026, credits: 560,  price: 800,  coBenefits: ['Air Quality','Jobs','Noise Reduction'], status: 'verified' },
+    { id: 'CRD-001', project: 'Turkana Solar Borehole Cluster', seller: 'Turkana Water Trust', county: 'Turkana', type: 'Renewable Energy', standard: 'Verra VCS', vintage: 2025, credits: 420, price: 1200, coBenefits: ['Clean Water', 'Jobs', 'Gender Equality'], status: 'verified' },
+    { id: 'CRD-002', project: 'Kwale Mangrove Restoration', seller: 'Coastal Green Alliance', county: 'Kwale', type: 'Blue Carbon', standard: 'Gold Standard', vintage: 2025, credits: 850, price: 1800, coBenefits: ['Biodiversity', 'Fisheries', 'Coastal Protection'], status: 'verified' },
+    { id: 'CRD-003', project: 'Narok Bamboo Plantation Phase I', seller: 'Mara Green Initiative', county: 'Narok', type: 'Agroforestry', standard: 'KNCR Domestic', vintage: 2026, credits: 1200, price: 950, coBenefits: ['Soil Health', 'Community Income', 'Biodiversity'], status: 'verified' },
+    { id: 'CRD-004', project: 'Nakuru Biogas Community Project', seller: 'Rift Valley Clean Energy', county: 'Nakuru', type: 'Clean Cooking', standard: 'Gold Standard', vintage: 2025, credits: 340, price: 1100, coBenefits: ['Health', 'Deforestation Reduction', 'Gender Equality'], status: 'pending' },
+    { id: 'CRD-005', project: 'Laikipia Acacia Reforestation', seller: 'Laikipia Conservancy Trust', county: 'Laikipia', type: 'Agroforestry', standard: 'Verra VCS', vintage: 2026, credits: 2100, price: 1050, coBenefits: ['Wildlife Habitat', 'Pastoralist Livelihoods', 'Soil Carbon'], status: 'verified' },
+    { id: 'CRD-006', project: 'Mombasa Electric Boda Fleet', seller: 'Coast E-Mobility Co.', county: 'Mombasa', type: 'Transport', standard: 'KNCR Domestic', vintage: 2026, credits: 560, price: 800, coBenefits: ['Air Quality', 'Jobs', 'Noise Reduction'], status: 'verified' },
   ],
   portfolio: {
     purchased: [],
@@ -227,14 +227,14 @@ function renderExchange() {
     return true;
   });
 
-  if (sortBy === 'price-asc') filtered.sort((a,b) => a.price - b.price);
-  else if (sortBy === 'price-desc') filtered.sort((a,b) => b.price - a.price);
-  else if (sortBy === 'credits') filtered.sort((a,b) => b.credits - a.credits);
+  if (sortBy === 'price-asc') filtered.sort((a, b) => a.price - b.price);
+  else if (sortBy === 'price-desc') filtered.sort((a, b) => b.price - a.price);
+  else if (sortBy === 'credits') filtered.sort((a, b) => b.credits - a.credits);
 
   grid.innerHTML = filtered.map(l => `
     <div class="exchange-card ${l.status === 'pending' ? 'pending' : ''}">
       <div class="ex-card-hdr">
-        <span class="ex-std-badge ${l.standard.replace(/\s/g,'-').toLowerCase()}">${l.standard}</span>
+        <span class="ex-std-badge ${l.standard.replace(/\s/g, '-').toLowerCase()}">${l.standard}</span>
         <span class="ex-status ${l.status}">${l.status === 'verified' ? '✅ Verified' : '⏳ Pending'}</span>
       </div>
       <h4 class="ex-project-name">${l.project}</h4>
@@ -255,8 +255,8 @@ function renderExchange() {
   `).join('');
 
   // Update exchange stats
-  const totalCredits = EXCHANGE.listings.reduce((s,l) => s + l.credits, 0);
-  const avgPrice = Math.round(EXCHANGE.listings.reduce((s,l) => s + l.price, 0) / EXCHANGE.listings.length);
+  const totalCredits = EXCHANGE.listings.reduce((s, l) => s + l.credits, 0);
+  const avgPrice = Math.round(EXCHANGE.listings.reduce((s, l) => s + l.price, 0) / EXCHANGE.listings.length);
   const el = document.getElementById('ex-stats');
   if (el) el.innerHTML = `
     <div class="ex-stat"><div class="ex-stat-val">${totalCredits.toLocaleString()}</div><div class="ex-stat-lbl">Credits Available</div></div>
@@ -296,10 +296,10 @@ function updateBuyTotal() {
 }
 
 function executePurchase() {
-  const creditId  = document.getElementById('buy-credit-id')?.value;
-  const qty       = parseInt(document.getElementById('buy-quantity')?.value) || 0;
+  const creditId = document.getElementById('buy-credit-id')?.value;
+  const qty = parseInt(document.getElementById('buy-quantity')?.value) || 0;
   const payMethod = document.querySelector('input[name="pay-method"]:checked')?.value || 'mpesa';
-  const listing   = EXCHANGE.listings.find(l => l.id === creditId);
+  const listing = EXCHANGE.listings.find(l => l.id === creditId);
 
   if (!listing || qty <= 0 || qty > listing.credits) {
     toast('Invalid quantity', 'error');
@@ -308,13 +308,13 @@ function executePurchase() {
 
   // ── Build transaction ────────────────────────────────
   listing.credits -= qty;
-  const certNo = `NTZ-RET-${new Date().getFullYear()}-${String(EXCHANGE.portfolio.purchased.length + 1).padStart(3,'0')}`;
+  const certNo = `NTZ-RET-${new Date().getFullYear()}-${String(EXCHANGE.portfolio.purchased.length + 1).padStart(3, '0')}`;
   const txnDate = new Date().toISOString().split('T')[0];
-  const buyer   = AUTH.currentUser?.name || S.user.name || 'Buyer';
-  const buyerOrg= AUTH.currentUser?.org  || S.user.org  || 'Organisation';
+  const buyer = AUTH.currentUser?.name || S.user.name || 'Buyer';
+  const buyerOrg = AUTH.currentUser?.org || S.user.org || 'Organisation';
 
   const txn = {
-    id: `TXN-${String(EXCHANGE.transactions.length + 1).padStart(3,'0')}`,
+    id: `TXN-${String(EXCHANGE.transactions.length + 1).padStart(3, '0')}`,
     type: 'purchase', creditId, credits: qty,
     total: qty * listing.price,
     date: txnDate,
@@ -349,24 +349,24 @@ function executePurchase() {
   // ── Compile certData and generate certificate ────────
   setTimeout(() => {
     toast(`✅ KNCR Ledger Updated. Corresponding Adjustment applied via Article 6.`, 'success');
-    
+
     const certData = {
       certNo,
       buyer,
       buyerOrg,
-      project:     listing.project,
-      seller:      listing.seller,
-      standard:    listing.standard    || 'Verra VCS',
-      sector:      listing.sector      || listing.type || 'Carbon Project',
-      county:      listing.county      || 'Kenya',
-      vintage:     listing.vintage     || new Date().getFullYear(),
+      project: listing.project,
+      seller: listing.seller,
+      standard: listing.standard || 'Verra VCS',
+      sector: listing.sector || listing.type || 'Carbon Project',
+      county: listing.county || 'Kenya',
+      vintage: listing.vintage || new Date().getFullYear(),
       methodology: listing.methodology || 'IPCC 2006 Guidelines / AR6 GWP₁₀₀ values',
-      credits:     qty,
-      pricePerT:   listing.price,
-      totalKES:    qty * listing.price,
-      date:        txnDate,
-      txnId:       txn.id,
-      payMethod:   methodLabels[payMethod],
+      credits: qty,
+      pricePerT: listing.price,
+      totalKES: qty * listing.price,
+      date: txnDate,
+      txnId: txn.id,
+      payMethod: methodLabels[payMethod],
     };
     generateRetirementCertificate(certData);
   }, 1800);
@@ -378,7 +378,7 @@ function executePurchase() {
    Includes Groq Expert Signature line as required
 ────────────────────────────────────────────────────── */
 function generateRetirementCertificate(cert) {
-  const now = new Date().toLocaleDateString('en-KE', { weekday:'long', year:'numeric', month:'long', day:'numeric' });
+  const now = new Date().toLocaleDateString('en-KE', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
   const html = `<!DOCTYPE html>
 <html lang="en">
 <head>
@@ -509,7 +509,7 @@ function generateRetirementCertificate(cert) {
 </html>`;
 
   // Open in new tab — use a named window so repeated purchases update the same tab
-  const certWin = window.open('', 'ntz_cert_' + cert.certNo.replace(/-/g,'_'));
+  const certWin = window.open('', 'ntz_cert_' + cert.certNo.replace(/-/g, '_'));
   if (!certWin) {
     // Popup was blocked — fallback: create a blob and force download
     const blob = new Blob([html], { type: 'text/html' });
@@ -551,9 +551,9 @@ function renderPortfolio() {
 
 function renderEnterpriseDashboard() {
   renderPortfolio();
-  const totalPurchased = EXCHANGE.portfolio.purchased.reduce((s,p) => s + p.credits, 0);
-  const totalSpent = EXCHANGE.portfolio.purchased.reduce((s,p) => s + (p.credits * p.price), 0);
-  const totalListed = EXCHANGE.portfolio.listed.reduce((s,l) => s + l.credits, 0);
+  const totalPurchased = EXCHANGE.portfolio.purchased.reduce((s, p) => s + p.credits, 0);
+  const totalSpent = EXCHANGE.portfolio.purchased.reduce((s, p) => s + (p.credits * p.price), 0);
+  const totalListed = EXCHANGE.portfolio.listed.reduce((s, l) => s + l.credits, 0);
   const kpis = document.getElementById('ent-kpis');
   if (kpis) kpis.innerHTML = `
     <div class="kpi green"><div class="kpi-lbl">Credits Purchased</div><div class="kpi-val green">${totalPurchased.toLocaleString()}</div><div class="kpi-sub">tCO₂e retired</div></div>
@@ -598,7 +598,7 @@ function listCreditsForSale() {
   }
 
   const newListing = {
-    id: `CRD-${String(EXCHANGE.listings.length + 1).padStart(3,'0')}`,
+    id: `CRD-${String(EXCHANGE.listings.length + 1).padStart(3, '0')}`,
     project: projectName,
     seller: AUTH.currentUser?.org || S.user.org,
     county: county || 'Nairobi',
@@ -616,7 +616,7 @@ function listCreditsForSale() {
   });
 
   // Clear form
-  ['sell-project-name','sell-credits','sell-price'].forEach(id => {
+  ['sell-project-name', 'sell-credits', 'sell-price'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -639,11 +639,11 @@ const B2B = {
     { id: 'CTR-001', buyer: 'EcoTech Manufacturing', seller: 'Mara Green Initiative', credits: 200, price: 1050, total: 210000, date: '2026-03-10', status: 'active', type: 'Spot' },
   ],
   profiles: [
-    { org: 'EcoTech Manufacturing',   sector: 'Manufacturing', county: 'Nairobi',  emissions: 4200, purchased: 800,  rating: 4.5, verified: true },
-    { org: 'Horizon Logistics Ltd',   sector: 'Transport',     county: 'Mombasa',  emissions: 8500, purchased: 1200, rating: 4.2, verified: true },
-    { org: 'Savanna Cement Co.',      sector: 'Construction',  county: 'Machakos', emissions: 15000,purchased: 3000, rating: 3.8, verified: true },
-    { org: 'GreenLeaf Industries',    sector: 'Agriculture',   county: 'Nakuru',   emissions: 2100, purchased: 500,  rating: 4.7, verified: true },
-    { org: 'Coastal Fisheries Corp.', sector: 'Fisheries',     county: 'Kwale',    emissions: 1800, purchased: 200,  rating: 4.0, verified: false },
+    { org: 'EcoTech Manufacturing', sector: 'Manufacturing', county: 'Nairobi', emissions: 4200, purchased: 800, rating: 4.5, verified: true },
+    { org: 'Horizon Logistics Ltd', sector: 'Transport', county: 'Mombasa', emissions: 8500, purchased: 1200, rating: 4.2, verified: true },
+    { org: 'Savanna Cement Co.', sector: 'Construction', county: 'Machakos', emissions: 15000, purchased: 3000, rating: 3.8, verified: true },
+    { org: 'GreenLeaf Industries', sector: 'Agriculture', county: 'Nakuru', emissions: 2100, purchased: 500, rating: 4.7, verified: true },
+    { org: 'Coastal Fisheries Corp.', sector: 'Fisheries', county: 'Kwale', emissions: 1800, purchased: 200, rating: 4.0, verified: false },
   ]
 };
 
@@ -657,9 +657,9 @@ function renderB2BHub() {
 function renderB2BStats() {
   const el = document.getElementById('b2b-kpis');
   if (!el) return;
-  const totalRFQVolume = B2B.rfqs.reduce((s,r) => s + r.quantity, 0);
+  const totalRFQVolume = B2B.rfqs.reduce((s, r) => s + r.quantity, 0);
   const activeContracts = B2B.contracts.filter(c => c.status === 'active').length;
-  const totalTraded = B2B.contracts.reduce((s,c) => s + c.total, 0);
+  const totalTraded = B2B.contracts.reduce((s, c) => s + c.total, 0);
   el.innerHTML = `
     <div class="kpi green"><div class="kpi-lbl">Open RFQs</div><div class="kpi-val green">${B2B.rfqs.filter(r => r.status === 'open').length}</div><div class="kpi-sub">${totalRFQVolume.toLocaleString()} tCO₂e demanded</div></div>
     <div class="kpi gold"><div class="kpi-lbl">Active Contracts</div><div class="kpi-val gold">${activeContracts}</div><div class="kpi-sub">B2B agreements</div></div>
@@ -724,7 +724,7 @@ function renderEnterpriseDirectory() {
   el.innerHTML = B2B.profiles.map(p => `
     <div class="ent-dir-card">
       <div class="ent-dir-header">
-        <div class="ent-dir-avatar">${p.org.split(' ').map(w => w[0]).join('').slice(0,2)}</div>
+        <div class="ent-dir-avatar">${p.org.split(' ').map(w => w[0]).join('').slice(0, 2)}</div>
         <div>
           <div class="ent-dir-name">${p.org} ${p.verified ? '<span class="verified-badge">✅ Verified</span>' : ''}</div>
           <div class="ent-dir-sector">${p.sector} · ${p.county} County</div>
@@ -733,7 +733,7 @@ function renderEnterpriseDirectory() {
       <div class="ent-dir-stats">
         <div><span class="ent-dir-stat-val">${p.emissions.toLocaleString()}</span><span class="ent-dir-stat-lbl">tCO₂e/yr</span></div>
         <div><span class="ent-dir-stat-val">${p.purchased.toLocaleString()}</span><span class="ent-dir-stat-lbl">Purchased</span></div>
-        <div><span class="ent-dir-stat-val">${Math.round(p.purchased/p.emissions*100)}%</span><span class="ent-dir-stat-lbl">Offset</span></div>
+        <div><span class="ent-dir-stat-val">${Math.round(p.purchased / p.emissions * 100)}%</span><span class="ent-dir-stat-lbl">Offset</span></div>
         <div><span class="ent-dir-stat-val">⭐ ${p.rating}</span><span class="ent-dir-stat-lbl">Rating</span></div>
       </div>
     </div>
@@ -752,13 +752,13 @@ function postRFQ() {
   }
 
   B2B.rfqs.unshift({
-    id: `RFQ-${String(B2B.rfqs.length + 1).padStart(3,'0')}`,
+    id: `RFQ-${String(B2B.rfqs.length + 1).padStart(3, '0')}`,
     buyer: AUTH.currentUser?.org || S.user.org,
     need, quantity, maxPrice, deadline,
     status: 'open', responses: 0
   });
 
-  ['rfq-need','rfq-quantity','rfq-max-price','rfq-deadline'].forEach(id => {
+  ['rfq-need', 'rfq-quantity', 'rfq-max-price', 'rfq-deadline'].forEach(id => {
     const el = document.getElementById(id);
     if (el) el.value = '';
   });
@@ -770,22 +770,22 @@ function postRFQ() {
 function respondToRFQ(rfqId) {
   const rfq = B2B.rfqs.find(r => r.id === rfqId);
   if (!rfq) return;
-  
+
   // Lock the RFQ
   rfq.status = 'closed';
   rfq.responses++;
-  
+
   // Deduct from seller and add to buyer (Mock logic)
   const buyerProfile = B2B.profiles.find(p => p.org === rfq.buyer);
   if (buyerProfile) {
     buyerProfile.purchased += rfq.quantity;
   }
-  
+
   const sellerOrg = (typeof AUTH !== 'undefined' && AUTH.currentUser) ? AUTH.currentUser.org : (window.S?.user?.org || 'Netzerra Developer');
-  
+
   // Log the contract
   B2B.contracts.unshift({
-    id: `CTR-${String(B2B.contracts.length + 1).padStart(3,'0')}`,
+    id: `CTR-${String(B2B.contracts.length + 1).padStart(3, '0')}`,
     buyer: rfq.buyer,
     seller: sellerOrg,
     credits: rfq.quantity,
@@ -797,13 +797,13 @@ function respondToRFQ(rfqId) {
   });
 
   renderB2BHub();
-  
+
   toast(`🚀 Executing Trade & Syncing to KNCR API Gateway...`, 'info');
-  
+
   // Simulate API delay and issue certificate
   setTimeout(() => {
     toast(`✅ KNCR Ledger Updated. Corresponding Adjustment applied.`, 'success');
-    showCertificateOfRetirement(`RET-${Math.floor(Math.random()*1000000)}`, rfq.quantity, rfq.buyer, sellerOrg, rfq.id);
+    showCertificateOfRetirement(`RET-${Math.floor(Math.random() * 1000000)}`, rfq.quantity, rfq.buyer, sellerOrg, rfq.id);
   }, 1800);
 }
 
@@ -859,20 +859,20 @@ function showCertificateOfRetirement(certId, amount, buyer, seller, ref) {
 
 const NEMA_DATA = {
   projects: [
-    { id: 'KNCR-2026-001', name: 'Turkana Solar Borehole Cluster',  developer: 'Turkana Water Trust',        county: 'Turkana',  sector: 'Energy',        credits: 420,  status: 'Registered',   step: 5, cda: 40, cdaCompliant: true,  lastAudit: '2026-02-28' },
-    { id: 'KNCR-2026-002', name: 'Rift Valley Matatu CNG Pilot',    developer: 'Rift Valley SACCO',          county: 'Nakuru',   sector: 'Transport',     credits: 1100, status: 'PDD Draft',    step: 2, cda: 40, cdaCompliant: true,  lastAudit: '2026-03-10' },
-    { id: 'KNCR-2026-003', name: 'Kwale Mangrove Restoration',      developer: 'Coastal Green Alliance',     county: 'Kwale',    sector: 'Blue Carbon',   credits: 850,  status: 'Validation',   step: 3, cda: 40, cdaCompliant: true,  lastAudit: '2026-03-15' },
-    { id: 'KNCR-2026-004', name: 'Narok Bamboo Plantation Phase I',  developer: 'Mara Green Initiative',     county: 'Narok',    sector: 'Agroforestry',  credits: 1200, status: 'Concept Note', step: 1, cda: 25, cdaCompliant: false, lastAudit: null },
-    { id: 'KNCR-2026-005', name: 'Nakuru Biogas Community',          developer: 'Rift Valley Clean Energy',  county: 'Nakuru',   sector: 'Clean Cooking', credits: 340,  status: 'DNA Review',   step: 4, cda: 40, cdaCompliant: true,  lastAudit: '2026-03-20' },
-    { id: 'KNCR-2026-006', name: 'Laikipia Acacia Reforestation',    developer: 'Laikipia Conservancy Trust',county: 'Laikipia', sector: 'Agroforestry',  credits: 2100, status: 'Registered',   step: 5, cda: 40, cdaCompliant: true,  lastAudit: '2026-03-01' },
-    { id: 'KNCR-2026-007', name: 'Mombasa Electric Boda Fleet',      developer: 'Coast E-Mobility Co.',      county: 'Mombasa',  sector: 'Transport',     credits: 560,  status: 'Credits Live', step: 6, cda: 25, cdaCompliant: true,  lastAudit: '2026-03-25' },
+    { id: 'KNCR-2026-001', name: 'Turkana Solar Borehole Cluster', developer: 'Turkana Water Trust', county: 'Turkana', sector: 'Energy', credits: 420, status: 'Registered', step: 5, cda: 40, cdaCompliant: true, lastAudit: '2026-02-28' },
+    { id: 'KNCR-2026-002', name: 'Rift Valley Matatu CNG Pilot', developer: 'Rift Valley SACCO', county: 'Nakuru', sector: 'Transport', credits: 1100, status: 'PDD Draft', step: 2, cda: 40, cdaCompliant: true, lastAudit: '2026-03-10' },
+    { id: 'KNCR-2026-003', name: 'Kwale Mangrove Restoration', developer: 'Coastal Green Alliance', county: 'Kwale', sector: 'Blue Carbon', credits: 850, status: 'Validation', step: 3, cda: 40, cdaCompliant: true, lastAudit: '2026-03-15' },
+    { id: 'KNCR-2026-004', name: 'Narok Bamboo Plantation Phase I', developer: 'Mara Green Initiative', county: 'Narok', sector: 'Agroforestry', credits: 1200, status: 'Concept Note', step: 1, cda: 25, cdaCompliant: false, lastAudit: null },
+    { id: 'KNCR-2026-005', name: 'Nakuru Biogas Community', developer: 'Rift Valley Clean Energy', county: 'Nakuru', sector: 'Clean Cooking', credits: 340, status: 'DNA Review', step: 4, cda: 40, cdaCompliant: true, lastAudit: '2026-03-20' },
+    { id: 'KNCR-2026-006', name: 'Laikipia Acacia Reforestation', developer: 'Laikipia Conservancy Trust', county: 'Laikipia', sector: 'Agroforestry', credits: 2100, status: 'Registered', step: 5, cda: 40, cdaCompliant: true, lastAudit: '2026-03-01' },
+    { id: 'KNCR-2026-007', name: 'Mombasa Electric Boda Fleet', developer: 'Coast E-Mobility Co.', county: 'Mombasa', sector: 'Transport', credits: 560, status: 'Credits Live', step: 6, cda: 25, cdaCompliant: true, lastAudit: '2026-03-25' },
   ],
   auditLog: [
-    { timestamp: '2026-03-25 14:32', action: 'Project Verified',      project: 'KNCR-2026-007', officer: 'Dr. Faith Karanja', detail: 'MRV report approved. Credits issued.' },
-    { timestamp: '2026-03-20 09:15', action: 'DNA Review Started',    project: 'KNCR-2026-005', officer: 'Halima Abdi',       detail: 'Technical review of biogas methodology initiated.' },
-    { timestamp: '2026-03-15 11:45', action: 'Validation Assigned',   project: 'KNCR-2026-003', officer: 'Dr. Faith Karanja', detail: 'VVB assigned: Bureau Veritas Kenya.' },
-    { timestamp: '2026-03-10 16:20', action: 'PDD Submitted',         project: 'KNCR-2026-002', officer: 'System',            detail: 'Project Design Document uploaded by developer.' },
-    { timestamp: '2026-02-28 10:00', action: 'Project Registered',    project: 'KNCR-2026-001', officer: 'Dr. Faith Karanja', detail: 'Listed on kncr.go.ke. Public project page live.' },
+    { timestamp: '2026-03-25 14:32', action: 'Project Verified', project: 'KNCR-2026-007', officer: 'Dr. Faith Karanja', detail: 'MRV report approved. Credits issued.' },
+    { timestamp: '2026-03-20 09:15', action: 'DNA Review Started', project: 'KNCR-2026-005', officer: 'Halima Abdi', detail: 'Technical review of biogas methodology initiated.' },
+    { timestamp: '2026-03-15 11:45', action: 'Validation Assigned', project: 'KNCR-2026-003', officer: 'Dr. Faith Karanja', detail: 'VVB assigned: Bureau Veritas Kenya.' },
+    { timestamp: '2026-03-10 16:20', action: 'PDD Submitted', project: 'KNCR-2026-002', officer: 'System', detail: 'Project Design Document uploaded by developer.' },
+    { timestamp: '2026-02-28 10:00', action: 'Project Registered', project: 'KNCR-2026-001', officer: 'Dr. Faith Karanja', detail: 'Listed on kncr.go.ke. Public project page live.' },
   ]
 };
 
@@ -902,7 +902,7 @@ function renderNEMAOversight() {
 
   const kpis = document.getElementById('nema-kpis');
   if (kpis) {
-    const totalCredits = projects.reduce((s,p) => s + p.credits, 0);
+    const totalCredits = projects.reduce((s, p) => s + p.credits, 0);
     const compliant = projects.filter(p => p.cdaCompliant).length;
     const registered = projects.filter(p => p.step >= 5).length;
     kpis.innerHTML = `
@@ -1005,19 +1005,40 @@ function viewProjectAudit(projectId) {
 const ZERRA = {
   isOpen: false,
   messages: [
-    { role: 'assistant', content: 'Habari! 👋 I\'m Zerra, your AI carbon intelligence assistant. I can help you with:\n\n• Carbon calculations and methodology\n• KNCR compliance and regulations\n• Offset strategy recommendations\n• Understanding emission factors\n\nAsk me anything about carbon accounting in Kenya!' }
+    { role: 'assistant', content: 'Habari! 👋 I\'m Zerra, your AI carbon intelligence assistant. I am grounded in the Kenya Carbon Markets Regulations 2024. Ask me about KNCR compliance, CDA mandates, or emission factors!' }
   ],
   knowledgeBase: {
-    'kncr': 'The Kenya National Carbon Registry (KNCR) went live on 17 February 2026. It is governed by the Carbon Markets Regulations 2024 and Carbon Trading Regulations 2025. All carbon projects must register. False data carries a KES 500M penalty under Regulation 37. The registry is managed by NEMA.',
-    'cda': 'The Community Development Agreement (CDA) is required under the Fourth Schedule of the Carbon Markets Regulations 2024. Land-based projects must allocate 40% of carbon credit earnings to the community. Non-land-based projects must allocate 25%. Private land projects may be exempt.',
-    'emission factors': 'Kenya Grid EF (KNCR): 0.3174 kgCO₂/kWh (UNFCCC CDM ASB0050-2020, Combined Margin — correct for KNCR carbon credit calculations). Note: IEA actual mix ~0.070 kgCO₂e/kWh applies only to GHG Protocol Scope 2 corporate reporting. Diesel: 2.68 kgCO₂e/L. Petrol: 2.31 kgCO₂e/L. Cement: 830 kgCO₂e/t. Steel (BOF): 1,850 kgCO₂e/t. CH₄ GWP (AR6): 27.0. N₂O GWP (AR6): 273.',
-    'offsets': 'Kenya offset strategies: Bamboo (17 tCO₂e/ha/yr), Casuarina (8 tCO₂e/ha/yr), Grevillea (6 tCO₂e/ha/yr), Biogas (3.5 tCO₂e/unit/yr), Solar pump replacement, Mangrove restoration (6.4 tCO₂e/ha/yr), Soil carbon (0.4 tCO₂e/ha/yr), Electric boda (0.103 kgCO₂e/km saved).',
-    'regulation 37': 'Regulation 37 of the Carbon Markets Regulations 2024 imposes a penalty of KES 500,000,000 (KES 500M) for submitting false or misleading data to the KNCR. Additional penalties include KES 20,000 for failure to report and up to 6 months imprisonment.',
-    'article 6': 'Article 6 of the Paris Agreement allows countries to trade carbon credits internationally. Kenya has active bilateral agreements with Switzerland (ITMO transfers operational), and is negotiating with Sweden, Singapore, South Korea, and the UK.',
-    'floca': 'FLLoCA (Framework for Local Climate Change Action) is a county-level reporting framework. It requires performance criteria documentation. Counties must report on climate resilience investments, carbon project oversight, and community benefit fund tracking.',
-    'ipcc': 'Netzerra uses IPCC 2006 Guidelines updated with AR6 (2021) GWP₁₀₀ values. The GHG Protocol Scope 1/2/3 framework is aligned with ISO 14064-1:2018.',
-    'verra': 'Verra VCS (Verified Carbon Standard) is one of the most widely used voluntary carbon market standards. Projects must undergo third-party validation and verification by an accredited VVB.',
-    'gold standard': 'Gold Standard is a premium carbon credit standard that requires demonstration of sustainable development co-benefits. It is often preferred by European buyers and development finance institutions.',
+    // PLATFORM KNOWLEDGE
+    'netzerra features': 'Netzerra is the Guided Compliance Intelligence System (GCIS) for KNCR. Features: Pre-Vetting Firewall (prevents garbage data), Smart Satellite Verification (GIS scans for AFOLU), Zerra AI (Project Readiness tracking and regulatory guidance), Document Generator (PCN/PDD auto-generation), and Enterprise B2B exchange with verifiable QR code hashes.',
+    'netzerra purpose': 'Netzerra protects the Kenya National Carbon Registry from bad data. It acts as an automated regulatory firewall for NEMA, preventing Regulation 37 penalties by ensuring project proponents only submit audit-ready, mathematically correct, and legally compliant (CDA/Article 6) carbon projects.',
+
+    // FUNDAMENTAL ACTS
+    'climate change act': 'The Climate Change (Amendment) Act 2023 is the primary law. It mandates that every carbon project in Kenya must be registered in the KNCR and provides the legal basis for the Designated National Authority (DNA) within NEMA.',
+    'waste management act': 'The Sustainable Waste Management Act 2022. It mandates the transition to a circular economy. Netzerra automates the methane tracking (EF 0.58) required for dumpsites and industrial waste to meet these new standards.',
+    'epr regulations': 'Extended Producer Responsibility (EPR). Manufacturers are now legally responsible for the entire lifecycle of their products. Netzerra’s Manufacturing module tracks waste-to-energy offsets to help firms meet EPR targets.',
+
+    // REGULATORY TERMS & PROCEDURAL (The 2024 Pipeline)
+    'kncr': 'The Kenya National Carbon Registry (KNCR) went live on 17 February 2026. Managed by NEMA, it is the sovereign ledger for all carbon projects. Registration is mandatory under the Climate Change Act.',
+    'cda': 'Community Development Agreement (CDA). Per the Fourth Schedule of the 2024 Regulations, land-based projects must share 40% of net earnings with the community. Non-land-based projects (tech/energy) share 25%.',
+    'regulation 19': 'Data Retention: Project proponents must maintain primary evidence (logs, receipts, meter readings) for at least 7 years for NEMA audits.',
+    'regulation 21': 'Project Concept Note (PCN): The first legal step. Proponents must submit a PCN to the DNA to receive a "Letter of No Objection" within 14 days.',
+    'regulation 22': 'Project Design Document (PDD): Within 12 months of getting a LoNO, a full technical PDD must be submitted for NEMA review.',
+    'regulation 23': 'Validation: Every project must be validated by an accredited independent third-party (VVB) to ensure the baseline math is real.',
+    'regulation 23e': 'Community Development Agreement (CDA): The Fourth Schedule mandate. Land-based projects must share 40% of net earnings; non-land projects share 25%.',
+    'regulation 24': 'Letter of Approval (LoA): The final authorization issued by the Cabinet Secretary. Without an LoA, carbon credits cannot be traded or transferred internationally.',
+    'regulation 25': 'Annual Monitoring: Proponents must submit an annual monitoring report to NEMA. This report is the legal basis for the issuance of credits in the registry.',
+    'regulation 30': 'Carbon Levy: 5% of the gross earnings from carbon credits must be paid to the National Treasury as a national climate contribution.',
+    'regulation 37': 'The enforcement clause. Providing false or misleading data to NEMA/KNCR carries a penalty of up to KES 500,000,000 (500M) or 10 years imprisonment.',
+
+    // TECHNICAL DATA
+    'emission factors': 'Kenya Grid (KNCR Standard): 0.3174 kgCO₂/kWh (Combined Margin). Diesel: 2.68 kgCO₂e/L. Petrol: 2.31 kgCO₂e/L. Mixed Solid Waste: 0.58 tCO2e/tonne. Wastewater: 0.025 tCO2e/m3.',
+    'gwp': 'Netzerra uses IPCC AR6 (2021) values: Methane (CH₄) = 27.0, Nitrous Oxide (N₂O) = 273. This ensures 2026 regulatory compliance.',
+    'offsets': 'Sequestration rates: Highland Bamboo (17 t/ha/yr), Casuarina (8 t/ha/yr), Mangroves (9.8 t/ha/yr), Soil Carbon (0.4 t/ha/yr).',
+
+    // INVESTMENT & POLICY
+    'article 6': 'Article 6.2 of the Paris Agreement allows for ITMOs (Internationally Transferred Mitigation Outcomes). Kenya has a bilateral agreement with Switzerland and is in talks with Sweden and Singapore.',
+    'floca': 'Financing Locally-Led Climate Action. Netzerra helps Counties track ward-level carbon data to meet FLLoCA performance criteria for National Treasury grants.',
+    'keninvest': 'KenInvest facilitates Foreign Direct Investment (FDI). Netzerra makes projects "Bankable" for KenInvest by providing verified Data Quality Scores (DQS).',
   }
 };
 
@@ -1030,19 +1051,19 @@ function toggleZerra() {
 function renderZerraMessages() {
   const container = document.getElementById('zerra-messages');
   if (!container) return;
-  
+
   container.innerHTML = ZERRA.messages.map(m => {
     // FIX: We use (m.content || '') 
     // This means: "Use m.content, but if it's missing/undefined, use an empty string instead."
     const safeContent = (m.content || '').replace(/\n/g, '<br>');
-    
+
     return `
     <div class="zerra-msg ${m.role}">
       <div class="zerra-msg-avatar">${m.role === 'assistant' ? '🌿' : '👤'}</div>
       <div class="zerra-msg-content">${safeContent}</div>
     </div>`;
   }).join('');
-  
+
   container.scrollTop = container.scrollHeight;
 }
 
@@ -1124,11 +1145,11 @@ async function callGeminiAPI(prompt) {
     body: JSON.stringify({
       messages: [
         { role: 'system', content: 'You are Zerra, AI assistant for Netzerra Kenya carbon platform. Expert in KNCR, IPCC AR6, CDA regulations, Kenya emissions. Cite sources. Respond in user language.' },
-        { role: 'user',   content: prompt }
+        { role: 'user', content: prompt }
       ]
     })
   });
-  if (!r.ok) { const t = await r.text().catch(()=>''); throw new Error(`Worker ${r.status}: ${t.slice(0,100)}`); }
+  if (!r.ok) { const t = await r.text().catch(() => ''); throw new Error(`Worker ${r.status}: ${t.slice(0, 100)}`); }
   const d = await r.json();
   const text = d.choices?.[0]?.message?.content;
   if (!text) throw new Error('Empty response from Worker');
@@ -1189,7 +1210,7 @@ function handleSmartParse() {
 // 7a. Emissions Forecasting
 function runEmissionsForecast() {
   const currentEmissions = S.user.totalEmissions || 2847;
-  const months = ['Jan','Feb','Mar','Apr','May','Jun','Jul','Aug','Sep','Oct','Nov','Dec'];
+  const months = ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul', 'Aug', 'Sep', 'Oct', 'Nov', 'Dec'];
   const currentMonth = new Date().getMonth();
 
   // Generate historical trend (simulated)
@@ -1224,7 +1245,7 @@ function runEmissionsForecast() {
       labels: [...histLabels, ...foreLabels],
       datasets: [
         { label: 'Historical', data: [...historical, null, null, null, null, null, null], borderColor: 'rgba(109,217,140,1)', backgroundColor: 'rgba(109,217,140,0.1)', fill: true, tension: 0.4 },
-        { label: 'AI Forecast', data: [null, null, null, null, null, historical[5], ...forecast], borderColor: 'rgba(245,166,35,1)', backgroundColor: 'rgba(245,166,35,0.1)', borderDash: [5,5], fill: true, tension: 0.4 }
+        { label: 'AI Forecast', data: [null, null, null, null, null, historical[5], ...forecast], borderColor: 'rgba(245,166,35,1)', backgroundColor: 'rgba(245,166,35,0.1)', borderDash: [5, 5], fill: true, tension: 0.4 }
       ]
     },
     options: {
@@ -1238,8 +1259,8 @@ function runEmissionsForecast() {
   });
 
   // Update forecast summary
-  const forecastTotal = forecast.reduce((s,v) => s + v, 0);
-  const yearProjection = Math.round((historical.reduce((s,v) => s + v, 0) + forecastTotal) / 12 * 12);
+  const forecastTotal = forecast.reduce((s, v) => s + v, 0);
+  const yearProjection = Math.round((historical.reduce((s, v) => s + v, 0) + forecastTotal) / 12 * 12);
   const el = document.getElementById('forecast-summary');
   if (el) el.innerHTML = `
     <div class="forecast-insight"><strong>6-Month Projection:</strong> ${forecastTotal.toLocaleString()} tCO₂e</div>
@@ -1324,7 +1345,7 @@ async function generateAIReport() {
     name: AUTH.currentUser?.name || S.user.name,
     org: AUTH.currentUser?.org || S.user.org,
     emissions: S.user.totalEmissions || 2847,
-    offsets: EXCHANGE.portfolio.purchased.reduce((s,p) => s + p.credits, 0),
+    offsets: EXCHANGE.portfolio.purchased.reduce((s, p) => s + p.credits, 0),
   };
 
   try {
@@ -1362,7 +1383,7 @@ async function generateAIReport() {
 
 const _origShowSection = window.showSection;
 
-window.showSection = function(id) {
+window.showSection = function (id) {
   if (typeof _origShowSection === 'function') _origShowSection(id);
 
   if (id === 'enterprise') renderEnterpriseDashboard();
@@ -1397,7 +1418,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // Enterprise tab switching
   document.querySelectorAll('.ent-tabs .ent-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
+    tab.addEventListener('click', function () {
       const targetId = this.getAttribute('data-tab');
       if (!targetId) return;
       document.querySelectorAll('.ent-tabs .ent-tab').forEach(t => t.classList.remove('active'));
@@ -1410,7 +1431,7 @@ document.addEventListener('DOMContentLoaded', () => {
 
   // B2B tab switching
   document.querySelectorAll('.b2b-tabs .b2b-tab').forEach(tab => {
-    tab.addEventListener('click', function() {
+    tab.addEventListener('click', function () {
       const targetId = this.getAttribute('data-tab');
       if (!targetId) return;
       document.querySelectorAll('.b2b-tabs .b2b-tab').forEach(t => t.classList.remove('active'));
@@ -1447,26 +1468,26 @@ document.addEventListener('DOMContentLoaded', () => {
 // ══════════════════════════════════════════════════════
 
 const SEQ_SPECIES = {
-  bamboo_highland:  { name:'Bamboo (Highland — Arundinaria alpina)',  rate:17.0, unit:'tCO₂e/ha/yr', ref:'Yuen et al. 2017', density:'1,600 stems/ha', notes:'Fastest Kenya sequestration. Highlands >1,500m. Also timber income.' },
-  bamboo_lowland:   { name:'Bamboo (Lowland — Bambusa vulgaris)',     rate:12.0, unit:'tCO₂e/ha/yr', ref:'KEFRI 2019',       density:'1,200 stems/ha', notes:'Suitable below 1,500m. Slightly lower sequestration than highland.' },
-  casuarina:        { name:'Casuarina equisetifolia',                 rate:8.0,  unit:'tCO₂e/ha/yr', ref:'KEFRI 2019',       density:'1,100 stems/ha', notes:'N-fixing pioneer. ASAL and coastal Kenya. Rapid establishment.' },
-  grevillea:        { name:'Grevillea robusta (Silky Oak)',           rate:6.0,  unit:'tCO₂e/ha/yr', ref:'KEFRI 2019',       density:'800 stems/ha',   notes:'Widely adopted in Kenyan smallholder systems. Timber + carbon.' },
-  acacia_tortilis:  { name:'Acacia tortilis (ASAL)',                  rate:4.0,  unit:'tCO₂e/ha/yr', ref:'KEFRI 2020',       density:'400 stems/ha',   notes:'Arid/semi-arid Kenya. Nitrogen-fixing. Livestock shade + fodder.' },
-  eucalyptus:       { name:'Eucalyptus spp. (Commercial)',            rate:9.5,  unit:'tCO₂e/ha/yr', ref:'KEFRI 2019',       density:'1,000 stems/ha', notes:'High sequestration but check local regulations on exotic species.' },
-  mango:            { name:'Mango (Mangifera indica)',                rate:3.8,  unit:'tCO₂e/ha/yr', ref:'Rosenstock 2014',  density:'100 stems/ha',   notes:'Fruit income + carbon. Common in agroforestry systems.' },
-  avocado:          { name:'Avocado (Persea americana)',              rate:3.5,  unit:'tCO₂e/ha/yr', ref:'Rosenstock 2014',  density:'100 stems/ha',   notes:'Commercial fruit crop with significant woody biomass carbon.' },
-  indigenous_mix:   { name:'Indigenous Mixed Forest (Kenya highlands)',rate:5.5, unit:'tCO₂e/ha/yr', ref:'KEFRI 2021',       density:'Mixed',          notes:'Biodiversity co-benefits. Preferred by Verra VCS and Gold Standard.' },
-  mangrove:         { name:'Mangrove (Rhizophora/Avicennia)',         rate:6.4,  unit:'tCO₂e/ha/yr', ref:'Alongi 2014',      density:'2,000 stems/ha', notes:'Blue carbon. Highest ecosystem carbon density incl. soil carbon. Coastal Kenya.' },
-  mangrove_soil:    { name:'Mangrove incl. soil carbon (full)',       rate:9.8,  unit:'tCO₂e/ha/yr', ref:'Kauffman et al.',  density:'2,000 stems/ha', notes:'When deep soil carbon is measured and verified — premium credits.' },
-  savannah:         { name:'Savannah Grassland (avoided degradation)',rate:1.2,  unit:'tCO₂e/ha/yr', ref:'IPCC 2006 Vol.4',  density:'N/A',            notes:'Based on biomass + soil carbon. Conservative Tier 1 estimate for northern Kenya.' },
-  soil_carbon:      { name:'Soil Carbon Enhancement (cropland)',      rate:0.4,  unit:'tCO₂e/ha/yr', ref:'IPCC 2019',        density:'N/A',            notes:'Conservation agriculture, cover crops, reduced tillage.' },
+  bamboo_highland: { name: 'Bamboo (Highland — Arundinaria alpina)', rate: 17.0, unit: 'tCO₂e/ha/yr', ref: 'Yuen et al. 2017', density: '1,600 stems/ha', notes: 'Fastest Kenya sequestration. Highlands >1,500m. Also timber income.' },
+  bamboo_lowland: { name: 'Bamboo (Lowland — Bambusa vulgaris)', rate: 12.0, unit: 'tCO₂e/ha/yr', ref: 'KEFRI 2019', density: '1,200 stems/ha', notes: 'Suitable below 1,500m. Slightly lower sequestration than highland.' },
+  casuarina: { name: 'Casuarina equisetifolia', rate: 8.0, unit: 'tCO₂e/ha/yr', ref: 'KEFRI 2019', density: '1,100 stems/ha', notes: 'N-fixing pioneer. ASAL and coastal Kenya. Rapid establishment.' },
+  grevillea: { name: 'Grevillea robusta (Silky Oak)', rate: 6.0, unit: 'tCO₂e/ha/yr', ref: 'KEFRI 2019', density: '800 stems/ha', notes: 'Widely adopted in Kenyan smallholder systems. Timber + carbon.' },
+  acacia_tortilis: { name: 'Acacia tortilis (ASAL)', rate: 4.0, unit: 'tCO₂e/ha/yr', ref: 'KEFRI 2020', density: '400 stems/ha', notes: 'Arid/semi-arid Kenya. Nitrogen-fixing. Livestock shade + fodder.' },
+  eucalyptus: { name: 'Eucalyptus spp. (Commercial)', rate: 9.5, unit: 'tCO₂e/ha/yr', ref: 'KEFRI 2019', density: '1,000 stems/ha', notes: 'High sequestration but check local regulations on exotic species.' },
+  mango: { name: 'Mango (Mangifera indica)', rate: 3.8, unit: 'tCO₂e/ha/yr', ref: 'Rosenstock 2014', density: '100 stems/ha', notes: 'Fruit income + carbon. Common in agroforestry systems.' },
+  avocado: { name: 'Avocado (Persea americana)', rate: 3.5, unit: 'tCO₂e/ha/yr', ref: 'Rosenstock 2014', density: '100 stems/ha', notes: 'Commercial fruit crop with significant woody biomass carbon.' },
+  indigenous_mix: { name: 'Indigenous Mixed Forest (Kenya highlands)', rate: 5.5, unit: 'tCO₂e/ha/yr', ref: 'KEFRI 2021', density: 'Mixed', notes: 'Biodiversity co-benefits. Preferred by Verra VCS and Gold Standard.' },
+  mangrove: { name: 'Mangrove (Rhizophora/Avicennia)', rate: 6.4, unit: 'tCO₂e/ha/yr', ref: 'Alongi 2014', density: '2,000 stems/ha', notes: 'Blue carbon. Highest ecosystem carbon density incl. soil carbon. Coastal Kenya.' },
+  mangrove_soil: { name: 'Mangrove incl. soil carbon (full)', rate: 9.8, unit: 'tCO₂e/ha/yr', ref: 'Kauffman et al.', density: '2,000 stems/ha', notes: 'When deep soil carbon is measured and verified — premium credits.' },
+  savannah: { name: 'Savannah Grassland (avoided degradation)', rate: 1.2, unit: 'tCO₂e/ha/yr', ref: 'IPCC 2006 Vol.4', density: 'N/A', notes: 'Based on biomass + soil carbon. Conservative Tier 1 estimate for northern Kenya.' },
+  soil_carbon: { name: 'Soil Carbon Enhancement (cropland)', rate: 0.4, unit: 'tCO₂e/ha/yr', ref: 'IPCC 2019', density: 'N/A', notes: 'Conservation agriculture, cover crops, reduced tillage.' },
 };
 
 const TREE_AVG_CARBON = {
-  small:  { label:'Small trees (<5yr, <5m height)',   kgCO2_per_tree_per_yr: 6  },
-  medium: { label:'Medium trees (5-15yr, 5-15m)',     kgCO2_per_tree_per_yr: 21 },
-  large:  { label:'Mature trees (>15yr, >15m)',        kgCO2_per_tree_per_yr: 48 },
-  mixed:  { label:'Mixed / unknown age',              kgCO2_per_tree_per_yr: 21 },
+  small: { label: 'Small trees (<5yr, <5m height)', kgCO2_per_tree_per_yr: 6 },
+  medium: { label: 'Medium trees (5-15yr, 5-15m)', kgCO2_per_tree_per_yr: 21 },
+  large: { label: 'Mature trees (>15yr, >15m)', kgCO2_per_tree_per_yr: 48 },
+  mixed: { label: 'Mixed / unknown age', kgCO2_per_tree_per_yr: 21 },
 };
 
 function renderSeqCalculator() {
@@ -1507,24 +1528,24 @@ function updateSeqPreview() {
       `${trees.toLocaleString()} trees × ${treeRate} kg CO₂/tree/yr = ${directTco2.toFixed(1)} tCO₂e/yr (tree-count method)`;
   }
 
-  const years  = parseFloat(document.getElementById('seq-years')?.value) || 10;
+  const years = parseFloat(document.getElementById('seq-years')?.value) || 10;
   const annual = area_ha * species.rate;
-  const total  = annual * years;
+  const total = annual * years;
   const credits_gross = total;
-  const credits_net   = credits_gross * 0.80; // 20% buffer pool (VCS standard)
-  const value_low  = credits_net * 800;
+  const credits_net = credits_gross * 0.80; // 20% buffer pool (VCS standard)
+  const value_low = credits_net * 800;
   const value_high = credits_net * 1800;
 
   // Update display
-  const set = (id, val) => { const e = document.getElementById(id); if(e) e.textContent = val; };
-  set('seq-result-area',    area_ha > 0 ? area_ha.toFixed(2) + ' ha' : '—');
-  set('seq-result-annual',  annual.toFixed(1) + ' tCO₂e/yr');
-  set('seq-result-total',   total.toFixed(0) + ' tCO₂e');
-  set('seq-result-net',     credits_net.toFixed(0) + ' tCO₂e (after 20% buffer)');
-  set('seq-result-value',   `KES ${value_low.toLocaleString()} – ${value_high.toLocaleString()}`);
+  const set = (id, val) => { const e = document.getElementById(id); if (e) e.textContent = val; };
+  set('seq-result-area', area_ha > 0 ? area_ha.toFixed(2) + ' ha' : '—');
+  set('seq-result-annual', annual.toFixed(1) + ' tCO₂e/yr');
+  set('seq-result-total', total.toFixed(0) + ' tCO₂e');
+  set('seq-result-net', credits_net.toFixed(0) + ' tCO₂e (after 20% buffer)');
+  set('seq-result-value', `KES ${value_low.toLocaleString()} – ${value_high.toLocaleString()}`);
   set('seq-result-species', species.name);
   set('seq-result-density', species.density);
-  set('seq-result-ref',     species.ref);
+  set('seq-result-ref', species.ref);
 
   // Progress ring
   const ring = document.getElementById('seq-ring-pct');
@@ -1541,8 +1562,8 @@ function renderSeqChart(annual, years, speciesName) {
   const ctx = document.getElementById('seq-chart');
   if (!ctx) return;
   if (S.charts && S.charts.seqChart) S.charts.seqChart.destroy();
-  const labels = Array.from({length: years}, (_, i) => `Year ${i+1}`);
-  const cumulative = labels.map((_, i) => parseFloat((annual * (i+1)).toFixed(1)));
+  const labels = Array.from({ length: years }, (_, i) => `Year ${i + 1}`);
+  const cumulative = labels.map((_, i) => parseFloat((annual * (i + 1)).toFixed(1)));
   const annual_arr = labels.map(() => parseFloat(annual.toFixed(1)));
   const chart = new Chart(ctx, {
     type: 'bar',
@@ -1550,17 +1571,18 @@ function renderSeqChart(annual, years, speciesName) {
       labels,
       datasets: [
         { label: 'Annual Sequestration (tCO₂e)', data: annual_arr, backgroundColor: 'rgba(109,217,140,0.5)', borderColor: 'rgba(109,217,140,1)', borderWidth: 1, yAxisID: 'y' },
-        { label: 'Cumulative Total (tCO₂e)',      data: cumulative, type: 'line', borderColor: 'rgba(245,166,35,1)', backgroundColor: 'rgba(245,166,35,0.1)', tension: 0.4, fill: true, yAxisID: 'y1' }
+        { label: 'Cumulative Total (tCO₂e)', data: cumulative, type: 'line', borderColor: 'rgba(245,166,35,1)', backgroundColor: 'rgba(245,166,35,0.1)', tension: 0.4, fill: true, yAxisID: 'y1' }
       ]
     },
     options: {
       responsive: true,
-      plugins: { legend: { labels: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } } },
+      plugins: {
+        legend: { labels: { color: 'rgba(255,255,255,0.6)', font: { size: 10 } } },
         title: { display: true, text: `${speciesName} — CO₂ Absorption Projection`, color: 'rgba(255,255,255,0.7)', font: { size: 11 } }
       },
       scales: {
-        x:  { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y:  { position: 'left',  ticks: { color: 'rgba(255,255,255,0.4)', callback: v => v + 't' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        x: { ticks: { color: 'rgba(255,255,255,0.4)', font: { size: 9 } }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { position: 'left', ticks: { color: 'rgba(255,255,255,0.4)', callback: v => v + 't' }, grid: { color: 'rgba(255,255,255,0.05)' } },
         y1: { position: 'right', ticks: { color: 'rgba(245,166,35,0.6)', callback: v => v + 't' }, grid: { display: false } }
       }
     }
@@ -1595,8 +1617,8 @@ Keep it practical and Kenya-specific.`;
   try {
     const response = await callGeminiAPI(prompt);
     const el = document.getElementById('seq-ai-output');
-    if (el) el.innerHTML = `<div class="ai-report-content">${response.replace(/\n/g,'<br>').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/#{1,3} (.*)/g,'<h4 style="color:var(--mint);margin:.6rem 0 .3rem">$1</h4>')}</div>`;
-  } catch(e) {
+    if (el) el.innerHTML = `<div class="ai-report-content">${response.replace(/\n/g, '<br>').replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>').replace(/#{1,3} (.*)/g, '<h4 style="color:var(--mint);margin:.6rem 0 .3rem">$1</h4>')}</div>`;
+  } catch (e) {
     const el = document.getElementById('seq-ai-output');
     if (el) el.innerHTML = `<div class="ai-report-content">
       <strong>KNCR Eligibility:</strong> ${species.name} projects qualify under KNCR Domestic standard and Verra VCS VM0047 (AFOLU — Improved Forest Management). Gold Standard also accepts agroforestry projects with strong community co-benefits.<br><br>
@@ -1675,24 +1697,24 @@ async function handleOCRUpload(input) {
     // 3. Robust "Search-and-Extract" JSON Logic
     const jsonStart = rawContent.indexOf('{');
     const jsonEnd = rawContent.lastIndexOf('}');
-    
+
     if (jsonStart !== -1 && jsonEnd !== -1) {
-        const jsonString = rawContent.substring(jsonStart, jsonEnd + 1);
-        const data = JSON.parse(jsonString);
-        renderOCRResults(data);
-        if (statusEl) statusEl.textContent = `✅ Data extracted successfully`;
+      const jsonString = rawContent.substring(jsonStart, jsonEnd + 1);
+      const data = JSON.parse(jsonString);
+      renderOCRResults(data);
+      if (statusEl) statusEl.textContent = `✅ Data extracted successfully`;
     } else {
-        // FALLBACK: If AI didn't give JSON, show its text explanation (Still looks good for a demo!)
-        document.getElementById('ocr-results').innerHTML = `
+      // FALLBACK: If AI didn't give JSON, show its text explanation (Still looks good for a demo!)
+      document.getElementById('ocr-results').innerHTML = `
         <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:10px; border-left:4px solid var(--gold);">
             <div style="color:var(--gold); font-size:10px; font-weight:800; margin-bottom:5px;">AI OBSERVATION</div>
             <div style="font-size:13px; color:rgba(255,255,255,0.8); line-height:1.5;">${rawContent}</div>
             <div style="margin-top:10px; font-size:11px; color:rgba(255,255,255,0.3);">⚠️ Document structure was too complex for automated mapping. Values listed above.</div>
         </div>`;
-        if (statusEl) statusEl.textContent = 'ℹ️ AI generated a text summary instead of raw data';
+      if (statusEl) statusEl.textContent = 'ℹ️ AI generated a text summary instead of raw data';
     }
 
-  } catch(e) {
+  } catch (e) {
     console.error('[OCR] Error:', e);
     if (statusEl) statusEl.textContent = '⚠️ Scan unavailable';
     document.getElementById('ocr-results').innerHTML = `<div style="color:var(--coral); font-size:12px; padding:1rem;">Error: ${e.message}</div>`;
@@ -1706,9 +1728,9 @@ const EF_MAP = {
   solid_waste: 0.58, wastewater: 0.025, hfc134a: 1.53, r404a: 4.18
 };
 const UNIT_LABEL = {
-  diesel:'L', petrol:'L', lpg:'kg', hfo:'L', cng:'m³', kerosene:'L',
-  electricity:'kWh', cement:'t', steel:'t', rebar:'t', concrete:'m³', timber:'m³',
-  distance:'km', solid_waste:'t', wastewater:'m³', hfc134a:'kg', r404a:'kg'
+  diesel: 'L', petrol: 'L', lpg: 'kg', hfo: 'L', cng: 'm³', kerosene: 'L',
+  electricity: 'kWh', cement: 't', steel: 't', rebar: 't', concrete: 'm³', timber: 'm³',
+  distance: 'km', solid_waste: 't', wastewater: 'm³', hfc134a: 'kg', r404a: 'kg'
 };
 
 function renderOCRResults(data) {
@@ -1727,7 +1749,7 @@ function renderOCRResults(data) {
     totalCO2 += co2;
     const confColor = item.confidence === 'high' ? '#69F0AE' : item.confidence === 'medium' ? '#FFD54F' : '#EF9A9A';
     return `<div class="parse-item">
-      <div class="parse-label">${item.type.replace(/_/g,' ')}</div>
+      <div class="parse-label">${item.type.replace(/_/g, ' ')}</div>
       <div class="parse-value">${item.value.toLocaleString()} ${item.unit || UNIT_LABEL[item.type] || ''}</div>
       <div class="parse-emission">${co2.toFixed(3)} tCO₂e</div>
       <div style="font-size:.65rem;color:${confColor};margin-top:2px">${item.confidence} confidence</div>
@@ -1741,7 +1763,7 @@ function renderOCRResults(data) {
     <div class="parse-results">${rows}</div>
     <div class="parse-total">Total: ${totalCO2.toFixed(3)} tCO₂e</div>
     ${data.notes ? `<div style="font-size:.72rem;color:rgba(255,165,0,.6);margin-top:.4rem">⚠️ ${data.notes}</div>` : ''}
-    <button class="btn-buy-credit" style="margin-top:.7rem;font-size:.78rem" onclick="applyOCRToCalculator(${JSON.stringify(data.extracted).replace(/"/g,'&quot;')})">
+    <button class="btn-buy-credit" style="margin-top:.7rem;font-size:.78rem" onclick="applyOCRToCalculator(${JSON.stringify(data.extracted).replace(/"/g, '&quot;')})">
       ⚡ Apply to Calculator
     </button>`;
 }
@@ -1788,9 +1810,9 @@ Under Kenya's Carbon Markets Regulations 2024 and IPCC AR6 methodology, what are
     const advice = await callGeminiAPI(prompt);
     el.innerHTML = `<div class="dqs-ai-box">
       <div style="font-size:.72rem;font-weight:600;color:var(--mint);margin-bottom:.4rem">🤖 AI Data Quality Advisor</div>
-      <div style="font-size:.79rem;color:rgba(255,255,255,.75)">${advice.replace(/\n/g,'<br>')}</div>
+      <div style="font-size:.79rem;color:rgba(255,255,255,.75)">${advice.replace(/\n/g, '<br>')}</div>
     </div>`;
-  } catch(e) {
+  } catch (e) {
     const tips = {
       'Audit-Ready': 'Your data quality is excellent. Maintain it by retaining all source documents for 7 years (Regulation 19 requirement). Consider engaging a VVB for third-party verification.',
       'Verified': 'Good foundation. Upgrade remaining estimated values to metered or receipt-based sources. Request KPLC meter certificates and keep fuel delivery notes.',
@@ -1820,7 +1842,7 @@ Uncertainty range: ±${u.pct}%.
 Plausibility flags: ${calcData.flags?.length ? calcData.flags.join('; ') : 'none'}.
 Kenya context. IPCC AR6 methodology. ISO 14064-1 aligned. Professional tone. Under 150 words.`;
     return await callGeminiAPI(prompt);
-  } catch(e) {
+  } catch (e) {
     return `This report documents the greenhouse gas (GHG) emissions of ${userData.org} for the reporting period, prepared in accordance with ISO 14064-1:2018 and IPCC 2006 Guidelines with AR6 GWP₁₀₀ values. Total emissions are ${calcData.total_t.toFixed(2)} tCO₂e/year, comprising Scope 1 direct emissions (${calcData.s1_t.toFixed(2)} tCO₂e), Scope 2 purchased energy (${calcData.s2_t.toFixed(2)} tCO₂e), and Scope 3 upstream/embodied emissions (${calcData.s3_t.toFixed(2)} tCO₂e).
 
 The NTZ Integrity Score of ${gs}/100 and Data Quality Score of ${calcData.dqs}/100 reflect the current state of data availability. ${calcData.flags?.length ? `${calcData.flags.length} plausibility flag(s) require auditor review before formal submission.` : 'No plausibility flags were identified.'} Results should be verified by a qualified carbon auditor before submission to NEMA or any carbon registry.`;
@@ -1843,12 +1865,12 @@ function runNetZeroPathway() {
 
   const annualReduction = currentEmissions / yearsLeft;
   const requiredOffsets = currentEmissions * 0.2; // 20% via offsets, 80% via reduction
-  const offsetCostLow  = requiredOffsets * 800;
+  const offsetCostLow = requiredOffsets * 800;
   const offsetCostHigh = requiredOffsets * 1800;
 
-  const years = Array.from({length: yearsLeft + 1}, (_, i) => now + i);
+  const years = Array.from({ length: yearsLeft + 1 }, (_, i) => now + i);
   const pathway = years.map((_, i) => Math.max(0, currentEmissions - (annualReduction * i)));
-  const offsets  = years.map((_, i) => Math.min(requiredOffsets, requiredOffsets * (i / yearsLeft)));
+  const offsets = years.map((_, i) => Math.min(requiredOffsets, requiredOffsets * (i / yearsLeft)));
 
   const ctx = document.getElementById('nz-chart');
   if (!ctx) return;
@@ -1859,15 +1881,15 @@ function runNetZeroPathway() {
       labels: years,
       datasets: [
         { label: 'Emission Reduction Pathway', data: pathway, borderColor: '#EF5350', backgroundColor: 'rgba(239,83,80,0.08)', fill: true, tension: 0.4 },
-        { label: 'Offset Coverage',            data: offsets,  borderColor: '#69F0AE', backgroundColor: 'rgba(109,240,174,0.1)', fill: true, tension: 0.4 },
+        { label: 'Offset Coverage', data: offsets, borderColor: '#69F0AE', backgroundColor: 'rgba(109,240,174,0.1)', fill: true, tension: 0.4 },
       ]
     },
     options: {
       responsive: true,
       plugins: { legend: { labels: { color: 'rgba(255,255,255,0.6)' } } },
       scales: {
-        x:  { ticks: { color: 'rgba(255,255,255,0.4)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
-        y:  { ticks: { color: 'rgba(255,255,255,0.4)', callback: v => v.toLocaleString() + 't' }, grid: { color: 'rgba(255,255,255,0.05)' } }
+        x: { ticks: { color: 'rgba(255,255,255,0.4)' }, grid: { color: 'rgba(255,255,255,0.05)' } },
+        y: { ticks: { color: 'rgba(255,255,255,0.4)', callback: v => v.toLocaleString() + 't' }, grid: { color: 'rgba(255,255,255,0.05)' } }
       }
     }
   });
@@ -1883,16 +1905,16 @@ function runNetZeroPathway() {
 
 // 14b. Scope 3 Supply Chain Tracker
 const SCOPE3_CATEGORIES = [
-  { cat:'Purchased Goods & Services', icon:'📦', ef_note:'Use supplier-specific data or EEIO models', placeholder:'e.g., office supplies, IT equipment, professional services' },
-  { cat:'Capital Goods',              icon:'🏗️', ef_note:'Bath ICE v3.0 for construction materials', placeholder:'e.g., vehicles, machinery, buildings' },
-  { cat:'Fuel & Energy (upstream)',   icon:'⛽', ef_note:'~15% upstream for diesel, ~8% for KPLC',   placeholder:'Upstream of your Scope 1&2 fuel use' },
-  { cat:'Upstream Transport',         icon:'🚚', ef_note:'0.20 kgCO₂/t-km (HGV)',                    placeholder:'Freight to your facility' },
-  { cat:'Waste Generated',            icon:'🗑️', ef_note:'580 kgCO₂e/t landfill',                   placeholder:'Solid waste sent to landfill' },
-  { cat:'Business Travel',            icon:'✈️', ef_note:'0.165 kgCO₂/km (car), 0.09 (flight)',     placeholder:'Employee flights, car travel' },
-  { cat:'Employee Commuting',         icon:'🚌', ef_note:'0.103 kgCO₂/km (matatu/boda avg)',        placeholder:'Daily staff commute distances' },
-  { cat:'Downstream Transport',       icon:'📤', ef_note:'0.20 kgCO₂/t-km',                         placeholder:'Freight from your facility to clients' },
-  { cat:'Use of Sold Products',       icon:'🏭', ef_note:'Depends on product type',                  placeholder:'Emissions from products when used by customers' },
-  { cat:'End-of-Life Treatment',      icon:'♻️', ef_note:'Material-specific disposal EFs',           placeholder:'Disposal/recycling of sold products' },
+  { cat: 'Purchased Goods & Services', icon: '📦', ef_note: 'Use supplier-specific data or EEIO models', placeholder: 'e.g., office supplies, IT equipment, professional services' },
+  { cat: 'Capital Goods', icon: '🏗️', ef_note: 'Bath ICE v3.0 for construction materials', placeholder: 'e.g., vehicles, machinery, buildings' },
+  { cat: 'Fuel & Energy (upstream)', icon: '⛽', ef_note: '~15% upstream for diesel, ~8% for KPLC', placeholder: 'Upstream of your Scope 1&2 fuel use' },
+  { cat: 'Upstream Transport', icon: '🚚', ef_note: '0.20 kgCO₂/t-km (HGV)', placeholder: 'Freight to your facility' },
+  { cat: 'Waste Generated', icon: '🗑️', ef_note: '580 kgCO₂e/t landfill', placeholder: 'Solid waste sent to landfill' },
+  { cat: 'Business Travel', icon: '✈️', ef_note: '0.165 kgCO₂/km (car), 0.09 (flight)', placeholder: 'Employee flights, car travel' },
+  { cat: 'Employee Commuting', icon: '🚌', ef_note: '0.103 kgCO₂/km (matatu/boda avg)', placeholder: 'Daily staff commute distances' },
+  { cat: 'Downstream Transport', icon: '📤', ef_note: '0.20 kgCO₂/t-km', placeholder: 'Freight from your facility to clients' },
+  { cat: 'Use of Sold Products', icon: '🏭', ef_note: 'Depends on product type', placeholder: 'Emissions from products when used by customers' },
+  { cat: 'End-of-Life Treatment', icon: '♻️', ef_note: 'Material-specific disposal EFs', placeholder: 'Disposal/recycling of sold products' },
 ];
 
 function renderScope3Tracker() {
@@ -1930,8 +1952,8 @@ function renderEnterpriseExtras() {
 
 // Override section navigation to also init new features
 const _origShowSectionEnt = window.showSection;
-window.showSection = function(id) {
+window.showSection = function (id) {
   if (typeof _origShowSectionEnt === 'function') _origShowSectionEnt(id);
   if (id === 'sequestration') { renderSeqCalculator(); }
-  if (id === 'enterprise')    { renderEnterpriseExtras(); }
+  if (id === 'enterprise') { renderEnterpriseExtras(); }
 };

@@ -273,6 +273,25 @@ const GCIS_STEPS = [
     ]
   },
   {
+    id: 'emissions-calc',
+    title: 'Emissions Calculator (Optional)',
+    subtitle: 'Optionally calculate expected baseline emissions using the Netzerra Calculator engine',
+    fields: [
+      { id: 'gcis-emissions-calc-total', label: 'Total Estimated Emissions (tCO2e/yr)', type: 'number', placeholder: 'e.g. 1500', required: false },
+      { id: 'gcis-emissions-calc-source', label: 'Emission Source Breakdown', type: 'textarea', placeholder: 'Describe the main sources of baseline emissions (e.g., diesel generators, grid electricity)...', required: false }
+    ]
+  },
+  {
+    id: 'sequestration-calc',
+    title: 'Sequestration Calculator (Optional)',
+    subtitle: 'Optionally calculate sequestration totals for forestry or AFOLU projects',
+    fields: [
+      { id: 'gcis-sequestration-calc-total', label: 'Total Sequestration (tCO2e/yr)', type: 'number', placeholder: 'e.g. 450', required: false },
+      { id: 'gcis-sequestration-calc-area', label: 'Project Area (Hectares)', type: 'number', placeholder: 'e.g. 120', required: false },
+      { id: 'gcis-sequestration-calc-species', label: 'Tree Species / Sink Type', type: 'text', placeholder: 'e.g. Acacia mellifera, Bamboo', required: false }
+    ]
+  },
+  {
     id: 'baseline-methodology',
     title: 'Baseline & Methodology',
     subtitle: 'Technical justification for emission reductions',
