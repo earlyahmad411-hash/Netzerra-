@@ -352,7 +352,14 @@ const GCIS_STEPS = [
     subtitle: 'CDA Fourth Schedule compliance',
     fields: [
       { id: 'gcis-community', label: 'Affected Community', type: 'text', placeholder: 'e.g. Turkana South Ward Community', required: true },
-      { id: 'gcis-cda-rate', label: 'Community Benefit Rate (%)', type: 'number', placeholder: 'Land-based: 40%, Non-land: 25%', required: true },
+      { id: 'gcis-cda-rate', label: 'Community Benefit Rate (%)', type: 'select', options: [
+        { value: '25', label: '25% (Minimum for Non-Land/Private Projects)' },
+        { value: '30', label: '30%' },
+        { value: '35', label: '35%' },
+        { value: '40', label: '40% (Minimum for Community/Public Land under Reg 23E)' },
+        { value: '45', label: '45%' },
+        { value: '50', label: '50%+' }
+      ], required: true },
       { id: 'gcis-benefit-plan', label: 'Benefit Distribution Plan', type: 'textarea', placeholder: 'Describe how carbon credit revenue will be shared with the community...', required: true },
       { id: 'gcis-grievance', label: 'Grievance Redress Mechanism', type: 'textarea', placeholder: 'Describe the community complaint and resolution process...' },
     ]
@@ -447,19 +454,35 @@ function renderGCISWizard() {
 
 function gcisGoToStep(step) {
   gcisCollectCurrentData();
+  
+  if (step > gcisCurrentStep) {
+    // Basic progression validation blocks jumping ahead with invalid data
+    if (!validateCurrentStep()) return;
+  }
+  
   gcisCurrentStep = step;
   renderGCISWizard();
 }
 
 function gcisNext() {
   gcisCollectCurrentData();
+  
+  if (!validateCurrentStep()) return;
+
+  gcisCurrentStep = Math.min(gcisCurrentStep + 1, GCIS_STEPS.length - 1);
+  renderGCISWizard();
+  window.scrollTo(0, document.getElementById('gcis-wizard-container')?.offsetTop - 80 || 0);
+}
+
+function validateCurrentStep() {
   const step = GCIS_STEPS[gcisCurrentStep];
+
   for (const field of step.fields) {
     if (field.required && !gcisData[field.id] && field.type !== 'gis-scan' && field.type !== 'receipt-scan') {
       toast('Please fill in: ' + field.label, 'error');
       const el = document.getElementById(field.id);
       if (el) { el.style.borderColor = '#EF5350'; el.focus(); }
-      return;
+      return false;
     }
   }
 
@@ -468,13 +491,50 @@ function gcisNext() {
     const dupWarnings = checkDuplicateRegistrations();
     if (dupWarnings.length > 0) {
       toast('WARNING: ' + dupWarnings.join('; '), 'error');
-      // Allow to continue but warn
+      // Allow to continue but warn (as per existing logic)
     }
   }
 
-  gcisCurrentStep = Math.min(gcisCurrentStep + 1, GCIS_STEPS.length - 1);
-  renderGCISWizard();
-  window.scrollTo(0, document.getElementById('gcis-wizard-container')?.offsetTop - 80 || 0);
+  // FOURTH SCHEDULE LOCK (Regulation 23E Enforcement)
+  if (step.id === 'community-benefit') {
+    const landType = gcisData['gcis-land-type'] || 'private';
+    const cdaRate = parseFloat(gcisData['gcis-cda-rate']) || 0;
+    
+    // Clear previous errors first
+    const cdaField = document.getElementById('gcis-cda-rate');
+    if (cdaField) cdaField.style.borderColor = '';
+    const existingMsg = document.getElementById('cda-regulatory-block');
+    if (existingMsg) existingMsg.remove();
+
+    if ((landType === 'community' || landType === 'public') && cdaRate < 40) {
+      if (cdaField) {
+        cdaField.style.borderColor = 'coral';
+        cdaField.focus();
+        
+        const errorMsg = document.createElement('div');
+        errorMsg.id = 'cda-regulatory-block';
+        errorMsg.style.color = 'coral';
+        errorMsg.style.fontWeight = 'bold';
+        errorMsg.style.marginTop = '10px';
+        errorMsg.style.fontSize = '0.9rem';
+        errorMsg.innerText = "⚠️ REGULATORY BLOCK: Under the Fourth Schedule of the Carbon Markets Regulations 2024 (Reg 23E), land-based projects on Community/Public land must allocate a minimum of 40% net earnings to the community. You cannot proceed with a 25% allocation.";
+        cdaField.parentNode.appendChild(errorMsg);
+      }
+      
+      if (!window.NTZ) window.NTZ = {};
+      if (!window.NTZ.registry) window.NTZ.registry = [];
+      window.NTZ.registry.push({ 
+        type: 'Compliance Violation Attempt', 
+        timestamp: new Date().toISOString(), 
+        detail: 'Attempted to bypass CDA minimum rate for ' + landType + ' land.' 
+      });
+      
+      toast('Regulatory Block: Invalid CDA rate for Community/Public land.', 'error');
+      return false;
+    }
+  }
+  
+  return true;
 }
 
 function gcisBack() {
@@ -489,7 +549,12 @@ function gcisCollectCurrentData() {
   step.fields.forEach(field => {
     if (field.type === 'gis-scan' || field.type === 'receipt-scan') return;
     const el = document.getElementById(field.id);
-    if (el) gcisData[field.id] = el.value;
+    if (el) {
+      gcisData[field.id] = el.value;
+      if (gcisData[field.id + '_ai_generated'] && gcisData[field.id + '_ai_text'] !== el.value.trim()) {
+        gcisData[field.id + '_ai_modified'] = true;
+      }
+    }
   });
 }
 
@@ -540,6 +605,8 @@ async function gcisAISuggest(fieldId, aiType) {
     if (textarea) {
       textarea.value = response.trim();
       gcisData[fieldId] = response.trim();
+      gcisData[fieldId + '_ai_generated'] = true;
+      gcisData[fieldId + '_ai_text'] = response.trim();
       textarea.style.borderColor = '#4ade80';
       setTimeout(() => { textarea.style.borderColor = ''; }, 2000);
     }
@@ -2294,8 +2361,8 @@ function renderReviewQueue() {
             <div><strong>Invoice No:</strong> ${p['gcis-invoice-no'] || 'N/A'}</div>
             <div><strong>NEMA License:</strong> ${p['gcis-nema-license'] || 'N/A'}</div>
           </div>
-          ${p['gcis-baseline'] ? '<div class="rq-detail-section"><strong>Baseline:</strong><p>' + p['gcis-baseline'].substring(0, 300) + '...</p></div>' : ''}
-          ${p['gcis-additionality'] ? '<div class="rq-detail-section"><strong>Additionality:</strong><p>' + p['gcis-additionality'].substring(0, 300) + '...</p></div>' : ''}
+          ${p['gcis-baseline'] ? '<div class="rq-detail-section"><strong>Baseline:</strong>' + (p['gcis-baseline_ai_generated'] ? (p['gcis-baseline_ai_modified'] ? ' <span style="font-size:0.6rem;color:#F5A623;border:1px solid #F5A623;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">⚠️ AI Assisted</span>' : ' <span style="font-size:0.6rem;color:#EF5350;border:1px solid #EF5350;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">🤖 AI Generated</span>') : '') + '<p>' + p['gcis-baseline'].substring(0, 300) + '...</p></div>' : ''}
+          ${p['gcis-additionality'] ? '<div class="rq-detail-section"><strong>Additionality:</strong>' + (p['gcis-additionality_ai_generated'] ? (p['gcis-additionality_ai_modified'] ? ' <span style="font-size:0.6rem;color:#F5A623;border:1px solid #F5A623;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">⚠️ AI Assisted</span>' : ' <span style="font-size:0.6rem;color:#EF5350;border:1px solid #EF5350;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">🤖 AI Generated</span>') : '') + '<p>' + p['gcis-additionality'].substring(0, 300) + '...</p></div>' : ''}
           
           <!-- AUTOMATED PRE-VETTING FIREWALL -->
           <div class="rq-detail-section" style="margin-top:12px;padding:12px;background:linear-gradient(135deg, rgba(74,222,128,.05), rgba(10,31,20,.8));border:1px solid rgba(74,222,128,.2);border-radius:8px;">
@@ -2319,6 +2386,10 @@ function renderReviewQueue() {
               <div style="background:rgba(0,0,0,.2);padding:8px;border-radius:6px">
                 <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase">Plagiarism & Greenwash</div>
                 <div style="font-size:.78rem;margin-top:4px;font-weight:600;color:#4ade80">✅ Original (98% Uniqueness)</div>
+              </div>
+              <div style="background:rgba(0,0,0,.2);padding:8px;border-radius:6px">
+                <div style="font-size:.65rem;color:rgba(255,255,255,.4);text-transform:uppercase">AI Text Detection</div>
+                <div style="font-size:.78rem;margin-top:4px;font-weight:600;color:${(p['gcis-baseline_ai_generated'] || p['gcis-additionality_ai_generated']) ? '#EF5350' : '#4ade80'}">${(p['gcis-baseline_ai_generated'] || p['gcis-additionality_ai_generated']) ? '🚨 AI Content Flagged' : '✅ Human Written'}</div>
               </div>
             </div>
             <div style="margin-top:10px;font-size:.7rem;color:rgba(255,255,255,.5);display:flex;align-items:center;gap:4px">
@@ -2490,6 +2561,7 @@ function renderNEMAOversight() {
            <div><strong style="color:rgba(255,255,255,.5)">IPCC Factor Alignment:</strong> <span style="color:#4ade80">Correct (Kenya Tech Specs)</span></div>
            <div><strong style="color:rgba(255,255,255,.5)">County Registration:</strong> <span style="color:#4ade80">Matched to Ledger</span></div>
            <div><strong style="color:rgba(255,255,255,.5)">DQS Traceability:</strong> <span style="color:#4ade80">Complete Audit Record</span></div>
+           <div><strong style="color:rgba(255,255,255,.5)">AI Generation Flag:</strong> <span style="color:${(p['gcis-baseline_ai_generated'] || p['gcis-additionality_ai_generated']) ? '#EF5350' : '#4ade80'}">${(p['gcis-baseline_ai_generated'] || p['gcis-additionality_ai_generated']) ? '🚨 AI Flagged' : 'Clear (Human)'}</span></div>
         </div>
       </div>
     </td></tr>`;
