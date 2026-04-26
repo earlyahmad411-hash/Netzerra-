@@ -98,7 +98,7 @@ function _buildAIHTML(){
     <div class="nai-body">
       <div class="nai-pane on" id="nai-chat">
         <div class="nai-msgs" id="nai-msgs">
-          <div class="nai-msg bot"><div class="nai-bub">👋 Habari! I'm Netzerra AI. I can help you with carbon calculations, KNCR compliance, or just have a friendly chat in English or Kiswahili. How can I help you today?</div><span class="nai-mt">Now</span></div>
+          <!-- Greeting injected dynamically by _injectRoleGreeting() after auth loads -->
         </div>
         <div class="nai-sugs" id="nai-sugs">
           <button class="nai-sug" onclick="NTZ_AI.qs(this)">How do I register a KNCR project?</button>
@@ -142,6 +142,8 @@ const NETZERRA_KNOWLEDGE = {
         "Carbon Markets Regulations 2024 (PDF)": "https://www.nema.go.ke/images/Docs/Regulations/Climate_Change_Carbon_Markets_Regulations_2024.pdf"
     },
     regulatory_framework: {
+        "Sustainable Waste Management Act 2022": "Establishes Extended Producer Responsibility (EPR) and mandates strict digital traceability of waste streams.",
+        "Traceability & dCoC": "Digital Chain of Custody (dCoC) mandates continuous tracking from Source-to-Sink. Any weight variance >10% between source and facility weighbridge triggers an anti-fraud block under Regulation 37.",
         "Climate Change Act 2016 (2023 Amendment)": "The primary law establishing the KNCR and national carbon oversight.",
         "Carbon Markets Regulations 2024": "Governs the registration, trade, and benefit-sharing of carbon projects.",
         "Regulation 37 (The Heavy Penalty)": "Fine not exceeding KES 500 Million or 10 years imprisonment for providing false/misleading data to NEMA/KNCR.",
@@ -151,6 +153,7 @@ const NETZERRA_KNOWLEDGE = {
         "LoA (Letter of Authorization)": "The final approval issued by NEMA allowing the transfer of credits."
     },
     technical_standards: {
+        "Solid Waste EF": "0.58 tCO2e/tonne (IPCC Tier 2 default for unmanaged Solid Waste/landfills in East Africa region).",
         "AFOLU": "Agriculture, Forestry, and Other Land Use (IPCC Sector). Includes Mau Forest, Kajiado rangelands, and coastal mangroves.",
         "Kenya Grid Factor": "0.3174 kgCO2/kWh (The official KNCR Combined Margin for grid-connected projects).",
         "GWP Values (IPCC AR6)": "CH4 = 27.0, N2O = 273. These are used in Netzerra to ensure 2026-standard accuracy.",
@@ -165,41 +168,183 @@ const NETZERRA_KNOWLEDGE = {
     }
 };
 
+/* ── Compute real regulatory violations from live project data ── */
+function _computeViolations() {
+  const all = [
+    ...((typeof NTZ !== 'undefined' && NTZ.projects) ? NTZ.projects : []),
+  ];
+  let wProjects = [];
+  try {
+    if (typeof getWasteProjects === 'function') wProjects = getWasteProjects();
+    else wProjects = all.filter(p => p.sector === 'waste');
+  } catch(e){}
+
+  const violations = [];
+  const today = Date.now();
+
+  // Check GCIS projects
+  all.forEach(p => {
+    const name = p['gcis-proj-name'] || p.name || p.id;
+    const cda = parseFloat(p['gcis-cda-rate'] || p.cda_share_pct || 0);
+    const isLand = (p['gcis-land-type']||p.land_type||'').toLowerCase().includes('land');
+    if (cda > 0 && cda < 40 && isLand)
+      violations.push(`🔴 CDA VIOLATION [Reg.23E] — ${name}: CDA share ${cda}% is below the 40% mandatory threshold for land-based projects.`);
+    if (p['gcis-baseline_ai_generated'] && !p['gcis-baseline_ai_modified'])
+      violations.push(`🟡 AI-GENERATED BASELINE [Reg.37 Risk] — ${name}: Baseline was AI-generated and has NOT been manually reviewed. This may constitute false data submission.`);
+    if (p.pipelineStage === 'mrv' || p.step >= 9) {
+      const lastAudit = p.lastAudit ? new Date(p.lastAudit).getTime() : 0;
+      if (lastAudit && (today - lastAudit) > 90 * 86400000)
+        violations.push(`🟡 MRV OVERDUE [Reg.25] — ${name}: No MRV report filed in ${Math.floor((today-lastAudit)/86400000)} days. 90-day limit exceeded.`);
+    }
+  });
+
+  // Check waste projects
+  wProjects.forEach(p => {
+    const name = p.name || p.id;
+    const srcW  = parseFloat(p.tonnageSource || p.w_tonnage || 0);
+    const facW  = parseFloat(p.tonnageFacility || 0);
+    if (srcW > 0 && facW > 0) {
+      const variance = Math.abs(srcW - facW) / srcW * 100;
+      if (variance > 10)
+        violations.push(`🔴 WEIGHT FRAUD [Reg.37 — KES 500M Penalty] — ${name}: Source weight ${srcW}t vs Facility weight ${facW}t = ${variance.toFixed(1)}% variance (threshold: 10%).`);
+    }
+    const cdaShare = parseFloat(p.cdaShare || p.cda_share_pct || 0);
+    if (cdaShare > 0 && cdaShare < 40)
+      violations.push(`🔴 CDA VIOLATION [Reg.23E] — ${name}: Community share ${cdaShare}% below 40% threshold.`);
+    if (!p.dcocEnabled && (p.currentStep||p.step||1) >= 6)
+      violations.push(`🟡 dCoC GAP [SWMA 2022] — ${name}: Digital Chain of Custody not active despite facility assignment at Step ${p.currentStep||p.step}.`);
+    if (p.w_nema_license) {
+      const expiry = p.w_license_expiry ? new Date(p.w_license_expiry).getTime() : 0;
+      if (expiry && expiry < today)
+        violations.push(`🔴 LICENSE EXPIRED [EMCA §87] — ${name}: NEMA waste license ${p.w_nema_license} expired ${new Date(expiry).toLocaleDateString('en-KE')}.`);
+      else if (expiry && (expiry - today) < 30 * 86400000)
+        violations.push(`🟡 LICENSE EXPIRING SOON [EMCA §87] — ${name}: License ${p.w_nema_license} expires in ${Math.floor((expiry-today)/86400000)} days.`);
+    }
+    const lastMrv = p.lastMrvDate ? new Date(p.lastMrvDate).getTime() : 0;
+    if (p.status === 'approved' && lastMrv && (today - lastMrv) > 90 * 86400000)
+      violations.push(`🟡 MRV OVERDUE [Reg.25] — ${name}: No waste MRV report in ${Math.floor((today-lastMrv)/86400000)} days.`);
+  });
+
+  if (violations.length === 0) return '  ✅ No active violations detected in live project data.';
+  return violations.map(v => `  ${v}`).join('\n');
+}
+
 function _ctx(){
+  // ── Resolve current user (AUTH takes priority over S) ──
+  const u = (typeof AUTH !== 'undefined' && AUTH.currentUser)
+    ? AUTH.currentUser
+    : ((typeof S !== 'undefined') ? S.user : {});
+  const role = u.role || 'proponent';
+  const lc   = (typeof S !== 'undefined') ? S.lastCalc : null;
+
+  // ── Pull ALL GCIS/nuclear projects ──
+  const gcisProjects = (typeof NTZ !== 'undefined' && NTZ.projects) ? NTZ.projects : [];
+
+  // ── Pull ALL waste management projects ──
+  let wasteProjects = [];
+  try {
+    if (typeof getWasteProjects === 'function') wasteProjects = getWasteProjects();
+    else if (typeof window.NTZ !== 'undefined' && window.NTZ.projects)
+      wasteProjects = window.NTZ.projects.filter(p => p.sector === 'waste');
+  } catch(e) {}
+
+  // ── Format project summaries ──
+  const STAGES = ['PCN','PDD','CDA','ESCP','Stakeholder','ESIA','VVB','DNA/LoA','KNCR Reg.','MRV'];
+  const fmtGcis = gcisProjects.map(p => {
+    const stageIdx = p.pipelineStage ? ['pcn','pdd','cda','escp','stakeholder','esia','validation','dna-approval','kncr-registration','mrv'].indexOf(p.pipelineStage) : (p.step||0);
+    const stageName = STAGES[stageIdx] || p.pipelineStage || 'PCN';
+    const prl = p.prlScore ? `PRL ${p.prlScore.score}% (${p.prlScore.level})` : 'PRL N/A';
+    return `  • [GCIS] ${p['gcis-proj-name']||p.name||p.id} | ${p['gcis-county']||p.county||'?'} County | Stage: ${stageName} | Credits: ${Math.round(p['gcis-credits']||p.credits||0)} tCO₂e/yr | CDA: ${p['gcis-cda-rate']||p.cda_share_pct||0}% | Status: ${p.status||'pending'} | ${prl}`;
+  }).join('\n') || '  (none)';
+
+  const fmtWaste = wasteProjects.map(p => {
+    const step = p.currentStep||p.step||1;
+    const stepNames = ['Identity','Legal Gate','Contractor','Source Stream','AI Vision','GIS Facility','IPCC Baseline','CDA','Registration'];
+    const stepName = stepNames[step-1] || `Step ${step}`;
+    return `  • [WASTE] ${p.name||p.id} | ${p.county||'?'} County | Wizard Step ${step}/9 (${stepName}) | Tonnage: ${p.tonnageSource||p.w_tonnage||0}t | Credits: ${parseFloat(p.credits||0).toFixed(1)} tCO₂e/yr | dCoC: ${p.dcocEnabled?'Active':'Pending'} | License: ${p.w_nema_license||'N/A'} | Status: ${p.status||'pending'}`;
+  }).join('\n') || '  (none)';
+
+  // ── Registry audit entries ──
+  const recentAudit = (typeof NTZ !== 'undefined' && NTZ.registry)
+    ? NTZ.registry.slice(-5).map(e => `  • Block#${e.blockNumber} ${e.action} → ${e.projectId} by ${e.actor}`).join('\n')
+    : '  (none)';
+
   const kObj = JSON.stringify(NETZERRA_KNOWLEDGE, null, 2);
-  const u  = (typeof S !== 'undefined') ? S.user  : {};
-  const lc = (typeof S !== 'undefined') ? S.lastCalc : null;
-  const kp = (typeof S !== 'undefined' && S.kncr) ? S.kncr.projects : [];
-  return `# ROLE: Sovereign Carbon Intelligence Lead (Kenya)
-You are Zerra, the expert brain of Netzerra. You are not a generic LLM. You are a specialized regulatory engine hardcoded with the Kenya National Carbon Registry (KNCR) logic.
 
-# OPERATIONAL PROTOCOLS:
-1. CITATION: Whenever you mention a penalty or a mandate, cite the specific Regulation (e.g., "Under Regulation 37...").
-2. LINKS: If the user asks where to register or for official documents, provide the official links from the Netzerra Knowledge Base (kncr.go.ke, nema.go.ke).
-3. DOMAIN EXPERTISE: 
-   - You understand the "NEMA First Schedule" (PCN) and "Fourth Schedule" (CDA). 
-   - You know that AFOLU is the heart of Kenya's climate finance.
-   - You understand that FLLoCA compliance is what unlocks county-level funding.
-4. HONESTY GATE: If a technical query is outside the provided data, state: "That requires a specialized NEMA Technical Review. I recommend generating a Netzerra DQS report to prepare for that audit."
+  // ── Role-specific persona & tone ──
+  const ROLE_PERSONAS = {
+    nema_national: `You are speaking with Dr. Faith Karanja, NEMA National Director. ADOPT THIS PERSONA: You are Zerra acting as a Senior Regulatory Intelligence Officer. Use formal, authoritative language. Lead every response with regulatory risk. Proactively flag CDA violations, weight fraud, and license breaches. Recommend enforcement actions. You have full visibility into ALL projects and their compliance status. Never be lenient about Regulation 37 penalties.`,
+    nema_county:   `You are speaking with a NEMA County Officer. ADOPT THIS PERSONA: You are Zerra acting as a County Compliance Advisor. Focus on projects within the officer's county. Highlight local enforcement priorities, community benefit compliance, and county-level monitoring actions. Use professional but practical language.`,
+    nema_reviewer: `You are speaking with a NEMA Technical Reviewer. ADOPT THIS PERSONA: You are Zerra acting as a Technical Auditor. Deep-dive into IPCC methodology, MRV quality, PRL scores, and data quality. Flag AI-generated content, unverified baselines, and additionality risks. Use highly technical language.`,
+    nema:          `You are speaking with a NEMA Regulator. ADOPT THIS PERSONA: Authoritative regulatory officer tone. Focus on compliance, enforcement, and registry integrity.`,
+    consultant:    `You are speaking with ${u.name||'a Carbon Consultant'} from ${u.org||'a consultancy'}. ADOPT THIS PERSONA: You are Zerra acting as a Peer Carbon Expert. Use technical but collaborative language. Help the consultant review project documents, spot weaknesses in methodologies, and prepare projects for NEMA approval. Focus on PRL improvement and document quality.`,
+    proponent:     `You are speaking with ${u.name||'a Project Proponent'} from ${u.org||'their organisation'}. ADOPT THIS PERSONA: You are Zerra acting as a Friendly Carbon Compliance Guide. Use encouraging but precise language. Walk them through the 10-stage KNCR pipeline. Explain regulations in plain terms. Alert them to compliance gaps before they become enforcement issues. Celebrate milestones.`,
+    developer:     `You are speaking with ${u.name||'a Developer'} (full access). ADOPT THIS PERSONA: You are Zerra in Developer Mode. Be technical, comprehensive, and direct. Share full system context when asked.`,
+    enterprise:    `You are speaking with ${u.name||'an Enterprise user'} from ${u.org||'their company'}. ADOPT THIS PERSONA: You are Zerra acting as a Carbon Investment Advisor. Focus on credit portfolio value, offset ratios, Article 6 compliance, and B2B trading opportunities.`,
+  };
 
-# DATA CONSTITUTION:
---- START DATABASE ---
+  const persona = ROLE_PERSONAS[role] || ROLE_PERSONAS.proponent;
+
+  // ── Role-specific instructions ──
+  const ROLE_INSTRUCTIONS = {
+    nema_national: `NEMA REGULATOR PROTOCOLS:
+- You have READ ACCESS to ALL projects in the system, including waste facilities.
+- Always lead with compliance status and enforcement risk.
+- For every project mentioned, state its CDA compliance, dCoC status, and pipeline stage.
+- Recommend "Freeze Credits", "Dispatch Investigator", or "Block PCN" where warranted.
+- Cite Regulation 37 (KES 500M) for weight fraud, Regulation 23E for CDA violations.`,
+    consultant:    `CONSULTANT PROTOCOLS:
+- Help review project documents for quality and NEMA readiness.
+- Flag AI-generated content that hasn't been verified by a human expert.
+- Guide the consultant on what NEMA reviewers look for at each pipeline stage.
+- Suggest specific improvements to PRL scores.`,
+    proponent:     `PROPONENT PROTOCOLS:
+- Only show the proponent THEIR OWN projects (listed below).
+- Guide them step by step through their current pipeline stage.
+- Explain what documents they need to prepare for the NEXT stage.
+- Warn about CDA obligations before they submit documents.
+- Be encouraging about their progress.`,
+    enterprise:    `ENTERPRISE PROTOCOLS:
+- Focus on credit portfolio, B2B trading, and Article 6 compliance.
+- Provide market pricing context (KES 1,200–3,000/tCO₂e range).
+- Help with retirement certificate questions and offset ratio calculations.`,
+  };
+  const roleInstr = ROLE_INSTRUCTIONS[role] || ROLE_INSTRUCTIONS.proponent;
+
+  return `# ZERRA AI — ROLE-AWARE CARBON INTELLIGENCE ENGINE
+
+## ACTIVE PERSONA
+${persona}
+
+## OPERATIONAL PROTOCOLS
+1. CITATION: Always cite the specific Regulation when mentioning penalties or mandates.
+2. LINKS: For official registration/documents: kncr.go.ke, nema.go.ke, climate.go.ke
+3. HONESTY GATE: If outside your knowledge, say "That requires a specialized NEMA Technical Review. Generate a Netzerra DQS report to prepare."
+4. LANGUAGE: Respond in the same language the user writes in (English or Kiswahili).
+
+## ROLE-SPECIFIC INSTRUCTIONS
+${roleInstr}
+
+## REGULATORY KNOWLEDGE BASE
 ${kObj}
---- END DATABASE ---
 
-# MULTI-STAKEHOLDER PERSPECTIVE:
-- For KENINVEST: Focus on "Project Readiness" and de-risking investments through high DQS.
-- For NEMA: Focus on "Registry Integrity" and "Automated Pre-Vetting."
-- For COUNTIES: Focus on "FLLoCA Compliance" and "Ward-Level Monitoring."
+## LIVE PROJECT DATA — ALL GCIS/CARBON PROJECTS
+${fmtGcis}
 
-# TASK:
-Process the user query by cross-referencing the Technical Standards and Legal Guardrails provided in the database. Provide a response that is 100% accurate to the 2024 Regulations.
+## LIVE PROJECT DATA — ALL WASTE MANAGEMENT PROJECTS
+${fmtWaste}
 
-# USER CONTEXT:
-Name: ${u.name||'User'} | Role: ${u.role||'Project Developer'} | Org: ${u.org||'N/A'}
-Emissions: ${u.totalEmissions||0} tCO₂e | Offsets: ${u.totalOffsets||0} tCO₂e
-Last Calc: ${lc ? lc.name+' ('+lc.sector+') · '+lc.total_t+' tCO₂e/yr · DQS:'+lc.dqs+'/100' : 'None'}
-KNCR Projects: ${kp.length ? kp.map(p=>p.name+' Step'+p.step+'/6').join(', ') : 'None'}`;
+## RECENT KNCR AUDIT TRAIL (last 5 blocks)
+${recentAudit}
+
+## ⚠️ LIVE REGULATORY VIOLATION SCAN (computed from actual project field values)
+These are REAL violations derived directly from the project data above. When asked about breach alerts, cite these specifically:
+${_computeViolations()}
+
+## CURRENT USER SESSION
+Name: ${u.name||'Unknown'} | Role: ${role} | Org: ${u.org||'N/A'} | County: ${u.county||'National'}
+Last Calculation: ${lc ? `${lc.name} (${lc.sector}) — ${lc.total_t} tCO₂e/yr — DQS: ${lc.dqs}/100` : 'None'}
+Session ID: ${Date.now()}`;
 }
 
 /* ── WORKER URL — single source of truth, no API key in frontend ── */
@@ -256,9 +401,79 @@ const NTZ_AI=(()=>{
   let _open=false,_curTab='chat',_busy=false,_rtype='executive',_rtext='';
   // chatHistory is defined globally above — shared with ZerraQuery
 
-  function toggle(){_open=!_open;document.getElementById('ntz-ai-panel').classList.toggle('open',_open);if(_open){if(_curTab==='insights')_loadInsights();if(_curTab==='suggest')_loadSuggest();document.getElementById('nai-inp')?.focus();}}
+  let _greeted = false; // only inject greeting once per session
+
+  function _injectRoleGreeting() {
+    // Defer if AUTH hasn't resolved yet (e.g. page just loaded)
+    const u = (typeof AUTH !== 'undefined' && AUTH.currentUser)
+      ? AUTH.currentUser : ((typeof S !== 'undefined') ? S.user : null);
+    if (!u || !u.role) {
+      // Retry once after 800ms — auth may still be initialising
+      setTimeout(_injectRoleGreeting, 800);
+      return;
+    }
+    if (_greeted) return;
+    _greeted = true;
+    const role = u.role || 'proponent';
+    const name = u.name ? u.name.split(' ')[0] : null;
+
+    const GREETINGS = {
+      nema_national: `🏛️ **Director ${name||''}** — I have full visibility into all KNCR projects and waste facilities. I'll flag enforcement priorities, weight fraud alerts, and CDA violations automatically. How can I assist?`,
+      nema_county:   `🏛️ **Officer ${name||''}** — I can see all projects within your county scope. Ask me about compliance status, enforcement actions, or community benefit checks.`,
+      nema_reviewer: `🔬 **Reviewer ${name||''}** — Ready for technical auditing. I can analyse methodology gaps, IPCC factor alignment, PRL scores, and MRV risks across all projects.`,
+      nema:          `🏛️ **${name||'NEMA Regulator'}** — I'm briefed on all active projects. Ask me about compliance, enforcement, or registry integrity.`,
+      consultant:    `📋 **${name||'Consultant'}** — I'm your peer review partner. I can help analyse project documents, improve PRL scores, and prepare submissions for NEMA approval.`,
+      proponent:     `🌱 **${name||'Hello'}!** — I'm your KNCR compliance guide. I know your projects and their current pipeline stages. Ask me what to do next, what documents to prepare, or anything about the regulations!`,
+      developer:     `⚙️ **Dev mode** — Full system context loaded. ${(typeof NTZ!=='undefined'?NTZ.projects.length:0)} GCIS projects visible.`,
+      enterprise:    `💼 **${name||'Hello'}** — I can help with your credit portfolio, B2B trading opportunities, Article 6 compliance, and retirement certificates.`,
+    };
+
+    const QUICK = {
+      nema_national: ['Show all CDA non-compliant projects','Which waste projects have dCoC gaps?','What projects are at risk of Regulation 37 action?'],
+      nema_county:   ['Show projects in my county','Which projects need enforcement action?','Check CDA compliance for my county'],
+      nema_reviewer: ['List projects with AI-generated baselines','Which projects have MRV overdue?','Analyse PRL scores across all projects'],
+      consultant:    ['Review my current project submissions','What should I check before sending to NEMA?','How do I improve a low PRL score?'],
+      proponent:     ['What stage is my project at?','What documents do I need next?','Explain CDA Fourth Schedule requirements'],
+      enterprise:    ['What is my current credit portfolio?','How do I trade credits under Article 6?','Explain the retirement certificate process'],
+    };
+
+    const greeting = GREETINGS[role] || GREETINGS.proponent;
+    const quickList = QUICK[role] || QUICK.proponent;
+
+    // Replace the static greeting message
+    const msgs = document.getElementById('nai-msgs');
+    if (msgs) {
+      msgs.innerHTML = '';
+      const d = document.createElement('div');
+      d.className = 'nai-msg bot';
+      const html = greeting.replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+      d.innerHTML = `<div class="nai-bub">${html}</div><span class="nai-mt">Now</span>`;
+      msgs.appendChild(d);
+    }
+
+    // Replace quick suggestion buttons
+    const sugs = document.getElementById('nai-sugs');
+    if (sugs) {
+      sugs.innerHTML = quickList.map(q =>
+        `<button class="nai-sug" onclick="NTZ_AI.qs(this)">${q}</button>`
+      ).join('');
+      sugs.style.display = '';
+    }
+  }
+
+  function toggle(){
+    _open=!_open;
+    document.getElementById('ntz-ai-panel').classList.toggle('open',_open);
+    if(_open){
+      _injectRoleGreeting();
+      if(_curTab==='insights')_loadInsights();
+      if(_curTab==='suggest')_loadSuggest();
+      document.getElementById('nai-inp')?.focus();
+    }
+  }
 
   function tab(t){_curTab=t;const ids=['chat','insights','suggest','report'];document.querySelectorAll('.nai-tab').forEach((el,i)=>el.classList.toggle('on',ids[i]===t));document.querySelectorAll('.nai-pane').forEach(p=>p.classList.remove('on'));document.getElementById('nai-'+t)?.classList.add('on');if(t==='insights')_loadInsights();if(t==='suggest')_loadSuggest();}
+
 
   function _msg(role,text){
     const c=document.getElementById('nai-msgs');const d=document.createElement('div');d.className='nai-msg '+role;
@@ -411,7 +626,14 @@ const NTZ_AI=(()=>{
 
   function copyReport(){if(!_rtext)return;navigator.clipboard.writeText(_rtext).then(()=>{const b=document.getElementById('nai-cpy');b.textContent='✅ Copied!';setTimeout(()=>b.textContent='Copy',2000);});}
 
-  return{toggle,tab,send,key,resize,qs,rtype,genReport,copyReport};
+  function resetGreeting(){ _greeted = false; _injectRoleGreeting(); }
+
+  return{toggle,tab,send,key,resize,qs,rtype,genReport,copyReport,resetGreeting};
 })();
 
-document.addEventListener('DOMContentLoaded',_buildAIHTML);
+document.addEventListener('DOMContentLoaded', _buildAIHTML);
+
+// Expose global reset hook — called by auth system on login/logout
+window.NTZ_AI_resetGreeting = function() {
+  if (typeof NTZ_AI !== 'undefined' && NTZ_AI.resetGreeting) NTZ_AI.resetGreeting();
+};

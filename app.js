@@ -48,7 +48,7 @@ const EF = {
     donkey: [10,    1, 20],
     poultry:[0.02,0.02,0.6]
   },
-  sectorBenchmarks: { borehole:50, livestock:300, transport:200, construct:500, manufact:200 }
+  sectorBenchmarks: { borehole:50, livestock:300, transport:200, construct:500, manufact:200, waste:100 }
 };
 
 // ── GWP LOOKUP TABLES — verified GHG Protocol Aug 2024 ──
@@ -391,7 +391,8 @@ const LABELS = {
   'my-projects':'My Projects',
   'messages':'Message Center',
   'review-queue':'Review Queue',
-  'registry':'National Registry Ledger'
+  'registry':'National Registry Ledger',
+  'waste-management':'Waste Management'
 };
 
 function showSection(id) {
@@ -2396,8 +2397,8 @@ function initCharts() {
   S.charts.sector = new Chart(document.getElementById('sector-chart'), {
     type:'doughnut',
     data:{
-      labels:['Borehole','Livestock','Transport','Construction','Manufacturing'],
-      datasets:[{ data:[8,38,24,18,12], backgroundColor:['rgba(21,101,192,.78)','rgba(230,81,0,.78)','rgba(55,71,79,.78)','rgba(109,76,65,.78)','rgba(106,27,154,.78)'], borderWidth:2, borderColor:'rgba(7,28,15,.8)' }]
+      labels:['Borehole','Livestock','Transport','Construction','Manufacturing','Waste'],
+      datasets:[{ data:[8,38,24,18,12,0], backgroundColor:['rgba(21,101,192,.78)','rgba(230,81,0,.78)','rgba(55,71,79,.78)','rgba(109,76,65,.78)','rgba(106,27,154,.78)','rgba(245,166,35,.78)'], borderWidth:2, borderColor:'rgba(7,28,15,.8)' }]
     },
     options:{ responsive:true, maintainAspectRatio:false, plugins:{ legend:{ position:'right', labels:{ boxWidth:10, font:{size:10} } } } }
   });
@@ -2989,7 +2990,8 @@ function loadFromStorage() {
 
 function clearStorage() {
   localStorage.removeItem(LS_KEY);
-  toast('🗑️ Saved data cleared. Refresh to reset.', 'info');
+  localStorage.removeItem('ntz_nuclear');
+  toast('🗑️ Saved data completely purged. Refresh to reset the ledger.', 'info');
 }
 
 // Auto-save after every calculation, every KNCR project add, every profile update
@@ -3189,4 +3191,130 @@ document.addEventListener('DOMContentLoaded', () => {
     });
   });
 });
+// ── WASTE MANAGEMENT IoT & TRACEABILITY ENGINE ───────────
+// Built for Netzerra Nuclear v14 - Source-to-Sink dCoC
 
+/**
+ * Reconcile "Weight at Source" vs "Weight at Facility".
+ * NEMA threshold for illegal dumping/leakage is >10% variance.
+ */
+function reconcileWasteWeights(sourceKg, facilityKg) {
+  const diff = Math.abs(sourceKg - facilityKg);
+  const variance = (diff / Math.max(sourceKg, 1)) * 100;
+  
+  if (variance > 10) {
+    if (!window.NTZ) window.NTZ = {};
+    if (!window.NTZ.registry) window.NTZ.registry = [];
+    window.NTZ.registry.push({
+      type: 'Compliance Violation Alert',
+      timestamp: new Date().toISOString(),
+      detail: `Regulation 37 Trigger: Source weight (${sourceKg}kg) deviates from weighbridge (${facilityKg}kg) by ${variance.toFixed(1)}%. Illegal dumping risk.`
+    });
+    
+    return {
+      fraud: true,
+      variancePct: variance,
+      message: `ILLEGAL DUMPING RISK: ${variance.toFixed(1)}% variance detected. Flagged under Regulation 37 (KES 500M penalty).`
+    };
+  }
+  
+  return {
+    fraud: false,
+    variancePct: variance,
+    message: `COMPLIANT: Verified matching weights (Variance ${variance.toFixed(1)}%).`
+  };
+}
+
+/**
+ * Simulates a real-time IoT transit feed of a waste truck moving to the facility.
+ * Renders a CSS/Leaflet mini-map and updates telemetry.
+ */
+function simulateWasteTransit(containerId, startLat, startLng, loadWeightKg, kchPlate) {
+  const container = document.getElementById(containerId);
+  if (!container) return;
+
+  const lat = parseFloat(startLat) || -1.2921; // Nairobi default
+  const lng = parseFloat(startLng) || 36.8219;
+  const destLat = lat + (Math.random() * 0.05 - 0.025);
+  const destLng = lng + (Math.random() * 0.05 - 0.025);
+
+  container.innerHTML = `
+    <div style="display:flex; gap:15px; background:var(--deep,#0D2818); padding:10px; border-radius:12px; border:1px solid rgba(109,217,140,.3);">
+      <div style="flex:2; position:relative; height:200px; border-radius:8px; overflow:hidden;" id="map-${containerId}">
+        <div id="leaflet-${containerId}" style="position:absolute; inset:0; z-index:1;"></div>
+      </div>
+      <div style="flex:1; display:flex; flex-direction:column; gap:8px;">
+        <div style="font-size:0.75rem; font-weight:600; color:var(--mint,#6DD98C); display:flex; align-items:center; gap:5px;">
+          <span style="display:inline-block; width:8px; height:8px; background:red; border-radius:50%; animation:nai-blink 1.5s infinite;"></span>
+          LIVE dCoC TELEMETRY
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; font-size:0.75rem;">
+          <div style="color:rgba(255,255,255,0.5); font-size:0.6rem;">TRUCK PLATE:</div>
+          <div style="font-weight:700; color:#fff;">${kchPlate || 'KDP 301A'}</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; font-size:0.75rem;">
+          <div style="color:rgba(255,255,255,0.5); font-size:0.6rem;">SOURCE LOAD:</div>
+          <div style="font-weight:700; color:#fff;">${loadWeightKg} kg</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; font-size:0.75rem;">
+          <div style="color:rgba(255,255,255,0.5); font-size:0.6rem;">CURRENT SPEED:</div>
+          <div style="font-weight:700; color:var(--gold,#F5A623);" id="speed-${containerId}">42 km/h</div>
+        </div>
+        <div style="background:rgba(255,255,255,0.05); padding:8px; border-radius:6px; font-size:0.75rem;">
+          <div style="color:rgba(255,255,255,0.5); font-size:0.6rem;">ETA (FACILITY):</div>
+          <div style="font-weight:700; color:#fff;" id="eta-${containerId}">14 mins</div>
+        </div>
+      </div>
+    </div>
+  `;
+
+  // Start Map logic if Leaflet is available
+  if (window.L) {
+    try {
+      const map = L.map(`leaflet-${containerId}`, { zoomControl: false, attributionControl: false }).setView([lat, lng], 13);
+      L.tileLayer('https://{s}.basemaps.cartocdn.com/dark_all/{z}/{x}/{y}{r}.png', { maxZoom: 19 }).addTo(map);
+      
+      const truckIcon = L.divIcon({
+        html: '<div style="background:var(--mint); width:14px; height:14px; border-radius:50%; border:2px solid #fff; box-shadow:0 0 10px var(--mint);"></div>',
+        className: 'truck-marker',
+        iconSize: [14,14]
+      });
+
+      const facilityIcon = L.divIcon({
+        html: '🏭',
+        className: 'facility-marker',
+        iconSize: [20,20]
+      });
+
+      const truckMarker = L.marker([lat, lng], {icon: truckIcon}).addTo(map);
+      L.marker([destLat, destLng], {icon: facilityIcon}).addTo(map);
+      
+      // Draw path line
+      L.polyline([[lat, lng], [destLat, destLng]], {color: 'rgba(109,217,140,0.5)', dashArray: '5, 10'}).addTo(map);
+      
+      // Animate Truck
+      let progress = 0;
+      const interval = setInterval(() => {
+        progress += 0.05;
+        if (progress >= 1) {
+          clearInterval(interval);
+          document.getElementById(`speed-${containerId}`).textContent = '0 km/h (ARRIVED)';
+          document.getElementById(`eta-${containerId}`).textContent = 'Arrived';
+          document.getElementById(`speed-${containerId}`).style.color = 'var(--mint)';
+          return;
+        }
+        
+        const curLat = lat + (destLat - lat) * progress;
+        const curLng = lng + (destLng - lng) * progress;
+        truckMarker.setLatLng([curLat, curLng]);
+        
+        // Randomize speed 30-65
+        const speed = Math.floor(30 + Math.random() * 35);
+        const elSpeed = document.getElementById(`speed-${containerId}`);
+        if(elSpeed) elSpeed.textContent = speed + ' km/h';
+
+      }, 1500);
+
+    } catch (e) { console.log('Map init failed', e); }
+  }
+}

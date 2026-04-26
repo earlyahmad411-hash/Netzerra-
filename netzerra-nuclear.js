@@ -13,14 +13,14 @@
 const NTZ_WORKER = 'https://delicate-bird-531b.shukriali411.workers.dev/';
 
 const ROLE_MAP = {
-  proponent:     { label: 'Project Proponent',      nav: ['home','dashboard','gcis-wizard','my-projects','messages','passport','calculator','offsets','sequestration','county','leaderboard','community','methodology','docs','marketplace','education','membership','about','profile','disclaimer','kncr'] },
-  consultant:    { label: 'Carbon Consultant',       nav: ['home','dashboard','review-queue','messages','registry','methodology','docs','about','profile','disclaimer'] },
-  nema:          { label: 'NEMA Regulator',          nav: ['home','dashboard','nema-oversight','registry','methodology','about','profile','disclaimer'] },
+  proponent:     { label: 'Project Proponent',      nav: ['home','dashboard','gcis-wizard','my-projects','messages','passport','calculator','waste-management','offsets','sequestration','county','leaderboard','community','methodology','docs','marketplace','education','membership','about','profile','disclaimer','kncr'] },
+  consultant:    { label: 'Carbon Consultant',       nav: ['home','dashboard','review-queue','messages','registry','waste-management','methodology','docs','about','profile','disclaimer'] },
+  nema:          { label: 'NEMA Regulator',          nav: ['home','dashboard','nema-oversight','registry','waste-management','methodology','about','profile','disclaimer'] },
   developer:     { label: 'Project Developer',       nav: 'all' },
   enterprise:    { label: 'Enterprise',              nav: 'all' },
-  nema_national: { label: 'NEMA National Director',  nav: ['home','dashboard','nema-oversight','registry','leaderboard','methodology','profile'] },
-  nema_county:   { label: 'NEMA County Officer',     nav: ['home','dashboard','nema-oversight','registry','leaderboard','methodology','profile'] },
-  nema_reviewer: { label: 'NEMA Technical Reviewer',  nav: ['home','dashboard','nema-oversight','registry','leaderboard','methodology','profile'] },
+  nema_national: { label: 'NEMA National Director',  nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','profile'] },
+  nema_county:   { label: 'NEMA County Officer',     nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','profile'] },
+  nema_reviewer: { label: 'NEMA Technical Reviewer',  nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','profile'] },
   personal:      { label: 'Personal',                nav: 'all' },
 };
 
@@ -47,6 +47,8 @@ const NTZ = {
   documents: {},
   registrationNumbers: [], // Track invoice/registration numbers for duplicate detection
 };
+window.NTZ = NTZ;
+
 
 // ══════════════════════════════════════════════════════
 // 1. NUCLEAR AUTH — COMPLETE SESSION RESET + LOGOUT BUTTON
@@ -109,6 +111,7 @@ function nuclearLogin(user) {
     'nav-enterprise':   ['enterprise'],
     'nav-exchange':     ['enterprise'],
     'nav-b2b':          ['enterprise'],
+    'nav-waste-management': ['proponent','developer','nema','nema_national','nema_county','nema_reviewer'],
     'nav-nema-oversight':['nema','nema_national','nema_county','nema_reviewer'],
   };
 
@@ -163,6 +166,8 @@ function nuclearLogin(user) {
     showSection('home');
   }
   toast('Logged in as ' + user.name + ' (' + (ROLE_MAP[user.role]?.label || user.role) + ')', 'success');
+  // Refresh Zerra AI greeting for the new role
+  setTimeout(() => { if (typeof NTZ_AI_resetGreeting === 'function') NTZ_AI_resetGreeting(); }, 400);
 }
 
 function ensureLogoutButton() {
@@ -2338,8 +2343,8 @@ function renderReviewQueue() {
       html += `<div class="rq-card">
         <div class="rq-card-header" onclick="toggleProjectDetail('${p.id}')" style="cursor:pointer">
           <div>
-            <h4>${p['gcis-proj-name'] || 'Unnamed Project'}</h4>
-            <span class="rq-meta">${p.id} | ${p['gcis-county'] || 'N/A'} County | ${p['gcis-proj-type'] || 'N/A'} | Stage: ${currentStage.label}</span>
+            <h4>${p['gcis-proj-name'] || p.name || 'Unnamed Project'}</h4>
+            <span class="rq-meta">${p.id} | ${p['gcis-county'] || p.county || 'N/A'} County | ${p['gcis-proj-type'] || p.type || 'N/A'} | Stage: ${currentStage.label}</span>
           </div>
           <div class="rq-prl" style="border-color:${prlColor}">
             <div class="rq-prl-score" style="color:${prlColor}">${prl.score}%</div>
@@ -2350,16 +2355,16 @@ function renderReviewQueue() {
         ${renderPipelineTracker(p)}
         <div class="rq-detail-panel" id="detail-${p.id}" style="display:none">
           <div class="rq-detail-grid">
-            <div><strong>Proponent:</strong> ${p['gcis-proponent'] || 'N/A'}</div>
-            <div><strong>Credits:</strong> ${p['gcis-credits'] || 0} tCO2e/yr</div>
-            <div><strong>Standard:</strong> ${p['gcis-standard'] || 'N/A'}</div>
+            <div><strong>Proponent:</strong> ${p['gcis-proponent'] || p.proponent || 'N/A'}</div>
+            <div><strong>Credits:</strong> ${p['gcis-credits'] || Math.round(p.credits) || 0} tCO2e/yr</div>
+            <div><strong>Standard:</strong> ${p['gcis-standard'] || (p.sector === 'waste' ? 'IPCC Waste Tier 2' : 'N/A')}</div>
             <div><strong>Duration:</strong> ${p['gcis-duration'] || 10} years</div>
-            <div><strong>Land Type:</strong> ${p['gcis-land-type'] || 'N/A'}</div>
-            <div><strong>CDA Rate:</strong> ${p['gcis-cda-rate'] || 0}%</div>
-            <div><strong>KRA PIN:</strong> ${p['gcis-kra-pin'] || 'N/A'}</div>
-            <div><strong>Business Reg:</strong> ${p['gcis-business-reg'] || 'N/A'}</div>
-            <div><strong>Invoice No:</strong> ${p['gcis-invoice-no'] || 'N/A'}</div>
-            <div><strong>NEMA License:</strong> ${p['gcis-nema-license'] || 'N/A'}</div>
+            <div><strong>Land Type:</strong> ${p['gcis-land-type'] || p.land_type || p.w_type || 'N/A'}</div>
+            <div><strong>CDA Rate:</strong> ${p['gcis-cda-rate'] || p.cda_share_pct || 0}%</div>
+            <div><strong>KRA PIN:</strong> ${p['gcis-kra-pin'] || p.w_kra_pin || 'N/A'}</div>
+            <div><strong>Business Reg:</strong> ${p['gcis-business-reg'] || p.w_business_reg || 'N/A'}</div>
+            <div><strong>Invoice No:</strong> ${p['gcis-invoice-no'] || p.w_invoice_no || 'N/A'}</div>
+            <div><strong>NEMA License:</strong> ${p['gcis-nema-license'] || p.w_nema_license || 'N/A'}</div>
           </div>
           ${p['gcis-baseline'] ? '<div class="rq-detail-section"><strong>Baseline:</strong>' + (p['gcis-baseline_ai_generated'] ? (p['gcis-baseline_ai_modified'] ? ' <span style="font-size:0.6rem;color:#F5A623;border:1px solid #F5A623;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">⚠️ AI Assisted</span>' : ' <span style="font-size:0.6rem;color:#EF5350;border:1px solid #EF5350;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">🤖 AI Generated</span>') : '') + '<p>' + p['gcis-baseline'].substring(0, 300) + '...</p></div>' : ''}
           ${p['gcis-additionality'] ? '<div class="rq-detail-section"><strong>Additionality:</strong>' + (p['gcis-additionality_ai_generated'] ? (p['gcis-additionality_ai_modified'] ? ' <span style="font-size:0.6rem;color:#F5A623;border:1px solid #F5A623;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">⚠️ AI Assisted</span>' : ' <span style="font-size:0.6rem;color:#EF5350;border:1px solid #EF5350;padding:1px 4px;border-radius:4px;margin-left:8px;vertical-align:middle">🤖 AI Generated</span>') : '') + '<p>' + p['gcis-additionality'].substring(0, 300) + '...</p></div>' : ''}
@@ -2405,7 +2410,7 @@ function renderReviewQueue() {
           <button class="gcis-btn gcis-btn-secondary" onclick="downloadDocument('${p.id}','escp')">ESCP</button>
           <button class="gcis-btn gcis-btn-secondary" onclick="downloadDocument('${p.id}','stakeholder')">Stakeholder</button>
           <button class="gcis-btn gcis-btn-secondary" onclick="downloadDocument('${p.id}','esia')">ESIA</button>
-          <button class="gcis-btn gcis-btn-approve" onclick="consultantApproveStage('${p.id}','${p.pipelineStage || 'pcn'}')">Approve ${currentStage.label}</button>
+          ${p.sector === 'waste' ? `<button class="gcis-btn gcis-btn-approve" onclick="certifyWasteProject('${p.id}'); document.getElementById('btn-review-queue').click();">Certify Waste Project</button>` : `<button class="gcis-btn gcis-btn-approve" onclick="consultantApproveStage('${p.id}','${p.pipelineStage || 'pcn'}')">Approve ${currentStage.label}</button>`}
           <button class="gcis-btn gcis-btn-primary" onclick="toggleRequestInfo('${p.id}')">Request Info</button>
           
           <div style="display:flex;gap:6px;margin-top:6px;flex-basis:100%">
@@ -2449,12 +2454,18 @@ function renderMyProjects() {
   const currentUser = AUTH.currentUser?.name || S.user.name;
   const projects = NTZ.projects.filter(p => p.submittedBy === currentUser || AUTH.currentUser?.role === 'developer');
 
-  let html = `<div class="rq-header"><h3>My Projects</h3><button class="gcis-btn gcis-btn-primary" onclick="showSection('gcis-wizard');gcisCurrentStep=0;gcisData={};renderGCISWizard();">New Project</button></div>`;
+  const gcisProjects = projects.filter(p => p.sector !== 'waste');
+  const wasteProjects = projects.filter(p => p.sector === 'waste');
 
-  if (projects.length === 0) {
-    html += '<div class="msg-empty">No projects yet. Start by creating a new GCIS application.</div>';
+  let html = `<div class="rq-header" style="margin-bottom:20px;">
+    <h3>Applications & Registration (GCIS)</h3>
+    <button class="gcis-btn gcis-btn-primary" onclick="showSection('gcis-wizard');gcisCurrentStep=0;gcisData={};renderGCISWizard();">New Project</button>
+  </div>`;
+
+  if (gcisProjects.length === 0) {
+    html += '<div class="msg-empty">No standard GCIS applications yet.</div>';
   } else {
-    projects.forEach(p => {
+    gcisProjects.forEach(p => {
       const prl = p.prlScore || calculatePRL(p);
       const prlColor = prl.level === 'HIGH' ? '#EF5350' : prl.level === 'MEDIUM' ? '#F5A623' : '#4ade80';
       const unreadMsgs = (p.messages || []).filter(m => !m.read && m.fromRole !== 'proponent').length;
@@ -2465,8 +2476,8 @@ function renderMyProjects() {
       html += `<div class="rq-card">
         <div class="rq-card-header">
           <div>
-            <h4>${p['gcis-proj-name'] || 'Unnamed Project'}</h4>
-            <span class="rq-meta">${p.id} | ${p['gcis-county'] || 'N/A'} County | <span style="color:${statusColor}">${statusLabel}</span></span>
+            <h4>${p['gcis-proj-name'] || p.name || 'Unnamed Project'}</h4>
+            <span class="rq-meta">${p.id} | ${p['gcis-county'] || p.county || 'N/A'} County | <span style="color:${statusColor}">${statusLabel}</span></span>
           </div>
           <div class="rq-prl" style="border-color:${prlColor}">
             <div class="rq-prl-score" style="color:${prlColor}">${prl.score}%</div>
@@ -2494,6 +2505,42 @@ function renderMyProjects() {
       </div>`;
     });
   }
+
+  html += `<div class="rq-header" style="margin-top:40px; margin-bottom:20px; border-top: 1px solid rgba(255,255,255,0.1); padding-top:20px;">
+    <h3><span style="color:#F5A623; margin-right:8px;">♻️</span>Waste Management & Circularity</h3>
+    <button class="gcis-btn gcis-btn-primary" style="background:var(--teal);color:#0a1f14;" onclick="showSection('waste-management');if(typeof hardResetWasteModule==='function'){hardResetWasteModule();}">Initiate New Waste Flow</button>
+  </div>`;
+
+  if (wasteProjects.length === 0) {
+    html += '<div class="msg-empty">No waste flows tracked yet. Initiate a new waste tracking log.</div>';
+  } else {
+    wasteProjects.forEach(p => {
+      const prl = p.prlScore || calculatePRL(p);
+      const prlColor = prl.level === 'HIGH' ? '#EF5350' : prl.level === 'MEDIUM' ? '#F5A623' : '#4ade80';
+      const statusLabel = p.status === 'certified' ? 'Lead Expert Certified' : p.status === 'approved' ? 'NEMA Approved' : 'Pending Review';
+      const statusColor = p.status === 'approved' ? '#4ade80' : p.status === 'certified' ? '#80DEEA' : 'rgba(255,255,255,.5)';
+
+      html += `<div class="rq-card" style="border-top:3px solid var(--teal)">
+        <div class="rq-card-header">
+          <div>
+            <h4>${p.name || 'Unnamed Waste Flow'}</h4>
+            <span class="rq-meta" style="color:var(--gold)">WASTE SECTOR</span> | <span class="rq-meta">${p.id} | ${p.county || 'N/A'} County | <span style="color:${statusColor}">${statusLabel}</span></span>
+          </div>
+        </div>
+        <div style="font-size:0.8rem; color:var(--mint); margin-top:-5px; margin-bottom:10px;">
+          <strong>Baselined Credits:</strong> ${parseFloat(p.credits || 0).toFixed(1)} tCO₂e / yr | <strong>CDA:</strong> ${p.cdaShare || 0}%
+        </div>
+        <div class="rq-actions">
+          <button class="gcis-btn gcis-btn-secondary" onclick="window.downloadWasteQRCode?.()">⬇️ Download dCoC Passport QR</button>
+          
+          <div style="display:flex;gap:6px;width:100%;margin-top:6px;padding-top:6px;border-top:1px solid rgba(255,255,255,.05)">
+            ${p.status === 'approved' ? `<button class="gcis-btn" style="background:#F5A623;color:#0a1f14;font-weight:600;border:none;flex:1" onclick="launchLogisticsSandbox('${p.id}')">🚚 Simulate Dispatch & Weighbridge Reconciliation</button>` : `<div style="font-size:0.75rem;color:rgba(255,255,255,0.4);font-style:italic">Physical Logistics unlocked after NEMA approval.</div>`}
+          </div>
+        </div>
+      </div>`;
+    });
+  }
+
   container.innerHTML = html;
 }
 
@@ -2516,6 +2563,33 @@ function renderNEMAOversight() {
     <div class="nema-stat"><div class="nema-stat-val">${NTZ.registry.length}</div><div class="nema-stat-lbl">Registry Blocks</div></div>
   </div>`;
 
+  // Waste Alerts Widget
+  const wasteAlerts = projects.filter(p => p.sector === 'waste' && !p.dcoCleared).length;
+  html += `
+  <div class="card" style="margin-bottom:1.2rem; border: 1px solid rgba(0,201,167,.4); background: linear-gradient(135deg, rgba(0,201,167,.03) 0%, rgba(10,31,20,1) 100%);">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:.9rem">
+      <h3 style="margin:0; display:flex; align-items:center; gap:8px;">
+        <svg width="20" height="20" fill="none" stroke="var(--teal)" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        Digital Chain of Custody (dCoC) Waste Tracking
+      </h3>
+      <span class="trust-badge" style="background:rgba(0,201,167,.1);color:var(--teal);border-color:rgba(0,201,167,.2)">${wasteAlerts} Alerts</span>
+    </div>
+    <div style="background:rgba(0,0,0,.3);border:1px solid rgba(0,201,167,.2);border-radius:10px;padding:1.2rem;display:grid;grid-template-columns:1fr 1fr 1fr;gap:15px;align-items:center;">
+      <div style="text-align:center;">
+        <div style="font-size: 2rem; color: var(--mint);">${projects.filter(p => p.sector === 'waste').length}</div>
+        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Active Transports Logged</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size: 2rem; color: var(--gold);">${projects.reduce((sum, p) => p.sector === 'waste' ? sum + (p.tonnageFacility || 0) : sum, 0).toLocaleString()} kg</div>
+        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Facility Reconciled</div>
+      </div>
+      <div style="text-align:center;">
+        <div style="font-size: 1.5rem; color: ${wasteAlerts > 0 ? '#EF5350' : '#4ade80'};">${wasteAlerts > 0 ? '⚠️ High Variance' : '✅ Compliant'}</div>
+        <div style="font-size: 0.8rem; color: rgba(255,255,255,0.6);">Weight Fraud Flags</div>
+      </div>
+    </div>
+  </div>`;
+
   // Project pipeline table
   html += `<h3 style="color:#4ade80;margin:16px 0 8px">Project Pipeline</h3>
   <table class="nema-table">
@@ -2526,8 +2600,8 @@ function renderNEMAOversight() {
     const stage = PIPELINE_STAGES.find(s => s.id === p.pipelineStage) || PIPELINE_STAGES[0];
     html += `<tr onclick="toggleProjectDetail('nema-${p.id}')" style="cursor:pointer">
       <td>${p.id}</td>
-      <td>${p['gcis-proj-name'] || 'Unnamed'}</td>
-      <td>${p['gcis-county'] || 'N/A'}</td>
+      <td>${p['gcis-proj-name'] || p.name || 'Unnamed'}</td>
+      <td>${p['gcis-county'] || p.county || 'N/A'}</td>
       <td style="color:${prl.level === 'HIGH' ? '#EF5350' : prl.level === 'MEDIUM' ? '#F5A623' : '#4ade80'}">${prl.score}% ${prl.level}</td>
       <td>${stage.label}</td>
       <td>${p.status === 'approved' ? '<span style="color:#4ade80">Approved</span>' : '<span style="color:#F5A623">Pending</span>'}</td>
@@ -2538,16 +2612,17 @@ function renderNEMAOversight() {
     </tr>
     <tr id="detail-nema-${p.id}" style="display:none"><td colspan="7">
       <div class="rq-detail-grid" style="padding:8px">
-        <div><strong>Proponent:</strong> ${p['gcis-proponent'] || 'N/A'}</div>
-        <div><strong>Credits:</strong> ${p['gcis-credits'] || 0} tCO2e/yr</div>
-        <div><strong>Land:</strong> ${p['gcis-land-type'] || 'N/A'}</div>
-        <div><strong>CDA:</strong> ${p['gcis-cda-rate'] || 0}%</div>
-        <div><strong>Standard:</strong> ${p['gcis-standard'] || 'N/A'}</div>
-        <div><strong>KRA PIN:</strong> ${p['gcis-kra-pin'] || 'N/A'}</div>
+        <div><strong>Proponent:</strong> ${p['gcis-proponent'] || p.proponent || 'N/A'}</div>
+        <div><strong>Credits:</strong> ${p['gcis-credits'] || Math.round(p.credits) || 0} tCO2e/yr</div>
+        <div><strong>Land:</strong> ${p['gcis-land-type'] || p.land_type || p.w_type || 'N/A'}</div>
+        <div><strong>CDA:</strong> ${p['gcis-cda-rate'] || p.cda_share_pct || 0}%</div>
+        <div><strong>Standard:</strong> ${p['gcis-standard'] || (p.sector === 'waste' ? 'IPCC Waste Tier 2' : 'N/A')}</div>
+        <div><strong>KRA PIN:</strong> ${p['gcis-kra-pin'] || p.w_kra_pin || 'N/A'}</div>
       </div>
       ${renderPipelineTracker(p)}
       <div style="padding:8px;display:flex;gap:6px;flex-wrap:wrap">
         ${['pcn','pdd','cda','escp','stakeholder','esia','compliance'].map(d => `<button class="gcis-btn gcis-btn-secondary" style="padding:3px 8px;font-size:.7rem" onclick="downloadDocument('${p.id}','${d}')">${d.toUpperCase()}</button>`).join('')}
+        ${p.sector === 'waste' && p.status === 'approved' ? `<button class="gcis-btn" style="background:#F5A623;color:#0a1f14;font-weight:600;padding:3px 8px;font-size:.7rem;border:none" onclick="launchLogisticsSandbox('${p.id}')">🚚 Live Logistics Tracker</button>` : ''}
       </div>
       
       <!-- NEMA AI INTELLIGENCE FIREWALL -->
@@ -2557,7 +2632,12 @@ function renderNEMAOversight() {
            Automated Pre-Vetting Insight 
         </h5>
         <div style="display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:10px;font-size:.75rem">
+           ${p.sector === 'waste' ? `
+           <div><strong style="color:rgba(255,255,255,.5)">GIS Reversal Risk:</strong> <span style="color:#4ade80">Leakage Safe (No Nearby Water Bodies)</span></div>
+           <div><strong style="color:rgba(255,255,255,.5)">dCoC Weight Fraud Check:</strong> <span style="color:#4ade80">Variance within 10% (Regulation 37 Passed)</span></div>
+           ` : `
            <div><strong style="color:rgba(255,255,255,.5)">GIS Reversal Risk:</strong> <span style="color:#4ade80">Low (No Deforestation Identified)</span></div>
+           `}
            <div><strong style="color:rgba(255,255,255,.5)">IPCC Factor Alignment:</strong> <span style="color:#4ade80">Correct (Kenya Tech Specs)</span></div>
            <div><strong style="color:rgba(255,255,255,.5)">County Registration:</strong> <span style="color:#4ade80">Matched to Ledger</span></div>
            <div><strong style="color:rgba(255,255,255,.5)">DQS Traceability:</strong> <span style="color:#4ade80">Complete Audit Record</span></div>
@@ -2580,24 +2660,8 @@ function renderNEMAOversight() {
 
   container.innerHTML = html;
 
-  // Initialize Leaflet Map for Live Satellite Monitor if not already initialized
-  setTimeout(() => {
-    const mapElement = document.getElementById('nema-satellite-map');
-    if (mapElement && !mapElement._leaflet_id) {
-      const map = L.map('nema-satellite-map').setView([1.2, 36.8], 12); // Coordinates over Rift Valley / Samburu
-      L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
-        attribution: 'Tiles &copy; Esri'
-      }).addTo(map);
-
-      // Add a red circle to highlight the "canopy reversal" alert
-      L.circle([1.2, 36.8], {
-        color: '#EF5350',
-        fillColor: '#EF5350',
-        fillOpacity: 0.4,
-        radius: 1200
-      }).addTo(map).bindPopup('<b>Deforestation Alert</b><br>14% canopy loss detected (NDVI drop).<br>Coordinates: 1.2N, 36.8E').openPopup();
-    }
-  }, 100);
+  // Satellite map is initialised by initNemaSatelliteMap() in
+  // netzerra-waste-management.js, which fires after the section becomes visible.
 }
 
 // ══════════════════════════════════════════════════════
@@ -2695,11 +2759,36 @@ window.showSection = function(id) {
   else if (id === 'review-queue') renderReviewQueue();
   else if (id === 'registry') renderNationalRegistry();
   else if (id === 'nema-oversight') renderNEMAOversight();
+  else if (id === 'dashboard') refreshDashboardWasteKPIs();
 
   const breadcrumb = document.getElementById('breadcrumb');
   const labels = { 'gcis-wizard':'GCIS Application Wizard', 'my-projects':'My Projects', 'messages':'Message Center', 'review-queue':'Consultant Review Queue', 'registry':'Quality Assurance & Compliance Ledger', 'nema-oversight':'NEMA Regulatory Oversight' };
   if (breadcrumb && labels[id]) breadcrumb.innerHTML = '<b>' + labels[id] + '</b>';
 };
+
+function refreshDashboardWasteKPIs() {
+  const wasteProjects = (NTZ.projects || []).filter(p => p.sector === 'waste');
+  const totalBaseline = wasteProjects.reduce((s,p) => s + (p.credits || 0), 0);
+  const certifiedCount = wasteProjects.filter(p => p.status === 'certified').length;
+  const dcocCleared = wasteProjects.filter(p => p.dcoCleared).length;
+
+  const kpiWaste = document.getElementById('kpi-waste');
+  if (kpiWaste) kpiWaste.textContent = totalBaseline.toFixed(1);
+  const kpiWasteCount = document.getElementById('kpi-waste-count');
+  if (kpiWasteCount) kpiWasteCount.textContent = wasteProjects.length;
+  const kpiWasteDcoc = document.getElementById('kpi-waste-dcoc');
+  if (kpiWasteDcoc) kpiWasteDcoc.textContent = wasteProjects.length > 0 ? `${dcocCleared}/${wasteProjects.length} cleared` : '—';
+
+  // Update sector chart with waste data
+  if (typeof S !== 'undefined' && S.charts && S.charts.sector) {
+    const chart = S.charts.sector;
+    const labels = chart.data.labels;
+    const data = chart.data.datasets[0].data;
+    const wasteIdx = labels.indexOf('Waste');
+    if (wasteIdx >= 0) data[wasteIdx] = Math.round(totalBaseline);
+    chart.update();
+  }
+}
 
 // ══════════════════════════════════════════════════════
 // 14. INJECT HTML SECTIONS + NAV
@@ -2751,10 +2840,68 @@ document.addEventListener('DOMContentLoaded', () => {
   injectNuclearNav();
   updateAuthOverlay();
   loadNuclearState();
-  if (NTZ.projects.length === 0) seedDemoData();
+  if (NTZ.projects.length === 0) {
+    seedDemoData();
+  } else {
+    // Force seed the demo waste project if it doesn't exist for returning users
+    if (!NTZ.projects.find(p => p.id === 'NTZ-W-DEMO001')) {
+      seedDemoDataWasteOnly();
+    }
+  }
 });
 
+function seedDemoDataWasteOnly() {
+  try {
+  const demoWaste = {
+    id: 'NTZ-W-DEMO001',
+    name: 'Dandora Dumpsite Methane Capture',
+    sector: 'waste',
+    county: 'Nairobi',
+    proponent: 'Nairobi County Government',
+    facilityType: 'Open Dumpsite',
+    credits: 145.0,
+    standard: 'KNCR Domestic',
+    step: 6,
+    created: '2026-03-10',
+    status: 'pending-review',
+    nemaStatus: 'pending',
+    pipelineStage: 'pcn',
+    cdaCompliant: true,
+    cdaShare: 40,
+    tonnage_source: 5000,
+    tonnage_facility: 4400,
+    methaneBaseline: 145.0,
+    lat: '-1.2505',
+    lng: '36.8972',
+    nemaLicense: 'NEMA/EIA/PSL/67890',
+    dcoCleared: false,
+    certifiedBy: 'Dr. Amina Hassan',
+    certifiedAt: '2026-03-12T09:00:00Z',
+    w_kra_pin: 'P059876543Z',
+    w_business_reg: 'CGN-2024-456789',
+    w_invoice_no: 'INV-2026-000789',
+    role: 'proponent',
+    submittedBy: 'Shukri Ali'
+  };
+  NTZ.projects.push(demoWaste);
+  NTZ.registry.push({
+    id: demoWaste.id,
+    name: demoWaste.name,
+    county: demoWaste.county,
+    sector: 'Waste',
+    credits: demoWaste.credits,
+    step: demoWaste.step,
+    cdaCompliant: true,
+    status: 'Certified',
+    facilityType: demoWaste.facilityType
+  });
+  addRegistryEntry({ projectId: demoWaste.id, action: 'WASTE_PROJECT_CERTIFIED', actor: 'Dr. Amina Hassan', detail: 'Dandora Dumpsite Methane Capture certified — 145.0 tCO₂e/yr baseline', hash: generateHash(demoWaste.id + '2026-03-12') });
+  saveNuclearState();
+  } catch(e) { alert("ERROR IN SEEDDEMODATAWASTEONLY: " + e.message); }
+}
+
 function seedDemoData() {
+  try {
   const demoProject = {
     id: 'GCIS-DEMO001',
     'gcis-proj-name': 'Turkana Solar Borehole Cluster',
@@ -2812,5 +2959,221 @@ function seedDemoData() {
   addRegistryEntry({ projectId: 'GCIS-DEMO001', action: 'PROJECT_SUBMITTED', actor: 'Shukri Ali', detail: 'GCIS application submitted for Turkana Solar Borehole Cluster', hash: generateHash('GCIS-DEMO001' + '2026-03-15') });
   addRegistryEntry({ projectId: 'GCIS-DEMO001', action: 'INFO_REQUESTED', actor: 'Dr. Amina Hassan', detail: 'Information request: Solar panel specifications and warranty documentation', hash: generateHash('MSG-DEMO001' + '2026-03-18') });
 
+  // 2. Seed demo Forestry project (Samburu REDD+)
+  const demoForestry = {
+    id: 'GCIS-FOR002',
+    name: 'Samburu REDD+ Conservancy',
+    'gcis-proj-name': 'Samburu REDD+ Conservancy',
+    'gcis-proj-type': 'forestry',
+    'gcis-county': 'Samburu',
+    'gcis-proponent': 'Samburu Wildlife Trust',
+    'gcis-land-type': 'community',
+    'gcis-credits': '12500',
+    'gcis-start-date': '2025-01-10',
+    'gcis-duration': '30',
+    'gcis-standard': 'verra',
+    'gcis-budget': '12000000',
+    'gcis-kra-pin': 'P059876543Y',
+    'gcis-business-reg': 'PVT-2023-012345',
+    'gcis-invoice-no': 'INV-2025-000045',
+    'gcis-nema-license': 'NEMA/EIA/PSL/11223',
+    'gcis-county-permit': 'CGS/PERMIT/2025/004',
+    status: 'approved',
+    nemaStatus: 'approved',
+    pipelineStage: 'kncr-registration',
+    submittedAt: '2025-01-15T08:00:00Z',
+    submittedBy: 'Dr. Lekolol',
+    role: 'proponent',
+    county: 'Samburu'
+  };
+  demoForestry.prlScore = calculatePRL(demoForestry);
+  NTZ.projects.push(demoForestry);
+  
+  // 3. Seed demo waste project
+  const demoWaste = {
+    id: 'NTZ-W-DEMO001',
+    name: 'Dandora Dumpsite Methane Capture',
+    sector: 'waste',
+    county: 'Nairobi',
+    proponent: 'Nairobi County Government',
+    facilityType: 'Open Dumpsite',
+    credits: 145.0,
+    standard: 'KNCR Domestic',
+    step: 6,
+    created: '2026-03-10',
+    status: 'pending-review',
+    nemaStatus: 'pending',
+    pipelineStage: 'pcn',
+    cdaCompliant: true,
+    cdaShare: 40,
+    tonnage_source: 5000,
+    tonnage_facility: 4400, // Large variance
+    methaneBaseline: 145.0,
+    lat: '-1.2505',
+    lng: '36.8972',
+    nemaLicense: 'NEMA/EIA/PSL/67890',
+    dcoCleared: false, // TRIGGER NEMA WASTE ALERT
+    certifiedBy: 'Dr. Amina Hassan',
+    certifiedAt: '2026-03-12T09:00:00Z',
+    w_kra_pin: 'P059876543Z',
+    w_business_reg: 'CGN-2024-456789',
+    w_invoice_no: 'INV-2026-000789',
+    role: 'proponent'
+  };
+  NTZ.projects.push(demoWaste);
+
+  NTZ.registry.push({
+    id: demoWaste.id,
+    name: demoWaste.name,
+    county: demoWaste.county,
+    sector: 'Waste',
+    credits: demoWaste.credits,
+    step: demoWaste.step,
+    cdaCompliant: true,
+    status: 'Certified',
+    facilityType: demoWaste.facilityType
+  });
+
+  addRegistryEntry({ projectId: demoWaste.id, action: 'WASTE_PROJECT_CERTIFIED', actor: 'Dr. Amina Hassan', detail: 'Dandora Dumpsite Methane Capture certified — 145.0 tCO₂e/yr baseline', hash: generateHash(demoWaste.id + '2026-03-12') });
+
   saveNuclearState();
+  } catch (e) {
+    alert("CRITICAL ERROR IN SEEDDEMODATA: " + e.message + "\n" + e.stack);
+  }
+}
+
+// ══════════════════════════════════════════════════════
+// 12. IoT LOGISTICS & WEIGHBRIDGE SIMULATOR
+// ══════════════════════════════════════════════════════
+window.launchLogisticsSandbox = function(projectId) {
+  const p = NTZ.projects.find(x => x.id === projectId);
+  if (!p) return toast('Project not found', 'error');
+
+  const overlay = document.createElement('div');
+  overlay.id = 'logistics-modal';
+  overlay.style.cssText = 'position:fixed;top:0;left:0;width:100%;height:100%;background:rgba(0,0,0,0.85);backdrop-filter:blur(10px);z-index:9999;display:flex;align-items:center;justify-content:center;padding:20px;';
+  
+  const modalContent = document.createElement('div');
+  modalContent.style.cssText = 'width:90%;max-width:1200px;height:85vh;background:#05120a;border:1px solid var(--teal);border-radius:12px;display:flex;overflow:hidden;box-shadow:0 15px 50px rgba(0,0,0,0.5); font-family:var(--font-sans);';
+
+  modalContent.innerHTML = `
+    <div style="width:350px; background:rgba(0,0,0,0.5); border-right:1px solid rgba(0,201,167,0.3); padding:20px; display:flex; flex-direction:column;">
+      <h3 style="color:var(--teal); margin-top:0; font-size:1.1rem; display:flex; align-items:center; gap:8px;">
+        <svg width="20" height="20" fill="none" stroke="currentColor" stroke-width="2" viewBox="0 0 24 24"><path d="M12 2v20 M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path></svg>
+        Hardware dCoC Simulator
+      </h3>
+      <p style="color:rgba(255,255,255,0.6); font-size:0.8rem; margin-bottom:20px;">
+        Flow: <strong>${p.name || projectId}</strong><br><br>
+        Simulating physical transponder tracking & Regulation 37 weighbridge reconciliation.
+      </p>
+
+      <div id="sim-console" style="flex:1; background:#000; border:1px solid rgba(255,255,255,0.1); border-radius:6px; padding:10px; font-family:monospace; font-size:0.75rem; color:#4ade80; overflow-y:auto; margin-bottom:20px;">
+        > Sandbox initialized.<br>
+        > Waiting for dispatch vector...<br>
+      </div>
+
+      <button id="sim-btn-dispatch" class="gcis-btn" style="background:#F5A623; color:#111; font-weight:bold; border:none; padding:12px; font-size: 0.8rem;">🚚 INITIATE DISPATCH & TRACK</button>
+      <button class="gcis-btn" style="background:transparent; color:var(--coral); border:1px solid var(--coral); margin-top:10px;" onclick="document.getElementById('logistics-modal').remove()">✖ Close Sandbox</button>
+    </div>
+    </div>
+    <div style="flex:1; position:relative;">
+      <div id="sim-map" style="width:100%; height:100%;"></div>
+    </div>
+  `;
+  overlay.appendChild(modalContent);
+  document.body.appendChild(overlay);
+
+  // Initialize Map
+  const simMap = L.map('sim-map', { zoomControl:false }).setView([-0.8, 36.6], 10);
+  L.tileLayer('https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}', {
+    attribution: 'Tiles &copy; Esri'
+  }).addTo(simMap);
+
+  // Add route points (Custom simulated route)
+  const waypoints = [
+    [-1.2921, 36.8219], [-1.2650, 36.8000], [-1.2200, 36.7200], [-1.1500, 36.6500], 
+    [-1.0800, 36.6000], [-0.9900, 36.5600], [-0.8500, 36.4800], [-0.7100, 36.4300]
+  ];
+
+  const sourceMarker = L.circleMarker(waypoints[0], { radius: 8, color: '#4ade80', fillOpacity: 0.8 }).addTo(simMap).bindPopup('Origin (Source)').openPopup();
+  const sinkMarker = L.circleMarker(waypoints[waypoints.length-1], { radius: 8, color: '#EF5350', fillOpacity: 0.8 }).addTo(simMap).bindPopup('Dumpsite (Sink)');
+
+  L.polyline(waypoints, { color: 'rgba(255,255,255,0.7)', dashArray: '5,5', weight: 3 }).addTo(simMap);
+
+  let truckMarker = null;
+  const cons = document.getElementById('sim-console');
+  
+  function logMsg(msg, color='#4ade80') {
+    cons.innerHTML += `<span style="color:${color}">> ${msg}</span><br>`;
+    cons.scrollTop = cons.scrollHeight;
+  }
+
+  document.getElementById('sim-btn-dispatch').onclick = function() {
+    this.disabled = true;
+    this.style.opacity = '0.5';
+    
+    logMsg('Establishing MQTT link with Source Weighbridge...');
+    
+    setTimeout(() => {
+      simMap.closePopup();
+      // Emulate baseline tonnage (around defined facility tonnage or random 5000)
+      const baseTon = p.tonnageSource ? parseInt(p.tonnageSource) : 5000;
+      logMsg('Weighbridge QR SCAN OK.', '#80DEEA');
+      logMsg(`Origin Tonnage Locked: <strong style="color:var(--gold)">${baseTon} kg</strong>`, '#fff');
+      logMsg('Commencing GPS telemetry vectoring...');
+
+      truckMarker = L.circleMarker(waypoints[0], { radius: 6, color: '#F5A623', fillColor: '#fff', fillOpacity: 1 }).addTo(simMap);
+      
+      let step = 0;
+      const interval = setInterval(() => {
+        step++;
+        if (step >= waypoints.length) {
+          clearInterval(interval);
+          logMsg('Truck arrived at destination coordinates.');
+          processReconciliation(baseTon);
+        } else {
+          truckMarker.setLatLng(waypoints[step]);
+          simMap.panTo(waypoints[step], {animate: true, duration: 0.8});
+          logMsg(`Ping: ${waypoints[step][0].toFixed(3)}, ${waypoints[step][1].toFixed(3)}`, 'rgba(255,255,255,0.4)');
+        }
+      }, 900);
+    }, 1500);
+  };
+
+  function processReconciliation(originTon) {
+    setTimeout(() => {
+      logMsg('Establishing MQTT link with Sink Weighbridge...');
+      
+      setTimeout(() => {
+        // Create a slight variance (e.g., 2% loss usually)
+        const lossRate = Math.random() * 0.04; 
+        const destTon = Math.round(originTon * (1 - lossRate));
+        const variance = (((originTon - destTon) / originTon) * 100).toFixed(2);
+
+        logMsg('Sink Weighbridge QR SCAN OK.', '#80DEEA');
+        logMsg(`Destination Tonnage Locked: <strong style="color:var(--gold)">${destTon} kg</strong>`, '#fff');
+        
+        let vColor = variance <= 5.0 ? '#4ade80' : '#EF5350';
+        logMsg(`Variance Computed: <strong style="color:${vColor}">${variance}%</strong>`);
+
+        if (variance <= 5.0) {
+          logMsg('✅ Reg 37 Variance Threshold MET.', '#4ade80');
+          logMsg('Cryptographic ledger updated.', '#80DEEA');
+          p.tonnageSource = originTon;
+          p.tonnageFacility = destTon;
+          p.dcoCleared = true;
+          if(typeof saveNuclearState === 'function') saveNuclearState();
+        } else {
+          logMsg('🚨 Reg 37 Variance Threshold FAILED (> 5%).', '#EF5350');
+          logMsg('Weight fraud detected. Alert logged to NEMA.', '#EF5350');
+          p.tonnageSource = originTon;
+          p.tonnageFacility = destTon;
+          p.dcoCleared = false;
+          if(typeof saveNuclearState === 'function') saveNuclearState();
+        }
+        
+        document.getElementById('sim-btn-dispatch').textContent = '✔ SIMULATION COMPLETE';
+      }, 1500);
+    }, 1000);
+  }
 }

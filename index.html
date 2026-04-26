@@ -19,6 +19,7 @@
   <link rel="stylesheet" href="style.css?v=2.6">
   <link rel="stylesheet" href="netzerra-enterprise.css?v=1.0">
   <link rel="stylesheet" href="netzerra-nuclear.css?v=1.0">
+  <link rel="stylesheet" href="netzerra-waste-management.css?v=1.0">
 
   <!-- Chart.js -->
   <script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js"></script>
@@ -29,6 +30,8 @@
   <!-- Leaflet for Real Satellite Imagery (No API key needed for World Imagery) -->
   <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" />
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
+  <!-- QRCode.js for Digital Waste Passports -->
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
 </head>
 <body>
 
@@ -105,6 +108,10 @@
       <div class="nav-label">Calculate</div>
       <div class="nav-item" onclick="showSection('calculator')">
         <span class="ico">⚡</span> Emission Calculator <span class="nav-badge">5</span>
+      </div>
+      <div class="nav-item" onclick="showSection('waste-management')" style="background:rgba(245,166,35,.06)">
+        <span class="ico">♻️</span> Waste Management
+        <span class="nav-badge" style="background:#F5A623;color:#1a1a1a">NEMA 21(2)</span>
       </div>
       <div class="nav-item" onclick="showSection('offsets')"><span class="ico">🌳</span> Offset Strategies</div>
       <div class="nav-item" onclick="showSection('sequestration')"><span class="ico">🌿</span> Sequestration Calc</div>
@@ -254,6 +261,11 @@
         <div class="kpi teal"> <div class="kpi-lbl">Total Offsets</div><div class="kpi-val teal" id="kpi-offsets">710</div><div class="kpi-sub">tCO₂e sequestered</div><div class="kpi-delta up">↑ +65 this month</div></div>
         <div class="kpi coral"><div class="kpi-lbl">Netzerra Score</div><div class="kpi-val coral" id="kpi-score">68</div><div class="kpi-sub">Grade B · Improving</div><div class="kpi-delta up">↑ +4 pts</div></div>
       </div>
+      <div class="g3" style="margin-bottom:1.2rem">
+        <div class="kpi" style="background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2)"><div class="kpi-lbl">♻️ Waste Baseline</div><div class="kpi-val" id="kpi-waste" style="color:#F5A623">0</div><div class="kpi-sub">tCO₂e methane mitigated</div></div>
+        <div class="kpi" style="background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2)"><div class="kpi-lbl">Waste Facilities</div><div class="kpi-val" id="kpi-waste-count" style="color:#F5A623">0</div><div class="kpi-sub">registered under NEMA 21(2)</div></div>
+        <div class="kpi" style="background:rgba(245,166,35,.08);border:1px solid rgba(245,166,35,.2)"><div class="kpi-lbl">dCoC Compliance</div><div class="kpi-val" id="kpi-waste-dcoc" style="color:#F5A623">—</div><div class="kpi-sub">digital chain of custody</div></div>
+      </div>
       <div class="db-grid">
         <div>
           <div class="charts-2">
@@ -284,6 +296,7 @@
               <button class="btn-report" onclick="showSection('calculator')">⚡ Run New Calculation</button>
               <button class="btn-report" onclick="showSection('county')">🏢 County Dashboard</button>
               <button class="btn-report" onclick="showSection('offsets')">🌳 Explore Offsets</button>
+              <button class="btn-report" onclick="showSection('waste-management')" style="background:rgba(245,166,35,.08);color:#F5A623">♻️ Waste Management</button>
               <button class="btn-report" onclick="generateAndDownloadPDF()">📄 Download PDF Report</button>
             </div>
           </div>
@@ -758,6 +771,58 @@
             </div>
           </div>
         </div>
+      </div>
+    </section>
+
+    <!-- ══════════════ WASTE MANAGEMENT ══════════════ -->
+    <section class="section" id="waste-management-section">
+      <div class="waste-module-container" id="waste-module-main">
+        <div class="waste-header">
+          <h2>♻️ Waste Management Module & Consultant Workbench</h2>
+          <div id="status-badge" class="waste-badge draft hidden">Draft (AI)</div>
+        </div>
+
+        <!-- PROPONENT VIEW (WIZARD) -->
+        <div id="waste-wizard-container"></div>
+
+        <!-- CONSULTANT TRIGGER -->
+        <div id="consultant-trigger-wrapper" class="hidden" style="text-align: center; margin-top: 2rem;">
+          <h4 style="color:#EF5350;">Notice: Direct NEMA Submission Blocked</h4>
+          <p style="font-size:0.8rem; color:rgba(255,255,255,0.6);">Regulation 21(2) dictates that a NEMA Lead Expert must certify this automated MRV calculation before the KNCR will accept it.</p>
+          <button id="btn-invite-consultant" class="btn-primary" style="background: linear-gradient(135deg, #1f4037, #99f2c8); color:#000;">💼 Invite Lead Consultant (Launch Workbench View)</button>
+        </div>
+
+        <!-- CONSULTANT WORKBENCH (Hidden until toggled) -->
+        <div id="consultant-sidebar" class="workbench-right hidden">
+          <div style="font-size: 0.8rem; font-weight: 600; text-transform: uppercase; color: var(--waste-accent);">NEMA Expert Review Panel</div>
+          <div id="consultant-sidebar-content" style="display:flex; flex-direction:column; gap:1rem;"></div>
+          
+          <div id="nema-score-container" class="nema-score-hud hidden">
+            <div class="score-stat">
+              <span class="s-lbl">NEMA Approval Probability</span>
+              <span class="s-val high" id="hud-score-val">--</span>
+            </div>
+            <div class="score-stat">
+              <span class="s-lbl">IPCC AR6 Baseline</span>
+              <span class="s-val" id="hud-baseline-val">--</span>
+            </div>
+          </div>
+
+          <div class="certify-block mt-auto">
+            <p>I have audited the visual extracts and the applied Documented Organic Carbon formulas.</p>
+            <button id="btn-certify-integrity" class="btn-primary" style="width: 100%;">🔒 Certify Integrity (Sign with License)</button>
+            <div id="certify-success" class="hidden" style="color:#3AAA5C; font-weight: 600; font-size: 0.85rem; margin-top: 0.5rem;"></div>
+          </div>
+        </div>
+
+        <!-- DOC VIEWER / DRAFT -->
+        <div id="waste-document-view" class="workbench-left hidden">
+          <div class="watermark" id="doc-watermark">UNVERIFIED DRAFT - AI ASSISTED</div>
+          <div class="doc-viewer">
+            <div class="doc-content" id="doc-editable-content"></div>
+          </div>
+        </div>
+
       </div>
     </section>
 
@@ -1842,10 +1907,10 @@
           </h3>
           <span class="trust-badge" style="background:rgba(245,166,35,.1);color:#F5A623;border-color:rgba(245,166,35,.2)">⚠️ 1 Deforestation Alert</span>
         </div>
-        <div style="background:rgba(0,0,0,.3);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:1.2rem;display:flex;gap:15px;align-items:stretch">
-          <div id="nema-satellite-map" style="width:160px; height:120px; border-radius:8px; overflow:hidden; border:1px solid rgba(245,166,35,.4); flex-shrink:0;"></div>
-          <div style="flex:1">
-            <h4 style="margin:0 0 4px 0;color:#F5A623;font-size:.9rem">Forest Canopy Reversal Detected</h4>
+        <div style="background:rgba(0,0,0,.3);border:1px solid rgba(245,166,35,.2);border-radius:10px;padding:1.2rem;display:flex;flex-direction:column;gap:15px;">
+          <div id="nema-satellite-map" style="width:100%; height:400px; border-radius:8px; overflow:hidden; border:1px solid rgba(245,166,35,.4);"></div>
+          <div>
+            <h4 style="margin:0 0 4px 0;color:#F5A623;font-size:1.1rem">Forest Canopy Reversal Detected</h4>
             <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px">
               <span style="font-size:0.75rem;color:rgba(255,255,255,.5);">Project: <strong>KNCR-102 (Samburu REDD+)</strong></span>
               <span style="font-size:0.7rem;color:rgba(255,255,255,.4);">ESA Sentinel-2 · 4 hours ago</span>
@@ -1860,6 +1925,9 @@
           </div>
         </div>
       </div>
+
+      <!-- ═══ WASTE COMPLIANCE INTELLIGENCE (Dynamic) ═══ -->
+      <div id="nema-waste-alerts-container"></div>
 
       <div class="card" style="margin-bottom:1.2rem">
         <h3 style="margin-bottom:.9rem">📋 Project Pipeline — All KNCR Projects</h3>
@@ -2344,7 +2412,7 @@
 </footer>
 
 <!-- Netzerra Core App -->
-<script src="app.js"></script>
+<script src="app.js?v=1.1"></script>
 <!-- Netzerra Enterprise Layer -->
 <script src="netzerra-enterprise.js"></script>
 <!-- Netzerra Validation: live flags, unit toggles, audit trail -->
@@ -2352,7 +2420,9 @@
 <!-- Netzerra AI Assistant: Claude-powered chat, insights, reports -->
 <script src="netzerra-ai.js"></script>
 <!-- Netzerra Nuclear Upgrade: Auth, GCIS Wizard, Document Engine, Messaging, Registry -->
-<script src="netzerra-nuclear.js?v=1.0"></script>
+<script src="netzerra-nuclear.js?v=1.3"></script>
+<!-- Netzerra Waste Management Module -->
+<script src="netzerra-waste-management.js?v=1.3"></script>
 <!-- Service Worker Registration -->
 <script>
 if ('serviceWorker' in navigator) {

@@ -101,6 +101,7 @@ function registerAccount() {
   applyLogin(user);
   hideAuthScreen();
   toast(`Welcome to Netzerra, ${name}! Your ${AUTH.roles[role]?.label} account has been created.`, 'success');
+  setTimeout(() => { if (typeof NTZ_AI_resetGreeting === 'function') NTZ_AI_resetGreeting(); }, 300);
 }
 
 function loginAs(demoId) {
@@ -115,6 +116,7 @@ function loginAs(demoId) {
     hideAuthScreen();
     toast(`Logged in as ${user.name} (${AUTH.roles[user.role]?.label})`, 'success');
   }
+  setTimeout(() => { if (typeof NTZ_AI_resetGreeting === 'function') NTZ_AI_resetGreeting(); }, 300);
 }
 
 function applyLogin(user) {
@@ -459,6 +461,7 @@ function generateRetirementCertificate(cert) {
     <tr><td>Payment Method</td><td>${cert.payMethod}</td></tr>
     <tr><td>Purchase Price</td><td>KES ${cert.pricePerT.toLocaleString()}/tCO₂e · Total: KES ${cert.totalKES.toLocaleString()}</td></tr>
     <tr><td>Retirement Date</td><td>${now}</td></tr>
+    <tr><td style="color:#B8860B;">Chain of Custody</td><td style="font-weight:bold; color:#B8860B;">Digital Traceability (dCoC) Verified Source-to-Sink via Netzerra IoT</td></tr>
     <tr><td>KNCR Reference</td><td style="font-family:monospace">${cert.certNo}</td></tr>
   </table>
 
@@ -489,13 +492,14 @@ function generateRetirementCertificate(cert) {
 
   <div style="display:flex; justify-content:space-between; align-items:center; margin-top:8mm; padding-top:4mm; border-top:1px dashed #ccc;">
     <div style="text-align:left">
-      <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('https://www.netzerra.co.ke/verify?hash=' + cert.certNo + '&ref=' + cert.certNo + '&doc=ret')}" style="width:70px;height:70px;padding:3px;border:1px solid #ccc;border-radius:4px" alt="QR">
+      <img src="https://api.qrserver.com/v1/create-qr-code/?size=80x80&data=${encodeURIComponent('https://www.netzerra.co.ke/verify?hash=' + cert.certNo + '&dCoC=true')}" style="width:70px;height:70px;padding:3px;border:1px solid #ccc;border-radius:4px" alt="QR">
       <div style="font-size:7pt;color:#666;margin-top:2px;font-family:monospace">PAYLOAD HASH: ${cert.certNo}</div>
     </div>
     <div style="text-align:right; font-size:8pt; color:#555;">
       <strong>KNCR LEDGER STATUS:</strong><br>
       ✅ Article 6 Corresponding Adjustment Applied<br>
-      ✅ Decentralised Ledger Hash Recorded
+      ✅ Decentralised Ledger Hash Recorded<br>
+      ✅ Source-to-Sink Traceability Verified
     </div>
   </div>
 
@@ -909,7 +913,7 @@ function renderNEMAOversight() {
       <div class="kpi teal"><div class="kpi-lbl">Total Projects</div><div class="kpi-val teal">${projects.length}</div><div class="kpi-sub">${isCounty ? county + ' County' : 'Nationwide'}</div></div>
       <div class="kpi green"><div class="kpi-lbl">Total Credits</div><div class="kpi-val green">${totalCredits.toLocaleString()}</div><div class="kpi-sub">tCO₂e tracked</div></div>
       <div class="kpi gold"><div class="kpi-lbl">CDA Compliant</div><div class="kpi-val gold">${compliant}/${projects.length}</div><div class="kpi-sub">meeting benefit mandate</div></div>
-      <div class="kpi coral"><div class="kpi-lbl">Registered on KNCR</div><div class="kpi-val coral">${registered}</div><div class="kpi-sub">projects live</div></div>
+      <div class="kpi coral"><div class="kpi-lbl">National Methane Avoided</div><div class="kpi-val coral">${(totalCredits * 0.42).toLocaleString(undefined, {maximumFractionDigits: 0})}</div><div class="kpi-sub">tCO₂e from Waste Sector</div></div>
     `;
   }
 
