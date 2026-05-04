@@ -1357,9 +1357,11 @@ function renderWasteWizard() {
         </div>
         <div class="wzc-header-right">
           <span class="wzc-step-badge" id="wzc-step-badge">Step 1/9</span>
+          <button class="wzc-export-btn" onclick="_wzcExport()" title="Export conversation">Export</button>
           <button class="btn-report" onclick="if(confirm('Reset interview and start fresh?')){wasteGcisHistory=[];hardResetWasteModule();}" style="font-size:.68rem;padding:.3rem .6rem">Reset</button>
         </div>
       </div>
+      <div class="wzc-progress"><div class="wzc-progress-fill" id="wzc-progress" style="width:11%"></div></div>
       <div class="wzc-msgs" id="wzc-msgs"></div>
       <div class="wzc-sugs" id="wzc-sugs"></div>
       <div class="wzc-input-row">
@@ -1383,11 +1385,12 @@ function _wzcAddMsg(role, text) {
   const d = document.createElement('div');
   d.className = 'wzc-msg ' + role;
   const ts = new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+  const label = role === 'user' ? 'You' : 'Zerra';
   let html = text
     .replace(/</g, '&lt;')
     .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
     .replace(/\n/g, '<br>');
-  d.innerHTML = '<div class="wzc-bub">' + html + '</div><span class="wzc-ts">' + ts + '</span>';
+  d.innerHTML = '<span class="wzc-role-label">' + label + '</span><div class="wzc-bub">' + html + '</div><span class="wzc-ts">' + ts + '</span>';
   c.appendChild(d);
   c.scrollTop = c.scrollHeight;
 }
@@ -1614,6 +1617,37 @@ function _wzcUpdateStepBadge() {
   }
   badge.textContent = 'Step ' + current.step + '/9 - ' + current.label;
   wasteCurrentStep = current.step - 1;
+
+  // Update progress bar
+  var pBar = document.getElementById('wzc-progress');
+  if (pBar) pBar.style.width = Math.round((current.step / 9) * 100) + '%';
+}
+
+// ── Export Conversation ──────────────────────────────
+function _wzcExport() {
+  if (wasteGcisHistory.length === 0) return toast('No conversation to export yet.', 'error');
+  var lines = ['ZERRA WASTE GCIS INTAKE TRANSCRIPT', '='.repeat(50), 'Exported: ' + new Date().toLocaleString('en-KE'), ''];
+  wasteGcisHistory.forEach(function(m) {
+    var who = m.role === 'user' ? 'PROPONENT' : 'ZERRA';
+    lines.push('[' + who + ']');
+    lines.push(m.content);
+    lines.push('');
+  });
+  if (wasteData.w_facility_name || wasteData.w_county) {
+    lines.push('='.repeat(50), 'EXTRACTED DATA SUMMARY', '');
+    if (wasteData.w_facility_name) lines.push('Facility: ' + wasteData.w_facility_name);
+    if (wasteData.w_county) lines.push('County: ' + wasteData.w_county);
+    if (wasteData.w_stream_type) lines.push('Waste Type: ' + wasteData.w_stream_type);
+    if (wasteData.w_annual_volume) lines.push('Annual Volume: ' + wasteData.w_annual_volume + ' tonnes/year');
+    if (wasteData.methane_baseline_tco2e_yr) lines.push('Methane Baseline: ' + wasteData.methane_baseline_tco2e_yr.toFixed(1) + ' tCO2e/yr');
+    if (wasteData.cda_share_pct) lines.push('CDA Share: ' + wasteData.cda_share_pct + '%');
+  }
+  var blob = new Blob([lines.join('\n')], { type: 'text/plain' });
+  var a = document.createElement('a');
+  a.href = URL.createObjectURL(blob);
+  a.download = 'zerra-waste-gcis-transcript-' + new Date().toISOString().slice(0,10) + '.txt';
+  a.click();
+  toast('Conversation transcript downloaded.', 'success');
 }
 
 // ── Check Interview Complete ──────────────────────────
