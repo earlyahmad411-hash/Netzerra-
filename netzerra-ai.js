@@ -76,6 +76,24 @@
 .nai-ract{display:flex;gap:.45rem}
 .nai-gen{flex:1;padding:.6rem;background:linear-gradient(135deg,var(--fern,#27733F),var(--leaf,#3AAA5C));border:none;color:#fff;border-radius:9px;font-size:.78rem;font-weight:600;cursor:pointer}
 .nai-cpy{padding:.6rem .95rem;background:rgba(255,255,255,.06);border:1px solid rgba(109,217,140,.17);color:rgba(255,255,255,.65);border-radius:9px;font-size:.78rem;cursor:pointer}
+/* ── VOICE STYLES ── */
+.nai-voice-row{display:flex;align-items:center;gap:.5rem;margin-left:auto}
+.nai-mic{width:34px;height:34px;border-radius:50%;background:rgba(255,255,255,.06);border:1px solid rgba(109,217,140,.22);color:rgba(255,255,255,.55);cursor:pointer;font-size:.9rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s;position:relative}
+.nai-mic:hover{background:rgba(109,217,140,.14);color:#fff;border-color:var(--leaf,#3AAA5C)}
+.nai-mic.listening{background:rgba(239,83,80,.18);border-color:#EF5350;color:#EF5350;animation:nai-mic-pulse 1s ease infinite}
+.nai-mic.listening::after{content:'';position:absolute;inset:-6px;border-radius:50%;border:2px solid rgba(239,83,80,.5);animation:nai-mic-ring 1s ease-out infinite}
+@keyframes nai-mic-pulse{0%,100%{transform:scale(1)}50%{transform:scale(1.08)}}
+@keyframes nai-mic-ring{0%{transform:scale(1);opacity:.8}100%{transform:scale(1.7);opacity:0}}
+.nai-spk{width:28px;height:28px;border-radius:50%;background:transparent;border:1px solid rgba(109,217,140,.15);color:rgba(255,255,255,.3);cursor:pointer;font-size:.75rem;display:flex;align-items:center;justify-content:center;flex-shrink:0;transition:all .2s}
+.nai-spk.on{background:rgba(109,217,140,.12);border-color:var(--leaf,#3AAA5C);color:var(--mint,#6DD98C)}
+.nai-spk:hover{border-color:rgba(109,217,140,.4);color:rgba(255,255,255,.7)}
+/* Zerra speaking waveform overlay on avatar */
+.nai-av.speaking{animation:nai-av-speak .6s ease infinite alternate}
+@keyframes nai-av-speak{0%{box-shadow:0 0 0 0 rgba(109,217,140,.6)}100%{box-shadow:0 0 0 8px rgba(109,217,140,0)}}
+/* Transcript preview in input */
+.nai-ta.listening-mode{border-color:#EF5350;background:rgba(239,83,80,.06)}
+/* No-support banner */
+#nai-voice-unsupported{font-size:.65rem;color:#F5A623;padding:.3rem .9rem;display:none}
 `;document.head.appendChild(s);})();
 
 function _buildAIHTML(){
@@ -85,9 +103,12 @@ function _buildAIHTML(){
   <button id="ntz-ai-btn" onclick="NTZ_AI.toggle()" title="Netzerra AI">🤖</button>
   <div id="ntz-ai-panel">
     <div class="nai-hdr">
-      <div class="nai-av">🤖</div>
+      <div class="nai-av" id="nai-av">🤖</div>
       <div><div class="nai-hname">Netzerra AI</div><div class="nai-hst">Online · Groq via Worker</div></div>
-      <button class="nai-close" onclick="NTZ_AI.toggle()">✕</button>
+      <div class="nai-voice-row">
+        <button class="nai-spk" id="nai-spk" onclick="NTZ_VOICE.toggleSpeak()" title="Toggle Zerra voice">🔇</button>
+        <button class="nai-close" onclick="NTZ_AI.toggle()">✕</button>
+      </div>
     </div>
     <div class="nai-tabs">
       <button class="nai-tab on" onclick="NTZ_AI.tab('chat')">💬 Chat</button>
@@ -105,8 +126,10 @@ function _buildAIHTML(){
           <button class="nai-sug" onclick="NTZ_AI.qs(this)">Habari yako, unawezaje kunisaidia?</button>
           <button class="nai-sug" onclick="NTZ_AI.qs(this)">Explain the CDA Fourth Schedule</button>
         </div>
+        <div id="nai-voice-unsupported">⚠️ Voice not supported in this browser. Use Chrome or Edge.</div>
         <div class="nai-inp-row">
-          <textarea class="nai-ta" id="nai-inp" rows="1" placeholder="Ask me anything..." onkeydown="NTZ_AI.key(event)" oninput="NTZ_AI.resize(this)"></textarea>
+          <textarea class="nai-ta" id="nai-inp" rows="1" placeholder="Ask me anything or press 🎤 to speak..." onkeydown="NTZ_AI.key(event)" oninput="NTZ_AI.resize(this)"></textarea>
+          <button class="nai-mic" id="nai-mic" onclick="NTZ_VOICE.toggleMic()" title="Speak to Zerra">🎤</button>
           <button class="nai-send" id="nai-send" onclick="NTZ_AI.send()">➤</button>
         </div>
       </div>
