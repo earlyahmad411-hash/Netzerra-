@@ -35,6 +35,79 @@ const SOVEREIGN_VALUES = {
   LEDGER_HASH_ALGO: 'SHA-256'
 };
 
+// ═══════════════════════════════════════════════════════════
+// WASTE GCIS AI SYSTEM PROMPT - Zerra Conversational Intake
+// ═══════════════════════════════════════════════════════════
+const WASTE_GCIS_SYSTEM_PROMPT = `You are Zerra, the AI guide for Netzerra's Waste GCIS Wizard.
+
+Your job is to conduct a structured adaptive intake interview for a new waste facility registration under Regulation 21(2) of the Carbon Markets Regulations 2024 and the Sustainable Waste Management Act 2022.
+
+WASTE-SPECIFIC REGULATORY GROUNDING:
+- EMCA 1999 S87: NEMA waste licence requirement
+- Sustainable Waste Management Act 2022 (SWMA): dCoC and EPR obligations
+- Plastic Bags Regulations 2017: EPR producer take-back
+- Health Act 2017: healthcare waste separate regime
+- IPCC 2006 Vol.5 Ch.3: waste sector methane methodology
+- Regulation 37: KES 500M penalty for false waste manifest data
+- SWMA Section 28: Digital Chain of Custody (dCoC) requirement
+- CDM AMS-III.G: landfill gas capture methodology
+- Methane EF: 0.58 kgCH4/kg waste (IPCC default East Africa)
+- Wastewater EF: 0.025 kgCH4/kg COD
+- CH4 GWP: 27.0 (IPCC AR6 100-year)
+
+CONVERSATION FLOW - ask in this sequence:
+
+STEP 1 - PROJECT IDENTITY & KYC
+Q1: "Habari! I'm Zerra, your Waste GCIS guide. What is the name of this waste facility or project?"
+Q2: "Which county is this facility located in?"
+Q3: "Who is the licensed waste operator responsible for this facility? Must be NEMA-registered."
+
+STEP 2 - LEGAL HARD-GATE
+Q4: "Does the operator hold a valid NEMA waste management licence under EMCA 1999 S87?"
+HARD GATE: If no licence, block progress. Explain: apply at nema.go.ke, 2-6 weeks, KES 5,000-50,000.
+Q5: "What is the NEMA licence category? Options: Category A (municipal), B (industrial), C (healthcare), D (hazardous), E (recycling), F (composting), G (waste-to-energy)."
+
+STEP 3 - WASTE STREAMS
+Q6: "What is the primary waste type? Options: Municipal Solid Waste, Industrial waste, Healthcare waste, Agricultural waste, Construction debris, Mixed recyclables, Hazardous waste."
+Q7: "How many tonnes per year does this facility process?"
+After Q7: Calculate preliminary IPCC methane baseline.
+
+STEP 4 - AI VISION AUDIT
+Q8: "For the AI waste composition analysis, have you uploaded site photos for Zerra to analyse?"
+
+STEP 5 - GIS FACILITY SELECTION
+Q9: "Which NEMA-licensed disposal facility will receive the waste?"
+
+STEP 6 - IPCC TIER 2 METHANE BASELINE
+Q10: "What percentage of the waste is degradable organic content (DOC)?"
+Q11: "Does the facility have or plan a landfill gas (LFG) capture system?"
+
+STEP 7 - DIGITAL CHAIN OF CUSTODY
+Q12: "How will you implement the Digital Chain of Custody (dCoC) required under SWMA 2022?"
+
+STEP 8 - CDA FOURTH SCHEDULE
+Q13: "What percentage of carbon revenues will be allocated to the community under the CDA?"
+HARD GATE: Minimum 25% for non-land waste projects. Block if below.
+Q14: "Does the project include provisions for informal waste pickers who may be affected?"
+
+STEP 9 - REGISTRATION SUMMARY
+Q15 (FINAL): Present facility summary table, calculate PRL score, list action items, provide timeline.
+
+AI SUGGESTION RULES:
+After each question add: "Suggested answers: [3 specific, Kenya-relevant options]"
+
+IPCC METHANE FORMULA - use this throughout:
+CH4 (tonnes) = W x DOC x DOCf x F x (16/12) x MCF x (1-OX)
+CH4 CO2e = CH4 tonnes x GWP(27.0)
+Where: W=Annual waste tonnage, DOC=Degradable organic carbon fraction (MSW:0.17, industrial:0.10, agricultural:0.20), DOCf=0.5, F=0.5, MCF=1.0, OX=0.1
+Always show this formula with real numbers substituted when you calculate it.`;
+
+// ═══════════════════════════════════════════════════════════
+// WASTE GCIS CHAT STATE
+// ═══════════════════════════════════════════════════════════
+let wasteGcisHistory = [];
+let wasteGcisBusy = false;
+
 const ALL_47_COUNTIES = ['Baringo','Bomet','Bungoma','Busia','Elgeyo-Marakwet','Embu','Garissa','Homa Bay','Isiolo','Kajiado','Kakamega','Kericho','Kiambu','Kilifi','Kirinyaga','Kisii','Kisumu','Kitui','Kwale','Laikipia','Lamu','Machakos','Makueni','Mandera','Marsabit','Meru','Migori','Mombasa',"Murang'a",'Nairobi','Nakuru','Nandi','Narok','Nyamira','Nyandarua','Nyeri','Samburu','Siaya','Taita-Taveta','Tana River','Tharaka-Nithi','Trans Nzoia','Turkana','Uasin Gishu','Vihiga','Wajir','West Pokot'];
 
 // Licensed Waste Collection Companies in Kenya (NEMA Registered)
@@ -236,6 +309,7 @@ function saveWasteState() {
     localStorage.setItem(WASTE_LS_KEY, JSON.stringify({
       wasteData,
       wasteCurrentStep,
+      wasteGcisHistory,
       savedAt: new Date().toISOString()
     }));
   } catch(e) { /* silent */ }
@@ -248,6 +322,7 @@ function loadWasteState() {
     const d = JSON.parse(raw);
     if (d.wasteData) Object.assign(wasteData, d.wasteData);
     if (typeof d.wasteCurrentStep === 'number') wasteCurrentStep = d.wasteCurrentStep;
+    if (Array.isArray(d.wasteGcisHistory)) wasteGcisHistory = d.wasteGcisHistory;
     return true;
   } catch(e) { return false; }
 }
@@ -257,6 +332,8 @@ function clearWasteState() {
   localStorage.removeItem('ntz_waste_v2');
   localStorage.removeItem('wasteWizardData');
   wasteCurrentStep = 0;
+  wasteGcisHistory = [];
+  wasteGcisBusy = false;
   wasteData = {
     // Step 1: KYC
     w_company_name: '', w_kra_pin: '', w_business_reg: '', w_proponent_name: '',
@@ -1255,572 +1332,331 @@ function simulateTruckTransit(containerId, startLat, startLng, endLat, endLng) {
   }, 1000);
 }
 
-// ── Proponent / Developer: Full Wizard (Titan Sovereign v6.0) ──────────────
+// ── Proponent / Developer: AI-Driven Waste GCIS Chat ──────────────
 function renderWasteWizard() {
   const container = document.getElementById('waste-wizard-container');
   if (!container) return;
 
-  const role = getWasteRole();
-  const step = WASTE_STEPS[wasteCurrentStep];
-  const total = WASTE_STEPS.length;
-  const progress = ((wasteCurrentStep + 1) / total * 100).toFixed(0);
-
-  // Show existing projects summary at top for proponents
   const existingProjects = getWasteProjects();
   const projectSummary = existingProjects.length > 0 ? `
-    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(109,217,140,.15);border-radius:8px;padding:.75rem 1rem;margin-bottom:1.2rem;display:flex;align-items:center;justify-content:space-between">
-      <div style="font-size:.82rem;color:rgba(255,255,255,.7)">♻️ You have <b style="color:var(--mint)">${existingProjects.length}</b> waste project${existingProjects.length>1?'s':''} registered · <b style="color:var(--mint)">${existingProjects.reduce((s,p)=>s+(p.credits||0),0).toFixed(1)}</b> tCO₂e total baseline</div>
-      <button class="btn-report" onclick="renderWasteViewForRole()" style="font-size:.72rem">📋 View All</button>
+    <div style="background:rgba(255,255,255,.04);border:1px solid rgba(109,217,140,.15);border-radius:8px;padding:.75rem 1rem;margin-bottom:1rem;display:flex;align-items:center;justify-content:space-between">
+      <div style="font-size:.82rem;color:rgba(255,255,255,.7)">You have <b style="color:var(--mint)">${existingProjects.length}</b> waste project${existingProjects.length>1?'s':''} registered</div>
+      <button class="btn-report" onclick="renderWasteViewForRole()" style="font-size:.72rem">View All</button>
     </div>` : '';
 
-  let html = `
+  container.innerHTML = `
     ${projectSummary}
-    <div class="gcis-progress"><div class="gcis-progress-bar" style="width:${progress}%"></div></div>
-    <div class="gcis-step-indicator">
-      ${WASTE_STEPS.map((s, i) => `
-        <div class="gcis-step-dot ${i < wasteCurrentStep ? 'completed' : i === wasteCurrentStep ? 'active' : ''}" title="${s.title}">
-          ${i < wasteCurrentStep ? '✓' : (i + 1)}
+    <div class="wzc-wrapper">
+      <div class="wzc-header">
+        <div class="wzc-header-left">
+          <div class="wzc-avatar">Z</div>
+          <div>
+            <div class="wzc-title">Zerra - Waste GCIS Intake</div>
+            <div class="wzc-status"><span class="wzc-status-dot"></span> Online - Structured Interview</div>
+          </div>
         </div>
-      `).join('<div class="gcis-step-line"></div>')}
+        <div class="wzc-header-right">
+          <span class="wzc-step-badge" id="wzc-step-badge">Step 1/9</span>
+          <button class="btn-report" onclick="if(confirm('Reset interview and start fresh?')){wasteGcisHistory=[];hardResetWasteModule();}" style="font-size:.68rem;padding:.3rem .6rem">Reset</button>
+        </div>
+      </div>
+      <div class="wzc-msgs" id="wzc-msgs"></div>
+      <div class="wzc-sugs" id="wzc-sugs"></div>
+      <div class="wzc-input-row">
+        <textarea class="wzc-ta" id="wzc-inp" rows="1" placeholder="Type your answer..." onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();wasteGcisSend();}" oninput="this.style.height='auto';this.style.height=Math.min(this.scrollHeight,88)+'px';"></textarea>
+        <button class="wzc-send" id="wzc-send" onclick="wasteGcisSend()">&#10148;</button>
+      </div>
     </div>
-    <div class="gcis-step-header">
-      <div class="gcis-step-count">Step ${wasteCurrentStep + 1} of ${total}</div>
-      <h3 class="gcis-step-title">${step.title}</h3>
-      <p class="gcis-step-subtitle">${step.subtitle}</p>
-      ${step.help ? `<p style="font-size:0.75rem; color:rgba(255,255,255,0.5); margin-top:5px;">${step.help}</p>` : ''}
-    </div>
-    <div class="gcis-step-body">
   `;
 
-  // ═══════════════════════════════════════════════════════════
-  // STEP 1: KYC (Project Identity & Proponent KYC)
-  // ═══════════════════════════════════════════════════════════
-  if (step.id === 'step1-kyc') {
-    step.inputs.forEach(f => {
-      if (f.type === 'text') {
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label} ${f.required ? '<span class="gcis-required">*</span>' : ''}</label>
-          <input class="gcis-input" type="text" id="${f.id}" placeholder="${f.placeholder}" value="${wasteData[f.id]||''}" oninput="wasteData[this.id]=this.value;saveWasteState()">
-        </div>`;
-      }
-    });
-    // Duplicate check notice
-    html += `<div style="margin-top:1rem; padding:0.75rem; background:rgba(109,217,140,0.1); border-radius:6px; font-size:0.75rem; color:var(--mint);">
-      <strong>🔍 Duplicate Check:</strong> System will verify KRA PIN and Business Registration against window.NTZ.registry
-    </div>`;
+  if (wasteGcisHistory.length === 0) {
+    _wzcGreet();
+  } else {
+    _wzcRestoreMessages();
   }
-  
-  // ═══════════════════════════════════════════════════════════
-  // STEP 2: Legal Hard-Gate (NEMA License)
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step2-license') {
-    step.inputs.forEach(f => {
-      if (f.type === 'readonly') {
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label}</label>
-          <div style="padding:0.5rem; background:rgba(0,0,0,0.3); border-radius:6px; font-size:0.85rem; color:rgba(255,255,255,0.7);">${f.value}</div>
-        </div>`;
-      } else {
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label} ${f.required ? '<span class="gcis-required">*</span>' : ''}</label>
-          <input class="gcis-input" type="${f.type === 'date' ? 'date' : 'text'}" id="${f.id}" value="${wasteData[f.id]||''}" oninput="wasteData[this.id]=this.value;saveWasteState()">
-        </div>`;
-      }
-    });
-    // Legal Hard-Gate warning
-    html += `<div style="margin-top:1rem; padding:1rem; background:rgba(255,100,100,0.1); border:1px solid #ff6b6b; border-radius:6px;">
-      <div style="font-size:0.8rem; color:#ff6b6b; font-weight:bold;">⚠️ LEGAL HARD-GATE</div>
-      <div style="font-size:0.75rem; color:rgba(255,255,255,0.7); margin-top:5px;">
-        Sustainable Waste Management Act 2022: No project may proceed without valid NEMA license.
-      </div>
-    </div>`;
-  }
-  
-  // ═══════════════════════════════════════════════════════════
-  // STEP 3: Licensed Waste Contractor
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step3-contractor') {
-    step.inputs.forEach(f => {
-      if (f.type === 'select') {
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label} ${f.required ? '<span class="gcis-required">*</span>' : ''}</label>
-          <select class="gcis-input" id="${f.id}" onchange="selectWasteContractor(this.value)">
-            <option value="">Select licensed contractor...</option>
-            ${f.options.map(o => `<option value="${o}" ${wasteData[f.id]===o?'selected':''}>${o}</option>`).join('')}
-          </select>
-          ${f.help ? `<p style="font-size:0.7rem; color:rgba(255,255,255,0.5); margin-top:5px;">${f.help}</p>` : ''}
-        </div>`;
-        
-        // Show company verification badge if contractor selected
-        if (wasteData.w_contractor) {
-          const company = LICENSED_WASTE_COMPANIES.find(c => c.name === wasteData.w_contractor);
-          if (company) {
-            html += `<div style="margin-top:0.5rem; padding:0.75rem; background:rgba(58,170,92,0.1); border:1px solid var(--mint); border-radius:6px; font-size:0.75rem;">
-              <div style="color:var(--mint); font-weight:bold; margin-bottom:5px;">✅ NEMA Verified Contractor</div>
-              <div><strong>License:</strong> ${company.license}</div>
-              <div><strong>Counties:</strong> ${company.counties.join(', ')}</div>
-              <div><strong>Specialization:</strong> ${company.specialization}</div>
-            </div>`;
-          }
-        }
-      } else {
-        const isReadOnly = f.id === 'w_contractor_license' && wasteData.w_contractor;
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label} ${f.required ? '<span class="gcis-required">*</span>' : ''}</label>
-          <input class="gcis-input" type="text" id="${f.id}" placeholder="${f.placeholder}" value="${wasteData[f.id]||''}" oninput="wasteData[this.id]=this.value;saveWasteState()" ${isReadOnly ? 'readonly style="background:rgba(0,0,0,0.3)"' : ''}>
-        </div>`;
-      }
-    });
-    
-    // Licensed contractors notice
-    html += `<div style="margin-top:1rem; padding:0.75rem; background:rgba(109,217,140,0.1); border-radius:6px; font-size:0.75rem; color:var(--mint);">
-      <strong>📋 NEMA Licensed Waste Contractors:</strong> ${LICENSED_WASTE_COMPANIES.length} companies registered including Baus Taka Ltd, Nairobi Waste Management, and Taka Kenya Solutions.
-    </div>`;
-  }
-  
-  // ═══════════════════════════════════════════════════════════
-  // STEP 4: Source & Stream Definition
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step4-stream') {
-    step.inputs.forEach(f => {
-      if (f.type === 'select') {
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label} ${f.required ? '<span class="gcis-required">*</span>' : ''}</label>
-          <select class="gcis-input" id="${f.id}" onchange="updateStreamType(this.value)">
-            <option value="">Select waste stream...</option>
-            ${f.options.map(o => `<option value="${o}" ${wasteData[f.id]===o?'selected':''}>${o}</option>`).join('')}
-          </select>
-          ${f.help ? `<p style="font-size:0.7rem; color:rgba(255,255,255,0.5); margin-top:5px;">${f.help}</p>` : ''}
-        </div>`;
-      } else if (f.type === 'readonly') {
-        const docValue = wasteData.w_stream_type === 'Municipal Solid Waste' ? SOVEREIGN_VALUES.DOC_MUNICIPAL :
-                         wasteData.w_stream_type === 'Industrial Waste' ? SOVEREIGN_VALUES.DOC_INDUSTRIAL :
-                         wasteData.w_stream_type === 'Healthcare/Medical Waste' ? SOVEREIGN_VALUES.DOC_HEALTHCARE :
-                         wasteData.w_stream_type === 'Agricultural Waste' ? SOVEREIGN_VALUES.DOC_AGRICULTURAL : SOVEREIGN_VALUES.DOC_MUNICIPAL;
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label}</label>
-          <div style="padding:0.5rem; background:rgba(109,217,140,0.1); border:1px solid var(--mint); border-radius:6px; font-size:0.85rem; color:var(--mint);">
-            <strong>DOC Fraction: ${docValue}</strong> (IPCC 2019 default for ${wasteData.w_stream_type || 'Municipal'})
-          </div>
-          ${f.help ? `<p style="font-size:0.7rem; color:rgba(255,255,255,0.5); margin-top:5px;">${f.help}</p>` : ''}
-        </div>`;
-      } else {
-        html += `<div class="gcis-field"><label class="gcis-label">${f.label} ${f.required ? '<span class="gcis-required">*</span>' : ''}</label>
-          <input class="gcis-input" type="number" id="${f.id}" placeholder="${f.placeholder}" value="${wasteData[f.id]||''}" oninput="wasteData[this.id]=parseFloat(this.value)||0;saveWasteState()">
-        </div>`;
-      }
-    });
-  }
-  
-  // ═══════════════════════════════════════════════════════════
-  // STEP 5: AI Multi-Vision Audit
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step5-vision') {
-    const hasResult = wasteData.ai_composition.organic > 0;
-    html += `
-      <div class="gcis-field">
-        <label class="gcis-label">Upload Waste Pile Photos & Manifests <span class="gcis-required">*</span></label>
-        <div id="waste-upload-zone" class="upload-zone" onclick="document.getElementById('waste-multi-file').click()">
-          <input type="file" id="waste-multi-file" style="display:none" accept="image/*" multiple onchange="handleBatchWasteUpload(this)">
-          <div class="icon">📸</div>
-          <p>Upload multiple images for AI composition analysis</p>
-          <p style="font-size:0.7rem; color:rgba(255,255,255,0.4);">Waste piles, weighbridge tickets, facility photos</p>
-        </div>
-        <div id="waste-image-thumbnails" style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;"></div>
-        
-        ${wasteData.vision_images.length > 0 ? `
-        <button id="waste-vision-btn" class="gcis-btn gcis-btn-primary" style="width:100%; margin-top:1rem;" onclick="triggerWasteWorker()">
-          🧠 Run AI Vision Analysis (${wasteData.vision_images.length} images)
-          <span style="font-size:0.7rem; display:block; margin-top:2px; color:var(--mint);">🔒 Worker v14.0: Jina OCR + Llama 70B</span>
-        </button>
-        ` : ''}
-        
-        <div id="vision-loading" class="hidden" style="text-align:center; padding:1rem;">
-          <div style="font-size:1.5rem; animation:nai-blink 1.5s infinite">🤖</div>
-          <div style="font-size:0.75rem; color:var(--mint); margin-top:5px">Jina Reader → Groq Synthesis...</div>
-        </div>
-        
-        <div id="vision-results-container" class="mt-3">
-          ${hasResult ? `
-          <div style="background:rgba(58,170,92,0.1); padding:15px; border-radius:8px; border:1px solid var(--mint);">
-            <h4 style="color:var(--mint); margin:0 0 10px 0;">✅ AI Composition Analysis</h4>
-            <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:8px; font-size:0.8rem;">
-              <div>🌱 Organic: <strong>${wasteData.ai_composition.organic}%</strong></div>
-              <div>🧴 Plastic: <strong>${wasteData.ai_composition.plastic}%</strong></div>
-              <div>🔩 Metal: <strong>${wasteData.ai_composition.metal}%</strong></div>
-              <div>🍾 Glass: <strong>${wasteData.ai_composition.glass}%</strong></div>
-              <div>☠️ Hazardous: <strong>${wasteData.ai_composition.hazardous}%</strong></div>
-            </div>
-          </div>
-          ` : ''}
-        </div>
-        
-        <!-- Sovereign Architecture Notice -->
-        <div style="margin-top:1.5rem; padding:1rem; background:rgba(13,40,24,0.5); border-radius:8px; border:1px solid rgba(109,217,140,0.3);">
-          <label class="gcis-label" style="font-size:0.8rem; color:var(--mint);">🔒 NEMA Sovereign Architecture</label>
-          <p style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin:0;">
-            AI processing secured via Cloudflare Worker (ENCRYPTED_ENV). 
-            Pipeline: Multiple Images → Jina Reader → Llama 3 70B → JSON breakdown
-          </p>
-        </div>
-        
-        <!-- Demo Mode -->
-        <button class="gcis-btn" style="width:100%; margin-top:1rem; background:rgba(58,170,92,0.2); font-size:0.75rem;" onclick="runDemoExtraction()">🎮 Demo: Simulate AI Analysis</button>
-      </div>
-    `;
-    setTimeout(renderThumbnails, 100);
-  }
-  
-  // ═══════════════════════════════════════════════════════════
-  // STEP 6: GIS Sovereign Proof
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step6-gis') {
-    html += `
-      <div class="gcis-field">
-        <label class="gcis-label">Select Waste Facility Location <span class="gcis-required">*</span></label>
-        <select class="gcis-input" id="w_gis_area" onchange="selectGISArea(this.value)">
-          <option value="">Choose a verified facility location...</option>
-          ${GIS_WASTE_AREAS.map(area => `<option value="${area.name}" ${wasteData.w_gis_area===area.name?'selected':''}>${area.name} (${area.type})</option>`).join('')}
-        </select>
-        <p style="font-size:0.7rem; color:rgba(255,255,255,0.5); margin-top:5px;">12 pre-verified waste facility locations in Kenya. Sentinel-2 leakage risk check enabled.</p>
-      </div>
-      
-      <div id="gis-coords-display" style="display:${wasteData.w_gis_area?'block':'none'}; margin-bottom:1rem; padding:0.75rem; background:rgba(58,170,92,0.1); border-radius:8px;">
-        <div style="display:flex; gap:1rem; font-size:0.8rem; flex-wrap:wrap;">
-          <div><span style="color:rgba(255,255,255,0.5)">Lat:</span> <b id="display-lat">${wasteData.w_facility_lat}</b></div>
-          <div><span style="color:rgba(255,255,255,0.5)">Lng:</span> <b id="display-lng">${wasteData.w_facility_lng}</b></div>
-          <div><span style="color:rgba(255,255,255,0.5)">County:</span> <b id="display-county">${wasteData.w_county}</b></div>
-        </div>
-        ${wasteData.gis_leakage_risk !== 'unknown' ? `
-        <div style="margin-top:0.5rem; padding:0.5rem; background:rgba(0,0,0,0.3); border-radius:4px;">
-          <span style="font-size:0.75rem; color:var(--${wasteData.gis_leakage_risk === 'low' ? 'mint' : wasteData.gis_leakage_risk === 'medium' ? 'gold' : 'coral'});">
-            🌊 Leakage Risk: ${wasteData.gis_leakage_risk.toUpperCase()}
-          </span>
-          <span style="font-size:0.7rem; color:rgba(255,255,255,0.5);"> | Sentinel-2 water body proximity check</span>
-        </div>
-        ` : ''}
-      </div>
-
-      <div id="satellite-ocr-panel" style="display:${wasteData.w_gis_area?'block':'none'};">
-        <div class="satellite-ocr-container" style="margin-bottom:1rem;">
-          <div id="satellite-scan-view" style="height:250px; background:linear-gradient(135deg, #0D2818 0%, #1a4d2e 100%); border-radius:8px; display:flex; align-items:center; justify-content:center; position:relative; overflow:hidden;">
-            <div id="waste-leaflet-map" style="position:absolute; inset:0; z-index:0;"></div>
-            <div id="ocr-scanning" style="display:none; position:absolute; inset:0; background:rgba(0,0,0,0.6); z-index:5;">
-              <div class="scan-line" style="width:100%; height:2px; background:var(--mint); animation:scan-move 2s linear infinite;"></div>
-              <div style="position:absolute; bottom:1rem; left:50%; transform:translateX(-50%); font-size:0.75rem; color:var(--mint); z-index:6;">🔍 Sentinel-2 OCR: Facility + Water Body Analysis...</div>
-            </div>
-            <div id="satellite-placeholder" style="text-align:center; color:rgba(255,255,255,0.4);">
-              <div style="font-size:2rem; margin-bottom:0.5rem;">🛰️</div>
-              <div>Satellite imagery ready for AI analysis</div>
-            </div>
-            <div id="ocr-results-overlay" style="display:none; position:absolute; inset:0; padding:1rem;">
-              <div style="position:absolute; top:10px; left:10px; background:rgba(0,0,0,0.7); padding:0.5rem; border-radius:6px; border:1px solid var(--mint);">
-                <div style="font-size:0.7rem; color:var(--mint);">✓ Waste Pile Detected</div>
-                <div style="font-size:0.65rem; color:rgba(255,255,255,0.7);">Confidence: 94%</div>
-              </div>
-              <div style="position:absolute; top:60px; right:20px; background:rgba(0,0,0,0.7); padding:0.5rem; border-radius:6px; border:1px solid var(--gold);">
-                <div style="font-size:0.7rem; color:var(--gold);">✓ Access Road</div>
-                <div style="font-size:0.65rem; color:rgba(255,255,255,0.7);">Confidence: 89%</div>
-              </div>
-            </div>
-          </div>
-        </div>
-        
-        <button class="gcis-btn gcis-btn-primary" style="width:100%;" onclick="runSatelliteOCR()" id="ocr-btn">
-          🔍 Run Sentinel-2 AI OCR Scan
-        </button>
-        
-        <div id="ocr-detailed-results" style="display:none; margin-top:1rem;" class="ocr-results-panel">
-          <h4 style="margin:0 0 0.75rem 0; font-size:0.85rem; color:var(--mint);">🧠 Sentinel-2 Analysis Results</h4>
-          <div class="ocr-detected-item">
-            <span class="detect-icon">🏔️</span>
-            <div class="detect-info">
-              <div class="label">Waste Accumulation Zone</div>
-              <div class="value">~2.3 hectares detected</div>
-            </div>
-            <span class="ocr-confidence">94%</span>
-          </div>
-          <div class="ocr-detected-item">
-            <span class="detect-icon">🌊</span>
-            <div class="detect-info">
-              <div class="label">Water Body Proximity</div>
-              <div class="value">${wasteData.gis_leakage_risk === 'low' ? '>500m (Safe)' : wasteData.gis_leakage_risk === 'medium' ? '200-500m (Monitor)' : '<200m (High Risk)'}</div>
-            </div>
-            <span class="ocr-confidence">${wasteData.gis_leakage_risk === 'low' ? '91%' : wasteData.gis_leakage_risk === 'medium' ? '85%' : '78%'}</span>
-          </div>
-        </div>
-      </div>
-    `;
-  }
-  
-  // ═══════════════════════════════════════════════════════════
-  // STEP 7: Technical Methane Baseline (IPCC Tier 2)
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step7-baseline') {
-    // Auto-calculate baseline
-    const organicFrac = wasteData.ai_composition.organic / 100 || 0.65;
-    const docFrac = wasteData.w_doc_fraction || SOVEREIGN_VALUES.DOC_MUNICIPAL;
-    const annualTonnes = wasteData.w_annual_volume || 10000;
-    const ef = SOVEREIGN_VALUES.SOLID_WASTE_EF;
-    const gwp = SOVEREIGN_VALUES.METHANE_GWP;
-    
-    // IPCC Tier 2: CH4 = MSW × DOC × DOCF × F × 16/12 × GWP
-    // Simplified: tCO2e/yr = tonnes × DOC × EF × GWP
-    const baselineTco2e = annualTonnes * docFrac * ef * gwp / 1000; // Convert to tCO2e
-    wasteData.methane_baseline_tco2e_yr = baselineTco2e;
-    
-    html += `
-    <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:8px; border:1px solid var(--mint);">
-      <h4 style="margin:0 0 10px 0; color:var(--mint)">IPCC Tier 2 Methane Baseline Calculation</h4>
-      <div style="font-family:monospace; font-size:0.8rem; background:#0D2818; padding:10px; border:1px solid rgba(109,217,140,0.3); border-radius:4px; margin-bottom:10px;">
-        <div style="color:rgba(255,255,255,0.7);">Baseline (tCO₂e/yr) = Annual Volume × DOC × EF × GWP</div>
-        <div style="margin:8px 0; color:var(--mint);">
-          = ${annualTonnes.toLocaleString()} t × ${docFrac} × ${ef} × ${gwp}
-        </div>
-        <div style="color:var(--gold); font-size:1.1rem; font-weight:bold;">
-          = ${baselineTco2e.toFixed(2)} tCO₂e/year
-        </div>
-      </div>
-      
-      <div style="display:grid; grid-template-columns:repeat(2,1fr); gap:10px; font-size:0.75rem;">
-        <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px;">
-          <span style="color:rgba(255,255,255,0.5)">Annual Volume:</span>
-          <div style="color:#fff; font-weight:bold;">${annualTonnes.toLocaleString()} tonnes</div>
-        </div>
-        <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px;">
-          <span style="color:rgba(255,255,255,0.5)">DOC Fraction:</span>
-          <div style="color:#fff; font-weight:bold;">${docFrac} (${wasteData.w_stream_type || 'Municipal'})</div>
-        </div>
-        <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px;">
-          <span style="color:rgba(255,255,255,0.5)">Solid Waste EF:</span>
-          <div style="color:#fff; font-weight:bold;">${ef} kg CH₄/kg</div>
-        </div>
-        <div style="padding:8px; background:rgba(0,0,0,0.3); border-radius:4px;">
-          <span style="color:rgba(255,255,255,0.5)">Methane GWP:</span>
-          <div style="color:#fff; font-weight:bold;">${gwp} (AR6)</div>
-        </div>
-      </div>
-      
-      <div style="margin-top:10px; padding:8px; background:rgba(58,170,92,0.1); border-radius:4px; font-size:0.75rem; color:var(--mint);">
-        ✅ Auto-calculated using AI-determined composition and IPCC 2019 defaults
-      </div>
-    </div>
-    `;
-  }
-  
-
-  // ═══════════════════════════════════════════════════════════
-  // STEP 8: Fourth Schedule Lock (CDA)
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step8-cda') {
-    const minShare = wasteData.land_type === 'Public/Community' 
-      ? SOVEREIGN_VALUES.REGULATION_23E_LAND_SHARE_PCT 
-      : SOVEREIGN_VALUES.REGULATION_23E_NONLAND_SHARE_PCT;
-    
-    html += `
-      <div class="gcis-field">
-        <label class="gcis-label">Land Type Classification</label>
-        <select class="gcis-input" id="land_type" onchange="wasteData.land_type=this.value; renderWasteWizard();">
-          <option value="Public/Community" ${wasteData.land_type==='Public/Community'?'selected':''}>Public/Community Land (40% required)</option>
-          <option value="Private" ${wasteData.land_type==='Private'?'selected':''}>Private Land (25% required)</option>
-        </select>
-      </div>
-      
-      <div class="gcis-field" style="background:rgba(255,0,0,0.05); border:1px solid rgba(255,100,100,0.3); padding:1rem; border-radius:8px; margin-top:1rem;">
-        <label class="gcis-label" style="color:#ff6b6b">Community Share Allocation (%) <span class="gcis-required">*</span></label>
-        <p style="font-size:0.75rem; color:rgba(255,255,255,0.6); margin-bottom:10px;">
-          Regulation 23E: ${wasteData.land_type === 'Public/Community' ? 'Land-based projects require 40%' : 'Non-land projects require 25%'} of net revenue to community.
-        </p>
-        <input class="gcis-input" type="number" id="cda_share_pct" value="${wasteData.cda_share_pct}" min="0" max="100" oninput="wasteData.cda_share_pct=parseInt(this.value)||0; checkCDALock(); saveWasteState();">
-        
-        <div id="cda-warning" style="display:${wasteData.cda_share_pct < minShare ? 'block' : 'none'}; margin-top:10px; padding:10px; background:rgba(255,100,100,0.2); border-radius:6px;">
-          <div style="font-size:0.8rem; color:#ff6b6b; font-weight:bold;">🚨 FOURTH SCHEDULE LOCK ACTIVE</div>
-          <div style="font-size:0.75rem; color:rgba(255,255,255,0.8); margin-top:5px;">
-            Minimum ${minShare}% required for ${wasteData.land_type} projects.<br>
-            Penalty Risk: KES ${SOVEREIGN_VALUES.REGULATION_37_PENALTY_KES.toLocaleString()}
-          </div>
-        </div>
-        
-        ${wasteData.cda_share_pct >= minShare ? `
-        <div style="margin-top:10px; padding:10px; background:rgba(58,170,92,0.2); border-radius:6px;">
-          <div style="font-size:0.8rem; color:var(--mint); font-weight:bold;">✅ CDA COMPLIANCE LOCK CLEARED</div>
-          <div style="font-size:0.75rem; color:rgba(255,255,255,0.8); margin-top:5px;">
-            ${wasteData.cda_share_pct}% community share meets Regulation 23E requirement.
-          </div>
-        </div>
-        ` : ''}
-      </div>
-    `;
-  }
-  
-  // ═══════════════════════════════════════════════════════════
-  // STEP 9: Professional Review & Submit (PRL)
-  // ═══════════════════════════════════════════════════════════
-  else if (step.id === 'step9-review') {
-    const prl = calculatePRL(wasteData);
-    wasteData.prl_score = prl.total;
-    wasteData.prl_breakdown = prl.breakdown;
-    
-    html += `
-      <div style="text-align:center; padding:1.5rem;">
-        <div style="font-size:3rem; margin-bottom:1rem;">📋</div>
-        <h3>Project Readiness Level Assessment</h3>
-        
-        <div style="margin:1.5rem 0; padding:1.5rem; background:rgba(0,0,0,0.3); border-radius:12px; border:2px solid var(--${prl.total >= 60 ? 'mint' : prl.total >= 40 ? 'gold' : 'coral'});">
-          <div style="font-size:3rem; font-weight:bold; color:var(--${prl.total >= 60 ? 'mint' : prl.total >= 40 ? 'gold' : 'coral'});">${prl.total}</div>
-          <div style="font-size:1rem; color:rgba(255,255,255,0.7);">PRL Score / 100</div>
-          <div style="margin-top:10px; padding:5px 15px; background:rgba(255,255,255,0.1); border-radius:20px; display:inline-block; font-size:0.85rem; color:var(--${prl.total >= 60 ? 'mint' : prl.total >= 40 ? 'gold' : 'coral'});">
-            ${prl.status}
-          </div>
-        </div>
-        
-        <div style="display:grid; grid-template-columns:repeat(3,1fr); gap:10px; margin:1rem 0; font-size:0.75rem;">
-          <div style="padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">
-            <div style="color:var(--mint); font-size:1.2rem; font-weight:bold;">${prl.breakdown.data_quality}/30</div>
-            <div style="color:rgba(255,255,255,0.6);">Data Quality</div>
-          </div>
-          <div style="padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">
-            <div style="color:var(--mint); font-size:1.2rem; font-weight:bold;">${prl.breakdown.cda_compliance}/40</div>
-            <div style="color:rgba(255,255,255,0.6);">CDA Compliance</div>
-          </div>
-          <div style="padding:10px; background:rgba(0,0,0,0.3); border-radius:8px;">
-            <div style="color:var(--mint); font-size:1.2rem; font-weight:bold;">${prl.breakdown.methodology}/30</div>
-            <div style="color:rgba(255,255,255,0.6);">Methodology</div>
-          </div>
-        </div>
-        
-        <p style="font-size:0.85rem; color:rgba(255,255,255,0.6); max-width:400px; margin:1rem auto;">
-          Digital Chain of Custody: ${wasteData.ledger_blocks.length} SHA-256 blocks recorded.<br>
-          IPCC Tier 2 Baseline: ${wasteData.methane_baseline_tco2e_yr.toFixed(2)} tCO₂e/year
-        </p>
-        
-        ${prl.total >= 60 ? `
-        <button class="gcis-btn gcis-btn-submit" style="margin-top:1rem;" onclick="submitWasteForAudit()">
-          📤 Submit for Expert Audit
-        </button>
-        ` : `
-        <div style="margin-top:1rem; padding:1rem; background:rgba(255,100,100,0.1); border-radius:8px;">
-          <div style="color:#ff6b6b; font-size:0.85rem;">
-            ⚠️ PRL too low for submission. Complete all steps and ensure CDA compliance.
-          </div>
-        </div>
-        `}
-      </div>
-    `;
-  }
-  
-  // Old step handlers (backward compatibility during transition)
-  else if (step.id === 'cda-lock') {
-    html += `
-      <div class="gcis-field" style="background:rgba(255,0,0,0.05); border:1px solid rgba(255,100,100,0.3); padding:1rem; border-radius:8px;">
-        <label class="gcis-label" style="color:#ff6b6b">Community Share Allocation (%) <span class="gcis-required">*</span></label>
-        <p style="font-size:0.75rem; color:rgba(255,255,255,0.6); margin-bottom:10px;">Regulation 23E dictates land-based/waste projects must allocate 40% of net revenue to the community.</p>
-        <input class="gcis-input" type="number" id="cda_share" value="${wasteData.cda_share}" oninput="wasteData.cda_share=this.value; checkCDA()">
-        <div id="cda-warning" style="color:#ff6b6b; font-size:0.75rem; font-weight:600; margin-top:5px; display:none;">🚨 KES 500M PENALTY RISK: Share cannot be less than 40%. The Fourth Schedule Lock prevents submission.</div>
-      </div>
-    `;
-  }
-  else if (step.id === 'visual-audit') {
-    const hasResult = wasteData.tonnage_facility > 0;
-    html += `
-      <div class="gcis-field">
-        <label class="gcis-label">Upload Batch Evidence (Images) <span class="gcis-required">*</span></label>
-        <div id="waste-upload-zone" class="upload-zone" onclick="document.getElementById('waste-multi-file').click()">
-          <input type="file" id="waste-multi-file" style="display:none" accept="image/*" multiple onchange="handleBatchWasteUpload(this)">
-          <div class="icon">📸</div>
-          <p>Select multiple Weighbridge Tickets & Pile Photos</p>
-          <p style="font-size:0.7rem; color:rgba(255,255,255,0.4);">Supported: JPG, PNG, WEBP</p>
-        </div>
-        <div id="waste-image-thumbnails" style="display:flex; gap:10px; margin-top:10px; flex-wrap:wrap;"></div>
-        
-        ${wasteData.vision_images.length > 0 ? `
-        <button id="waste-vision-btn" class="gcis-btn gcis-btn-primary" style="width:100%; margin-top:1rem;" onclick="triggerWasteWorker()">
-          🧠 Run AI Vision Analysis (${wasteData.vision_images.length} images)
-          <span style="font-size:0.7rem; display:block; margin-top:2px; color:var(--mint);">🔒 Worker v14.0 Bridge</span>
-        </button>
-        ` : ''}
-        
-        <div id="vision-loading" class="hidden" style="text-align:center; padding:1rem;">
-          <div style="font-size:1.5rem; animation:nai-blink 1.5s infinite">🤖</div>
-          <div style="font-size:0.75rem; color:var(--mint); margin-top:5px">Analyzing weighbridge tickets... Extracting tonnage data...</div>
-        </div>
-        
-        <div id="vision-results-container" class="mt-3">
-          ${hasResult ? `
-          <div style="background:rgba(58,170,92,0.1); padding:15px; border-radius:8px; border:1px solid var(--mint);">
-            <h4 style="color:var(--mint); margin:0 0 10px 0;">✅ Extraction Complete</h4>
-            <div style="display:flex; justify-content:space-between; margin-bottom:5px;">
-              <span>Facility Tonnage:</span>
-              <strong style="color:#fff">${wasteData.tonnage_facility.toLocaleString()} kg</strong>
-            </div>
-            <div style="font-size:0.75rem; color:rgba(255,255,255,0.6);">Ready for IPCC calculation →</div>
-          </div>
-          ` : ''}
-        </div>
-        
-        <!-- Sovereign Architecture Notice -->
-        <div style="margin-top:1.5rem; padding:1rem; background:rgba(13,40,24,0.5); border-radius:8px; border:1px solid rgba(109,217,140,0.3);">
-          <label class="gcis-label" style="font-size:0.8rem; color:var(--mint);">
-            � NEMA Sovereign Architecture
-          </label>
-          <p style="font-size:0.7rem; color:rgba(255,255,255,0.6); margin:0;">
-            AI processing secured via Cloudflare Worker (ENCRYPTED_ENV). 
-            Images sent to national bridge: <code style="background:rgba(0,0,0,0.3); padding:2px 4px; border-radius:3px;">delicate-bird-531b.shukriali411.workers.dev</code>
-          </p>
-        </div>
-        
-        <!-- Manual Entry Fallback -->
-        <div style="margin-top:1.5rem; padding-top:1rem; border-top:1px dashed rgba(255,255,255,0.2);">
-          <label class="gcis-label" style="font-size:0.8rem; color:rgba(255,255,255,0.6);">
-            ⚠️ Or enter tonnage manually (for testing):
-          </label>
-          <div style="display:flex; gap:0.5rem;">
-            <input type="number" class="gcis-input" id="manual-tonnage" placeholder="e.g. 5000" value="${wasteData.tonnage_facility || ''}" style="flex:1;">
-            <button class="gcis-btn" style="background:var(--gold);" onclick="setManualTonnage()">Set kg</button>
-          </div>
-          <button class="gcis-btn" style="width:100%; margin-top:0.5rem; background:rgba(58,170,92,0.2); font-size:0.75rem;" onclick="runDemoExtraction()">🎮 Demo: Simulate AI Extraction</button>
-        </div>
-      </div>
-    `;
-    setTimeout(renderThumbnails, 100);
-  }
-  else if (step.id === 'ipcc-math') {
-    // Calculate from visual audit data (tonnage from uploaded images) - no longer requires IoT step
-    const o = wasteData.extracted?.find(e => e.type === 'organic')?.value || 65; // default 65% organic
-    const t = (wasteData.tonnage_facility || wasteData.tonnage_source || 5000) / 1000; // tonnes from visual audit
-    const EF = 0.58; 
-    wasteData.methane_baseline = t * (o/100) * EF;
-    wasteData.tonnage_facility = wasteData.tonnage_facility || wasteData.tonnage_source; // ensure facility weight is set
-    
-    html += `
-      <div style="background:rgba(255,255,255,0.05); padding:1rem; border-radius:8px;">
-        <h4 style="margin:0 0 10px 0; color:var(--mint)">Tier 2 CH₄ Baseline Equation</h4>
-        <div style="font-family:monospace; font-size:0.85rem; background:#0D2818; padding:10px; border:1px solid rgba(109,217,140,0.3); border-radius:4px;">
-          Baseline = Total Mass (t) × Organic Fraction (%) × Solid Waste EF <br><br>
-          = ${t.toFixed(1)} t × ${o}% × ${EF} EF<br>
-          <strong style="color:var(--gold); font-size:1.1rem; display:block; margin-top:10px;">Total Mitigated: ${wasteData.methane_baseline.toFixed(1)} tCO₂e</strong>
-        </div>
-      </div>
-    `;
-  }
-  else if (step.id === 'review') {
-    html += `
-      <div style="text-align:center; padding:2rem;">
-        <div style="font-size:3rem; margin-bottom:1rem;">📋</div>
-        <h3>10-Page PDD Ready</h3>
-        <p style="font-size:0.85rem; color:rgba(255,255,255,0.6); max-width:400px; margin:0 auto;">Digital Chain of Custody verified. Fourth Schedule lock cleared. IPCC math audited.</p>
-        <button class="gcis-btn gcis-btn-submit" style="margin-top:1.5rem;" onclick="generateWasteDossierAndConsultant()">Seal & Push to Consultant Queue</button>
-      </div>
-    `;
-  }
-
-  html += `</div>
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-top:0.75rem; padding-top:0.75rem; border-top:1px solid rgba(255,255,255,0.1);">
-      <button class="gcis-btn" style="background:transparent; font-size:0.7rem; color:rgba(255,255,255,0.5);" onclick="if(confirm('Clear all wizard data and start fresh?')){hardResetWasteModule();}">🗑️ Reset Wizard</button>
-    </div>
-    <div class="gcis-nav-buttons" style="margin-top:1rem; display:flex; justify-content:space-between;">
-      ${wasteCurrentStep > 0 ? '<button class="gcis-btn" style="background:rgba(255,255,255,0.1)" onclick="wasteBack()">← Back</button>' : '<div></div>'}
-      ${wasteCurrentStep < total - 1 && step.id !== 'review' ? `<button class="gcis-btn gcis-btn-primary" onclick="wasteNext()" id="waste-next-btn">Continue →</button>` : ''}
-    </div>`;
-
-  container.innerHTML = html;
-  
-  if (step.id === 'cda-lock') checkCDA();
-  if (step.id === 'step6-gis') setTimeout(runWasteGIS, 100);
 }
+
+// ── Chat Message Helpers ──────────────────────────────
+function _wzcAddMsg(role, text) {
+  const c = document.getElementById('wzc-msgs');
+  if (!c) return;
+  const d = document.createElement('div');
+  d.className = 'wzc-msg ' + role;
+  const ts = new Date().toLocaleTimeString('en-KE', { hour: '2-digit', minute: '2-digit' });
+  let html = text
+    .replace(/</g, '&lt;')
+    .replace(/\*\*(.*?)\*\*/g, '<strong>$1</strong>')
+    .replace(/\n/g, '<br>');
+  d.innerHTML = '<div class="wzc-bub">' + html + '</div><span class="wzc-ts">' + ts + '</span>';
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function _wzcShowTyping() {
+  const c = document.getElementById('wzc-msgs');
+  if (!c) return;
+  const d = document.createElement('div');
+  d.className = 'wzc-msg bot wzc-typing';
+  d.id = 'wzc-typing';
+  d.innerHTML = '<div class="wzc-bub"><span class="wzc-dot-anim"></span><span class="wzc-dot-anim"></span><span class="wzc-dot-anim"></span></div>';
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+function _wzcRemoveTyping() {
+  var el = document.getElementById('wzc-typing');
+  if (el) el.remove();
+}
+
+function _wzcRestoreMessages() {
+  wasteGcisHistory.forEach(function(m) {
+    _wzcAddMsg(m.role === 'user' ? 'user' : 'bot', m.content);
+  });
+  var lastBot = null;
+  for (var i = wasteGcisHistory.length - 1; i >= 0; i--) {
+    if (wasteGcisHistory[i].role === 'assistant') { lastBot = wasteGcisHistory[i]; break; }
+  }
+  if (lastBot) _wzcParseSuggestions(lastBot.content);
+  _wzcUpdateStepBadge();
+}
+
+// ── Greeting (Auto-start Q1) ──────────────────────────
+async function _wzcGreet() {
+  _wzcShowTyping();
+  wasteGcisBusy = true;
+  try {
+    var systemMsg = { role: 'system', content: WASTE_GCIS_SYSTEM_PROMPT };
+    var initMsg = { role: 'user', content: 'Begin the waste facility registration interview. Start with Q1.' };
+    var messages = [systemMsg, initMsg];
+    var reply = await _wzcCallWorker(messages);
+    _wzcRemoveTyping();
+    _wzcAddMsg('bot', reply);
+    wasteGcisHistory.push({ role: 'assistant', content: reply });
+    _wzcParseSuggestions(reply);
+    _wzcUpdateStepBadge();
+    saveWasteState();
+  } catch (e) {
+    _wzcRemoveTyping();
+    _wzcAddMsg('bot', 'Could not connect to Zerra: ' + e.message);
+  }
+  wasteGcisBusy = false;
+}
+
+// ── Send User Message ──────────────────────────────
+async function wasteGcisSend(textOverride) {
+  if (wasteGcisBusy) return;
+  var inp = document.getElementById('wzc-inp');
+  var txt = textOverride || (inp ? inp.value.trim() : '');
+  if (!txt) return;
+  if (inp) { inp.value = ''; inp.style.height = 'auto'; }
+
+  var sugs = document.getElementById('wzc-sugs');
+  if (sugs) sugs.innerHTML = '';
+
+  _wzcAddMsg('user', txt);
+  wasteGcisHistory.push({ role: 'user', content: txt });
+
+  wasteGcisBusy = true;
+  var sendBtn = document.getElementById('wzc-send');
+  if (sendBtn) sendBtn.disabled = true;
+  _wzcShowTyping();
+
+  try {
+    var systemMsg = { role: 'system', content: WASTE_GCIS_SYSTEM_PROMPT };
+    var messages = [systemMsg].concat(wasteGcisHistory.slice(-24));
+    var reply = await _wzcCallWorker(messages);
+    _wzcRemoveTyping();
+    _wzcAddMsg('bot', reply);
+    wasteGcisHistory.push({ role: 'assistant', content: reply });
+
+    _wzcExtractData(reply);
+    _wzcParseSuggestions(reply);
+    _wzcUpdateStepBadge();
+
+    if (_wzcCheckComplete(reply)) {
+      _wzcShowSubmitButton();
+    }
+
+    saveWasteState();
+  } catch (e) {
+    _wzcRemoveTyping();
+    _wzcAddMsg('bot', 'Error: ' + e.message);
+  }
+
+  wasteGcisBusy = false;
+  if (sendBtn) sendBtn.disabled = false;
+}
+
+// ── Worker Call ──────────────────────────────────
+async function _wzcCallWorker(messages) {
+  var url = typeof WASTE_WORKER_URL !== 'undefined' ? WASTE_WORKER_URL : 'https://delicate-bird-531b.shukriali411.workers.dev/';
+  var r = await fetch(url, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ messages: messages })
+  });
+  if (!r.ok) {
+    var msg = 'Worker ' + r.status;
+    try { var e = await r.json(); msg = e.error && e.error.message ? e.error.message : msg; } catch (_) {}
+    throw new Error(msg);
+  }
+  var d = await r.json();
+  var text = d.choices && d.choices[0] && d.choices[0].message ? d.choices[0].message.content : null;
+  if (!text) throw new Error('Empty response from Worker');
+  return text;
+}
+
+// ── Parse Suggested Answers ──────────────────────────
+function _wzcParseSuggestions(reply) {
+  var sugs = document.getElementById('wzc-sugs');
+  if (!sugs) return;
+
+  var match = reply.match(/Suggested answers?:\s*([\s\S]*?)(?:\n\n|$)/i);
+  if (!match) { sugs.innerHTML = ''; return; }
+
+  var sugText = match[1];
+  var items = sugText
+    .split(/\n/)
+    .map(function(s) { return s.replace(/^[\s\-\d.)]+/, '').trim(); })
+    .filter(function(s) { return s.length > 2 && s.length < 150; });
+
+  if (items.length === 0) { sugs.innerHTML = ''; return; }
+
+  sugs.innerHTML = items.slice(0, 4).map(function(s) {
+    var escaped = s.replace(/'/g, "\\'").replace(/"/g, '&quot;');
+    return '<button class="wzc-sug" onclick="wasteGcisSend(\'' + escaped + '\')">' + s + '</button>';
+  }).join('');
+}
+
+// ── Extract Data from AI Responses ──────────────────
+function _wzcExtractData(reply) {
+  var fullConvo = wasteGcisHistory.map(function(m) { return m.content; }).join('\n');
+  var userMsgs = wasteGcisHistory.filter(function(m) { return m.role === 'user'; }).map(function(m) { return m.content; });
+
+  // Extract county
+  for (var i = 0; i < userMsgs.length; i++) {
+    var um = userMsgs[i];
+    for (var j = 0; j < ALL_47_COUNTIES.length; j++) {
+      if (um.toLowerCase().indexOf(ALL_47_COUNTIES[j].toLowerCase()) !== -1) {
+        wasteData.w_county = ALL_47_COUNTIES[j];
+        break;
+      }
+    }
+    if (wasteData.w_county) break;
+  }
+
+  // Extract tonnage
+  var tonnageMatch = reply.match(/([\d,]+)\s*(?:tonnes?|t)\s*(?:per year|\/year|\/yr|annually)/i);
+  if (tonnageMatch) wasteData.w_annual_volume = parseInt(tonnageMatch[1].replace(/,/g, ''));
+
+  // Extract tCO2e baseline
+  var co2Match = reply.match(/([\d,]+(?:\.\d+)?)\s*tCO.?e\/(?:year|yr)/i);
+  if (co2Match) wasteData.methane_baseline_tco2e_yr = parseFloat(co2Match[1].replace(/,/g, ''));
+
+  // Extract CDA share
+  for (var k = 0; k < userMsgs.length; k++) {
+    var cdaMatch = userMsgs[k].match(/(\d+)\s*%/);
+    if (cdaMatch) {
+      var pct = parseInt(cdaMatch[1]);
+      if (pct >= 20 && pct <= 100) wasteData.cda_share_pct = pct;
+    }
+  }
+
+  // Extract DOC fraction
+  var docMatch = reply.match(/DOC[^:]*?[:=]\s*(0\.\d+)/i);
+  if (docMatch) wasteData.w_doc_fraction = parseFloat(docMatch[1]);
+
+  // Extract waste type
+  var wasteTypes = ['Municipal Solid Waste', 'Industrial waste', 'Healthcare waste', 'Agricultural waste', 'Construction debris', 'Mixed recyclables', 'Hazardous waste'];
+  for (var w = 0; w < wasteTypes.length; w++) {
+    if (fullConvo.toLowerCase().indexOf(wasteTypes[w].toLowerCase()) !== -1) {
+      wasteData.w_stream_type = wasteTypes[w];
+      break;
+    }
+  }
+
+  // Extract facility name from first user answer
+  if (!wasteData.w_facility_name && userMsgs.length >= 1) {
+    var firstAnswer = userMsgs[0];
+    if (firstAnswer && firstAnswer.length < 100 && firstAnswer.length > 2) {
+      wasteData.w_facility_name = firstAnswer.trim();
+      wasteData.w_company_name = wasteData.w_company_name || firstAnswer.trim();
+    }
+  }
+
+  saveWasteState();
+}
+
+// ── Update Step Badge ──────────────────────────────
+function _wzcUpdateStepBadge() {
+  var badge = document.getElementById('wzc-step-badge');
+  if (!badge) return;
+
+  var botMsgs = wasteGcisHistory.filter(function(m) { return m.role === 'assistant'; }).length;
+  var stepMap = [
+    { min: 0, max: 4, step: 1, label: 'Project Identity' },
+    { min: 4, max: 6, step: 2, label: 'Legal Hard-Gate' },
+    { min: 6, max: 8, step: 3, label: 'Waste Streams' },
+    { min: 8, max: 9, step: 4, label: 'AI Vision Audit' },
+    { min: 9, max: 10, step: 5, label: 'GIS Facility' },
+    { min: 10, max: 12, step: 6, label: 'IPCC Baseline' },
+    { min: 12, max: 13, step: 7, label: 'dCoC' },
+    { min: 13, max: 15, step: 8, label: 'CDA Fourth Schedule' },
+    { min: 15, max: 99, step: 9, label: 'Registration Summary' }
+  ];
+
+  var current = stepMap[stepMap.length - 1];
+  for (var i = 0; i < stepMap.length; i++) {
+    if (botMsgs >= stepMap[i].min && botMsgs < stepMap[i].max) {
+      current = stepMap[i];
+      break;
+    }
+  }
+  badge.textContent = 'Step ' + current.step + '/9 - ' + current.label;
+  wasteCurrentStep = current.step - 1;
+}
+
+// ── Check Interview Complete ──────────────────────────
+function _wzcCheckComplete(reply) {
+  var lower = reply.toLowerCase();
+  return (lower.indexOf('facility summary') !== -1 || lower.indexOf('registration data') !== -1 || lower.indexOf('collected all') !== -1) &&
+         (lower.indexOf('generate') !== -1 || lower.indexOf('registration package') !== -1 || lower.indexOf('pcn') !== -1);
+}
+
+// ── Show Submit Button ──────────────────────────────
+function _wzcShowSubmitButton() {
+  var c = document.getElementById('wzc-msgs');
+  if (!c) return;
+  if (document.getElementById('wzc-submit-panel')) return;
+
+  var d = document.createElement('div');
+  d.id = 'wzc-submit-panel';
+  d.className = 'wzc-submit-panel';
+  d.innerHTML = '<div style="text-align:center; padding:1.5rem; background:rgba(58,170,92,.08); border:1px solid var(--mint,#6DD98C); border-radius:12px; margin-top:.75rem;">' +
+    '<h4 style="color:var(--mint,#6DD98C); margin:0 0 .5rem 0;">Interview Complete - Ready to Submit</h4>' +
+    '<p style="font-size:.78rem; color:rgba(255,255,255,.6); margin-bottom:1rem;">Zerra has collected all registration data. Generate your NEMA Waste Registration Package.</p>' +
+    '<button class="gcis-btn gcis-btn-submit" onclick="wasteGcisSubmit()" style="font-size:.9rem; padding:.8rem 2rem;">Generate Registration Package</button>' +
+    '</div>';
+  c.appendChild(d);
+  c.scrollTop = c.scrollHeight;
+}
+
+// ── Submit from Chat ──────────────────────────────
+async function wasteGcisSubmit() {
+  var prl = calculatePRL(wasteData);
+  wasteData.prl_score = prl.total;
+  wasteData.prl_breakdown = prl.breakdown;
+
+  if (!wasteData.w_company_name) wasteData.w_company_name = wasteData.w_facility_name || 'Waste Facility';
+  if (!wasteData.w_doc_fraction) wasteData.w_doc_fraction = SOVEREIGN_VALUES.DOC_MUNICIPAL;
+  if (!wasteData.methane_baseline_tco2e_yr && wasteData.w_annual_volume) {
+    wasteData.methane_baseline_tco2e_yr = wasteData.w_annual_volume * wasteData.w_doc_fraction * SOVEREIGN_VALUES.SOLID_WASTE_EF * SOVEREIGN_VALUES.METHANE_GWP / 1000;
+  }
+
+  await submitWasteForAudit();
+  toast('Registration Package generated and submitted for NEMA expert audit. PRL: ' + wasteData.prl_score + '/100', 'success');
+}
+
 
 function wasteNext() {
   const step = WASTE_STEPS[wasteCurrentStep];
