@@ -13,14 +13,14 @@
 const NTZ_WORKER = 'https://delicate-bird-531b.shukriali411.workers.dev/';
 
 const ROLE_MAP = {
-  proponent:     { label: 'Project Proponent',      nav: ['home','dashboard','gcis-wizard','my-projects','messages','passport','calculator','waste-management','offsets','sequestration','county','leaderboard','community','methodology','docs','marketplace','education','membership','about','profile','disclaimer','kncr'] },
-  consultant:    { label: 'Carbon Consultant',       nav: ['home','dashboard','review-queue','messages','registry','waste-management','methodology','docs','about','profile','disclaimer'] },
-  nema:          { label: 'NEMA Regulator',          nav: ['home','dashboard','nema-oversight','registry','waste-management','methodology','about','profile','disclaimer'] },
+  proponent:     { label: 'Project Proponent',      nav: ['home','dashboard','gcis-wizard','my-projects','messages','passport','calculator','waste-management','offsets','sequestration','county','leaderboard','community','methodology','ai-intelligence','docs','marketplace','education','membership','about','profile','disclaimer','kncr'] },
+  consultant:    { label: 'Carbon Consultant',       nav: ['home','dashboard','review-queue','messages','registry','waste-management','methodology','ai-intelligence','docs','about','profile','disclaimer'] },
+  nema:          { label: 'NEMA Regulator',          nav: ['home','dashboard','nema-oversight','registry','waste-management','methodology','ai-intelligence','about','profile','disclaimer'] },
   developer:     { label: 'Project Developer',       nav: 'all' },
   enterprise:    { label: 'Enterprise',              nav: 'all' },
-  nema_national: { label: 'NEMA National Director',  nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','profile'] },
-  nema_county:   { label: 'NEMA County Officer',     nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','profile'] },
-  nema_reviewer: { label: 'NEMA Technical Reviewer',  nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','profile'] },
+  nema_national: { label: 'NEMA National Director',  nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','ai-intelligence','profile'] },
+  nema_county:   { label: 'NEMA County Officer',     nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','ai-intelligence','profile'] },
+  nema_reviewer: { label: 'NEMA Technical Reviewer',  nav: ['home','dashboard','nema-oversight','registry','waste-management','leaderboard','methodology','ai-intelligence','profile'] },
   personal:      { label: 'Personal',                nav: 'all' },
 };
 

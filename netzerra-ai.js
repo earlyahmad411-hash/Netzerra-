@@ -191,6 +191,142 @@ const NETZERRA_KNOWLEDGE = {
     }
 };
 
+/* ── NETZERRA FEATURES MAP — Zerra knows every feature ── */
+const NETZERRA_FEATURES = {
+  'home':             { icon:'🏠', label:'Home',                    desc:'Landing page with sector cards, platform overview, and key stats.' },
+  'dashboard':        { icon:'📊', label:'Dashboard',               desc:'Emission portfolio: total emissions, offsets, NTZ score, 12-month trend, net zero trajectory, waste KPIs.' },
+  'calculator':       { icon:'⚡', label:'Emission Calculator',     desc:'5-sector IPCC AR6 calculator: Borehole, Livestock, Transport, Construction, Manufacturing. Includes DQS scoring, uncertainty bands, GWP switching (AR5/AR6), plausibility flags, and PDF report generation.' },
+  'waste-management': { icon:'♻️', label:'Waste Management',        desc:'9-step NEMA waste wizard: Identity → Legal Gate → Contractor → Source Stream → AI Vision → GIS Facility → IPCC Baseline → CDA → Registration. Includes the Zerra Waste Compliance Console with Groq Worker AI review, evidence OCR/vision parsing, AI dossier drafting, dCoC simulator, consultant workbench, and NEMA 21(2) compliance.' },
+  'kncr':             { icon:'🏛️', label:'KNCR Gateway',            desc:'6-step KNCR pipeline viewer: Concept Note → PDD → Validation → DNA Review → Registered → Credits Live. Shows bilateral market status (Switzerland, Sweden, Singapore).' },
+  'gcis-wizard':      { icon:'📝', label:'GCIS Project IDE Wizard', desc:'10-step project application wizard: Project Info → Registration Docs → Scope → Emissions Calc → Sequestration Calc → Baseline/Methodology → Additionality → Monitoring → Site Verification (AI satellite scan + receipt OCR) → CDA → Review & Submit. AI-assisted content generation for baseline, additionality, and monitoring fields.' },
+  'my-projects':      { icon:'📁', label:'My Projects',             desc:'Proponent project portfolio with pipeline progress, PRL scores, and document status.' },
+  'messages':         { icon:'💬', label:'Messages',                desc:'Two-way communication between proponents and consultants. Message threads per project.' },
+  'review-queue':     { icon:'✅', label:'Review Queue',            desc:'Consultant document review workflow. Review submitted PCN/PDD/CDA documents and approve or request changes.' },
+  'registry':         { icon:'📋', label:'National Registry Ledger',desc:'Blockchain-style audit ledger showing all KNCR transactions, registrations, and credit issuances.' },
+  'enterprise':       { icon:'🏢', label:'Enterprise Dashboard',    desc:'Credit portfolio management: purchased/retired credits, total invested, offset ratio, listed credits for sale.' },
+  'exchange':         { icon:'🔄', label:'Carbon Credit Exchange',  desc:'Buy/sell verified carbon credits from 6+ projects. Filters by standard (Verra, Gold Standard, KNCR). Generates retirement certificates with QR verification.' },
+  'b2b':              { icon:'🤝', label:'B2B Trading Hub',         desc:'Request-for-Quote board, enterprise contracts, corporate directory. Post RFQs and respond to credit demands.' },
+  'nema-oversight':   { icon:'🏛️', label:'NEMA Oversight Portal',   desc:'Regulator dashboard: project compliance status, CDA enforcement, weight fraud detection, pipeline analytics.' },
+  'ai-intelligence':  { icon:'🧠', label:'AI Intelligence Suite',    desc:'Netzerra-wide AI tools: predictive credit pricing, additionality argument generator, greenwash scanner, adaptive project intake, PDD reviewer, satellite monitoring brief, FPIC sentiment analysis, regulatory change monitor, carbon credit risk scoring, and automated annual MRV report drafting. All Worker-backed with local static fallbacks.' },
+  'county':           { icon:'🏢', label:'County Dashboard',        desc:'County-level carbon data for all 47 counties. FLLoCA performance reports, carbon levy tracking.' },
+  'passport':         { icon:'🪪', label:'Carbon Passport',         desc:'Personal carbon identity card with NTZ score, emission history, and offset achievements.' },
+  'offsets':          { icon:'🌳', label:'Offset Strategies',       desc:'Kenya-specific offset options: agroforestry (bamboo, casuarina, grevillea, mangroves), biogas digesters, solar pumps.' },
+  'sequestration':    { icon:'🌿', label:'Sequestration Calculator',desc:'Tree species sequestration calculator with Kenya-specific rates per hectare.' },
+  'methodology':      { icon:'📐', label:'Methodology',             desc:'Full IPCC source documentation: emission factors, GWP tables, uncertainty ranges, data quality framework.' },
+  'docs':             { icon:'📁', label:'Documentation Hub',       desc:'Regulatory document templates: PCN, PDD, CDA Fourth Schedule, ESIA checklist.' },
+  'marketplace':      { icon:'🛒', label:'Marketplace',             desc:'Carbon offset marketplace with project listings.' },
+  'education':        { icon:'🎓', label:'Education Centre',        desc:'Learning resources: carbon accounting fundamentals, KNCR compliance guide, IPCC methodology training.' },
+  'leaderboard':      { icon:'🏆', label:'Leaderboard',             desc:'County and organisation carbon rankings with charts.' },
+  'community':        { icon:'💬', label:'Community Feed',          desc:'Social feed for the carbon community: share projects, discuss regulations, network.' },
+  'membership':       { icon:'💎', label:'Membership Plans',        desc:'Seedling (free), Canopy (pro), Baobab (enterprise) plan tiers with M-Pesa payment.' },
+  'about':            { icon:'ℹ️', label:'About & Founder',         desc:'About Netzerra and founder Shukri Ali. Contact: shukriali411@gmail.com, +254 705 366 807.' },
+  'disclaimer':       { icon:'📋', label:'Disclaimer & Legal',      desc:'Legal disclaimer, data privacy, terms of use.' },
+};
+
+/* ── Platform Context Scanner — reads live state across all modules ── */
+function _scanPlatformContext() {
+  const scan = { gaps: [], actions: [], stats: {} };
+  const u = (typeof AUTH !== 'undefined' && AUTH.currentUser) ? AUTH.currentUser : ((typeof S !== 'undefined') ? S.user : {});
+  const role = u.role || 'proponent';
+
+  // 1. Active section detection
+  const activeSec = document.querySelector('.section.active');
+  scan.activeSection = activeSec ? activeSec.id.replace('-section','') : 'home';
+
+  // 2. Session status
+  scan.loggedIn = !!(typeof AUTH !== 'undefined' && AUTH.currentUser);
+  if (!scan.loggedIn) scan.gaps.push('⚠️ NOT LOGGED IN — user is browsing as guest. Suggest logging in or creating an account.');
+
+  // 3. Calculator status
+  const lc = (typeof S !== 'undefined') ? S.lastCalc : null;
+  if (lc) {
+    scan.stats.lastCalc = `${lc.name} (${lc.sector}) — ${lc.total_t} tCO₂e/yr — DQS: ${lc.dqs}/100`;
+    if (lc.dqs < 70) scan.gaps.push(`⚠️ LOW DATA QUALITY — Last calculation "${lc.name}" has DQS ${lc.dqs}/100 (${lc.dqsGrade}). Recommend declaring verified data sources (receipts, meter readings) to raise score above 70.`);
+    if (lc.flags && lc.flags.length > 0) scan.gaps.push(`⚠️ PLAUSIBILITY FLAGS — Last calculation "${lc.name}" has ${lc.flags.length} data flag(s). Review flagged inputs for accuracy.`);
+  } else {
+    scan.gaps.push('📊 NO CALCULATIONS YET — User has not run any emission calculations. Suggest starting with the Emission Calculator (⚡).');
+    scan.actions.push({ label:'⚡ Start a Calculation', section:'calculator' });
+  }
+
+  // 4. GCIS Wizard progress
+  const gcisProjects = (typeof NTZ !== 'undefined' && NTZ.projects) ? NTZ.projects : [];
+  scan.stats.gcisCount = gcisProjects.length;
+  if (gcisProjects.length === 0 && ['proponent','developer'].includes(role)) {
+    scan.gaps.push('📝 NO GCIS PROJECTS — No carbon projects started. Suggest opening the GCIS Project IDE Wizard to begin a KNCR application.');
+    scan.actions.push({ label:'📝 Start GCIS Wizard', section:'gcis-wizard' });
+  }
+  gcisProjects.forEach(p => {
+    const name = p['gcis-proj-name'] || p.name || p.id;
+    const step = p.step || 0;
+    if (step < 10) scan.gaps.push(`📝 GCIS INCOMPLETE — "${name}" is at Step ${step+1}/10. Next: complete ${(typeof GCIS_STEPS !== 'undefined' && GCIS_STEPS[step]) ? GCIS_STEPS[step].title : 'the next step'}.`);
+    if (p['gcis-baseline_ai_generated'] && !p['gcis-baseline_ai_modified']) scan.gaps.push(`🤖 UNREVIEWED AI CONTENT — "${name}" has AI-generated baseline text that has NOT been manually reviewed. Reg.37 risk.`);
+    if (p.status === 'pending' || p.status === 'submitted') scan.gaps.push(`⏳ AWAITING REVIEW — "${name}" is pending consultant review.`);
+  });
+
+  // 5. Waste projects
+  let wasteProjects = [];
+  try { if (typeof getWasteProjects === 'function') wasteProjects = getWasteProjects(); } catch(e){}
+  scan.stats.wasteCount = wasteProjects.length;
+  if (typeof wasteData !== 'undefined') {
+    scan.stats.activeWasteDraft = `${wasteData.w_facility_name || wasteData.w_company_name || 'Unnamed waste draft'} | ${wasteData.w_county || 'County missing'} | PRL ${(wasteData.prl_score || (typeof calculatePRL === 'function' ? calculatePRL(wasteData).total : 0))}/100`;
+    if (wasteData.ai_compliance_review) {
+      scan.stats.lastWasteAI = `${wasteData.ai_compliance_review.decision || 'reviewed'} | score ${wasteData.ai_compliance_review.score || 'N/A'}/100 | ${wasteData.ai_last_mode || 'AI review'}`;
+    } else if (['proponent','developer'].includes(role)) {
+      scan.gaps.push('♻️ WASTE AI REVIEW NOT RUN — The Waste Compliance Console can check licence, CDA, dCoC, methane baseline, and evidence gaps through the Groq Worker.');
+      scan.actions.push({ label:'♻️ Run Waste AI Review', section:'waste-management' });
+    }
+  }
+  if (wasteProjects.length === 0 && ['proponent','developer','nema_national','nema_county'].includes(role)) {
+    scan.actions.push({ label:'♻️ Start Waste Wizard', section:'waste-management' });
+  }
+  wasteProjects.forEach(p => {
+    const name = p.name || p.id;
+    const step = p.currentStep || p.step || 1;
+    if (step < 9) scan.gaps.push(`♻️ WASTE INCOMPLETE — "${name}" at Step ${step}/9. Continue the waste wizard to complete registration.`);
+    if (!p.dcocEnabled && step >= 6) scan.gaps.push(`🔗 dCoC NOT ACTIVE — "${name}" needs Digital Chain of Custody enabled (Step 6+).`);
+  });
+
+  // 6. Exchange portfolio
+  if (typeof EXCHANGE !== 'undefined') {
+    scan.stats.creditsPurchased = EXCHANGE.portfolio?.purchased?.reduce((s,p) => s + p.credits, 0) || 0;
+    scan.stats.creditsListed = EXCHANGE.portfolio?.listed?.reduce((s,l) => s + l.credits, 0) || 0;
+    if (role === 'enterprise' && scan.stats.creditsPurchased === 0) {
+      scan.gaps.push('🔄 NO CREDITS PURCHASED — Visit the Carbon Exchange to buy verified credits and build your offset portfolio.');
+      scan.actions.push({ label:'🔄 Browse Exchange', section:'exchange' });
+    }
+  }
+
+  // 7. Feature discovery — sections user likely hasn't visited
+  const roleFeatures = {
+    proponent: ['calculator','gcis-wizard','waste-management','ai-intelligence','offsets','passport','kncr'],
+    consultant: ['review-queue','registry','ai-intelligence','methodology'],
+    enterprise: ['exchange','b2b','enterprise','ai-intelligence','offsets'],
+    nema_national: ['nema-oversight','registry','waste-management','ai-intelligence'],
+    nema_county: ['nema-oversight','registry','waste-management','ai-intelligence'],
+    developer: ['calculator','gcis-wizard','waste-management','ai-intelligence','exchange','b2b','nema-oversight'],
+  };
+  scan.suggestedFeatures = (roleFeatures[role] || roleFeatures.proponent).map(id => NETZERRA_FEATURES[id]).filter(Boolean);
+
+  // 8. Build formatted report
+  let report = `Active Page: ${NETZERRA_FEATURES[scan.activeSection]?.label || scan.activeSection}\n`;
+  report += `Session: ${scan.loggedIn ? 'Logged in' : 'Guest'} | Role: ${role}\n`;
+  report += `Projects: ${scan.stats.gcisCount || 0} GCIS, ${scan.stats.wasteCount || 0} Waste\n`;
+  if (scan.stats.lastCalc) report += `Last Calc: ${scan.stats.lastCalc}\n`;
+  if (scan.stats.activeWasteDraft) report += `Active Waste Draft: ${scan.stats.activeWasteDraft}\n`;
+  if (scan.stats.lastWasteAI) report += `Last Waste AI Review: ${scan.stats.lastWasteAI}\n`;
+  if (typeof NTZ_INTEL !== 'undefined') {
+    const runs = Object.keys(NTZ_INTEL.state?.lastResults || {}).length;
+    report += `AI Intelligence Suite: ${runs} saved run${runs === 1 ? '' : 's'} available. Tools include pricing, additionality, greenwash, PDD review, FPIC, credit risk, and MRV.\n`;
+  }
+  if (scan.gaps.length > 0) {
+    report += `\nGaps & Action Items (${scan.gaps.length}):\n` + scan.gaps.map(g => `  ${g}`).join('\n');
+  } else {
+    report += '\n✅ No critical gaps detected.';
+  }
+  scan.report = report;
+  return scan;
+}
+
 /* ── Compute real regulatory violations from live project data ── */
 function _computeViolations() {
   const all = [
@@ -248,6 +384,17 @@ function _computeViolations() {
       violations.push(`🟡 MRV OVERDUE [Reg.25] — ${name}: No waste MRV report in ${Math.floor((today-lastMrv)/86400000)} days.`);
   });
 
+  // Integrate dCoC AI Fraud Detection Engine
+  try {
+    if (typeof runDcocFraudAnalysis === 'function') {
+      const fraud = runDcocFraudAnalysis();
+      fraud.patterns.forEach(p => violations.push(`🔴 PATTERN GAMING [Reg.37 AI] — Driver ${p.driverName} (${p.plate}): ${p.tripCount} trips with mean ${p.mean}% variance (σ=${p.stdDev}). Gaming the ${SOVEREIGN_VALUES?.WEIGHT_VARIANCE_THRESHOLD_PCT||10}% threshold.`));
+      fraud.ghostTrips.forEach(g => violations.push(`🔴 GHOST TRIP [Reg.37] — ${g.driverName} (${g.plate}) on ${g.route}: ${g.detail}`));
+      fraud.collusion.forEach(c => violations.push(`🔴 COLLUSION [Reg.37] — ${c.facilities.join(' ↔ ')}: ${c.detail}`));
+      fraud.driverScores.filter(d => d.score < 40).forEach(d => violations.push(`🟡 DRIVER RISK [SWMA] — ${d.driverName} (${d.plate}): Score ${d.score}/100 (Grade ${d.grade}), ${d.flagCount} flags, ${d.ghostTrips} ghost trips.`));
+    }
+  } catch(e) {}
+
   if (violations.length === 0) return '  ✅ No active violations detected in live project data.';
   return violations.map(v => `  ${v}`).join('\n');
 }
@@ -286,6 +433,30 @@ function _ctx(){
     const stepName = stepNames[step-1] || `Step ${step}`;
     return `  • [WASTE] ${p.name||p.id} | ${p.county||'?'} County | Wizard Step ${step}/9 (${stepName}) | Tonnage: ${p.tonnageSource||p.w_tonnage||0}t | Credits: ${parseFloat(p.credits||0).toFixed(1)} tCO₂e/yr | dCoC: ${p.dcocEnabled?'Active':'Pending'} | License: ${p.w_nema_license||'N/A'} | Status: ${p.status||'pending'}`;
   }).join('\n') || '  (none)';
+
+  const activeWasteAI = (() => {
+    try {
+      if (typeof wasteData === 'undefined') return '  No active waste draft loaded.';
+      const prl = typeof calculatePRL === 'function' ? calculatePRL(wasteData) : { total: wasteData.prl_score || 0 };
+      const review = wasteData.ai_compliance_review;
+      let r = `  Active draft: ${wasteData.w_facility_name || wasteData.w_company_name || 'Unnamed waste facility'} | ${wasteData.w_county || 'County missing'} | ${wasteData.w_stream_type || 'Waste stream missing'} | PRL ${prl.total}/100\n`;
+      r += `  AI tools available in [GO:waste-management]: AI Review, Draft Dossier, Parse Evidence.\n`;
+      if (review) {
+        r += `  Last AI review: decision=${review.decision || 'reviewed'} | score=${review.score || 'N/A'}/100 | updated=${wasteData.ai_last_updated || 'unknown'}\n`;
+        const flags = review.critical_flags || review.flags || [];
+        if (flags.length) r += `  Critical waste AI flags: ${flags.join('; ')}\n`;
+        const recs = review.recommendations || review.next_actions || [];
+        if (recs.length) r += `  Waste AI recommendations: ${recs.slice(0, 5).join('; ')}\n`;
+      } else {
+        r += `  Last AI review: not run yet. Recommend using the Waste Compliance Console before submission.\n`;
+      }
+      if (wasteData.ai_dossier) r += `  AI dossier: drafted and available in waste module output.\n`;
+      if (wasteData.ai_evidence?.length) r += `  AI evidence parses stored: ${wasteData.ai_evidence.length}\n`;
+      return r;
+    } catch(e) {
+      return '  Waste AI context unavailable: ' + e.message;
+    }
+  })();
 
   // ── Registry audit entries ──
   const recentAudit = (typeof NTZ !== 'undefined' && NTZ.registry)
@@ -334,7 +505,26 @@ function _ctx(){
   };
   const roleInstr = ROLE_INSTRUCTIONS[role] || ROLE_INSTRUCTIONS.proponent;
 
-  return `# ZERRA AI — ROLE-AWARE CARBON INTELLIGENCE ENGINE
+  // ── Platform context scan ──
+  const platformScan = _scanPlatformContext();
+
+  // ── Feature map summary for the AI ──
+  const featureList = Object.entries(NETZERRA_FEATURES).map(([id, f]) =>
+    `  ${f.icon} ${f.label} (section: '${id}'): ${f.desc}`
+  ).join('\n');
+
+  const intelContext = (() => {
+    try {
+      if (typeof NTZ_INTEL === 'undefined') return 'AI Intelligence Suite not loaded.';
+      const results = NTZ_INTEL.state?.lastResults || {};
+      const lines = Object.entries(results).slice(-6).map(([tool, rec]) => `  • ${tool}: ${rec.source || 'worker'} run at ${rec.ts || 'unknown'}`);
+      return lines.length ? lines.join('\n') : '  No Intelligence Suite runs yet. Suggest [GO:ai-intelligence] for pricing, additionality, greenwash, PDD review, credit risk, and MRV.';
+    } catch(e) {
+      return '  Intelligence context unavailable: ' + e.message;
+    }
+  })();
+
+  return `# ZERRA AI — CONTEXT-AWARE CARBON INTELLIGENCE ENGINE
 
 ## ACTIVE PERSONA
 ${persona}
@@ -344,9 +534,18 @@ ${persona}
 2. LINKS: For official registration/documents: kncr.go.ke, nema.go.ke, climate.go.ke
 3. HONESTY GATE: If outside your knowledge, say "That requires a specialized NEMA Technical Review. Generate a Netzerra DQS report to prepare."
 4. LANGUAGE: Respond in the same language the user writes in (English or Kiswahili).
+5. NAVIGATION: When suggesting a feature, include the section ID in brackets like [GO:calculator] or [GO:waste-management]. The system will render these as clickable navigation buttons.
+6. CONTEXT AWARENESS: You have a live scan of the platform state below. Use it to proactively suggest next steps, flag gaps, and guide the user to features they haven't explored.
 
 ## ROLE-SPECIFIC INSTRUCTIONS
 ${roleInstr}
+
+## 🔍 LIVE PLATFORM CONTEXT SCAN
+${platformScan.report}
+
+## 🗺️ NETZERRA FEATURE MAP (all available sections)
+When the user asks "what can you do", "what features are available", "where do I find X", or needs navigation help, reference this map:
+${featureList}
 
 ## REGULATORY KNOWLEDGE BASE
 ${kObj}
@@ -357,12 +556,63 @@ ${fmtGcis}
 ## LIVE PROJECT DATA — ALL WASTE MANAGEMENT PROJECTS
 ${fmtWaste}
 
+## WASTE AI COMPLIANCE CONSOLE
+The static waste module now has direct Groq Worker AI tools. Use these when advising users:
+- AI Review: checks licence, CDA, dCoC variance, methane baseline, evidence gaps, and submission readiness.
+- Draft Dossier: creates a consultant-ready regulatory memo from the active waste draft.
+- Parse Evidence: sends uploaded images/PDF screenshots through Worker vision/OCR and applies extracted fields where possible.
+${activeWasteAI}
+
+## NETZERRA AI INTELLIGENCE SUITE
+This suite implements the strategic AI upgrades: predictive credit pricing, additionality argument generation, greenwash scanning, adaptive intake, document/PDD review, satellite monitoring brief, FPIC sentiment analysis, regulatory change assessment, credit risk scoring, and annual MRV drafting.
+${intelContext}
+
 ## RECENT KNCR AUDIT TRAIL (last 5 blocks)
 ${recentAudit}
 
 ## ⚠️ LIVE REGULATORY VIOLATION SCAN (computed from actual project field values)
 These are REAL violations derived directly from the project data above. When asked about breach alerts, cite these specifically:
 ${_computeViolations()}
+
+## 🚨 dCoC AI FRAUD INTELLIGENCE (live analysis of ${(() => { try { return typeof getDcocTripHistory === 'function' ? getDcocTripHistory().length : 0; } catch(e) { return 0; } })()}+ trip records over 30 days)
+${(() => {
+  try {
+    if (typeof runDcocFraudAnalysis !== 'function') return '  Fraud engine not loaded.';
+    const f = runDcocFraudAnalysis();
+    let r = `Summary: ${f.summary}\n\n`;
+    r += `DRIVER BEHAVIOUR SCORES (ranked worst→best):\n`;
+    f.driverScores.forEach(d => {
+      r += `  • ${d.driverName} (${d.plate}, ${d.driverId}) — Score: ${d.score}/100 (Grade ${d.grade}) | Trips: ${d.tripCount} | Avg Variance: ${d.avgVariance}% | σ: ${d.varStdDev} | Route Adherence: ${d.routeAdherence}% | Ghost Trips: ${d.ghostTrips} | Flags: ${d.flagCount}\n`;
+    });
+    if (f.patterns.length > 0) {
+      r += `\nPATTERN GAMING ALERTS:\n`;
+      f.patterns.forEach(p => { r += `  🔴 ${p.driverName} (${p.plate}): ${p.detail}\n`; });
+    }
+    if (f.ghostTrips.length > 0) {
+      r += `\nGHOST TRIP ALERTS:\n`;
+      f.ghostTrips.forEach(g => { r += `  🔴 ${g.driverName} (${g.plate}) on ${g.route}: ${g.detail}\n`; });
+    }
+    if (f.collusion.length > 0) {
+      r += `\nCOLLUSION ALERTS:\n`;
+      f.collusion.forEach(c => { r += `  🔴 ${c.facilities.join(' ↔ ')}: ${c.detail}\n`; });
+    }
+    if (f.routeDeviations.length > 0) {
+      r += `\nROUTE DEVIATION ALERTS (top 5):\n`;
+      f.routeDeviations.slice(0,5).forEach(d => { r += `  🔴 ${d.driverName} (${d.plate}) ${d.route}: Max ${d.maxDevKm}km off corridor. ${d.deviations.length} deviation point(s).\n`; });
+    }
+    if (f.weightAnomalies.length > 0) {
+      r += `\nWEIGHT SIGNATURE ANOMALIES (top 5):\n`;
+      f.weightAnomalies.slice(0,5).forEach(w => { r += `  🟡 ${w.driverName} on ${w.route}: Variance ${w.variance}% outside expected ${w.expected}.\n`; });
+    }
+    r += `\nWEIGHT SIGNATURES (learned baselines per waste type × route):\n`;
+    Object.entries(f.weightSignatures).forEach(([key, sig]) => {
+      const [type, route] = key.split('|');
+      r += `  • ${type} on ${route}: Expected range ${sig.lo}%–${sig.hi}% (μ=${sig.mean}%, σ=${sig.stdDev}, n=${sig.n})\n`;
+    });
+    return r;
+  } catch(e) { return '  Fraud engine error: ' + e.message; }
+})()}
+When answering fraud or dCoC questions, reference specific driver names, scores, trip counts, and detection results from the data above. Recommend enforcement actions for Grade F/C drivers.
 
 ## CURRENT USER SESSION
 Name: ${u.name||'Unknown'} | Role: ${role} | Org: ${u.org||'N/A'} | County: ${u.county||'National'}
@@ -440,28 +690,46 @@ const NTZ_AI=(()=>{
     const role = u.role || 'proponent';
     const name = u.name ? u.name.split(' ')[0] : null;
 
+    // Run live platform scan for context-aware greeting
+    const scan = _scanPlatformContext();
+
     const GREETINGS = {
       nema_national: `🏛️ **Director ${name||''}** — I have full visibility into all KNCR projects and waste facilities. I'll flag enforcement priorities, weight fraud alerts, and CDA violations automatically. How can I assist?`,
       nema_county:   `🏛️ **Officer ${name||''}** — I can see all projects within your county scope. Ask me about compliance status, enforcement actions, or community benefit checks.`,
       nema_reviewer: `🔬 **Reviewer ${name||''}** — Ready for technical auditing. I can analyse methodology gaps, IPCC factor alignment, PRL scores, and MRV risks across all projects.`,
       nema:          `🏛️ **${name||'NEMA Regulator'}** — I'm briefed on all active projects. Ask me about compliance, enforcement, or registry integrity.`,
       consultant:    `📋 **${name||'Consultant'}** — I'm your peer review partner. I can help analyse project documents, improve PRL scores, and prepare submissions for NEMA approval.`,
-      proponent:     `🌱 **${name||'Hello'}!** — I'm your KNCR compliance guide. I know your projects and their current pipeline stages. Ask me what to do next, what documents to prepare, or anything about the regulations!`,
-      developer:     `⚙️ **Dev mode** — Full system context loaded. ${(typeof NTZ!=='undefined'?NTZ.projects.length:0)} GCIS projects visible.`,
+      proponent:     `🌱 **${name||'Hello'}!** — I'm Zerra, your context-aware KNCR guide. I can see your projects, calculations, and documents in real-time. Ask me what's missing, what to do next, or explore any Netzerra feature!`,
+      developer:     `⚙️ **Dev mode** — Full platform scan loaded. ${(typeof NTZ!=='undefined'?NTZ.projects.length:0)} GCIS projects, ${scan.stats.wasteCount||0} waste projects. ${scan.gaps.length} gap(s) detected.`,
       enterprise:    `💼 **${name||'Hello'}** — I can help with your credit portfolio, B2B trading opportunities, Article 6 compliance, and retirement certificates.`,
     };
 
-    const QUICK = {
+    // Build context-aware greeting addendum
+    let contextNote = '';
+    if (scan.gaps.length > 0 && scan.gaps.length <= 3) {
+      contextNote = '\n\n📋 **Quick status:**\n' + scan.gaps.slice(0, 3).map(g => `• ${g.replace(/^[⚠️📊📝♻️🤖⏳🔗🔄]+\s*/,'')}`).join('\n');
+    } else if (scan.gaps.length > 3) {
+      contextNote = `\n\n📋 I've detected **${scan.gaps.length} items** that need attention. Ask me "what am I missing?" for the full report.`;
+    }
+
+    // Dynamic quick suggestions based on scan
+    const QUICK_BASE = {
       nema_national: ['Show all CDA non-compliant projects','Which waste projects have dCoC gaps?','What projects are at risk of Regulation 37 action?'],
       nema_county:   ['Show projects in my county','Which projects need enforcement action?','Check CDA compliance for my county'],
       nema_reviewer: ['List projects with AI-generated baselines','Which projects have MRV overdue?','Analyse PRL scores across all projects'],
       consultant:    ['Review my current project submissions','What should I check before sending to NEMA?','How do I improve a low PRL score?'],
-      proponent:     ['What stage is my project at?','What documents do I need next?','Explain CDA Fourth Schedule requirements'],
-      enterprise:    ['What is my current credit portfolio?','How do I trade credits under Article 6?','Explain the retirement certificate process'],
+      proponent:     ['Run waste AI review','What am I missing?','What features does Netzerra have?','Explain CDA Fourth Schedule requirements'],
+      enterprise:    ['What is my current credit portfolio?','What am I missing?','Explain the retirement certificate process'],
+      developer:     ['Run waste AI review','What is the full system status?','Show all feature capabilities','Run compliance scan'],
     };
+    let quickList = QUICK_BASE[role] || QUICK_BASE.proponent;
+    // Prepend scan-derived dynamic actions
+    if (scan.actions.length > 0) {
+      const dynActions = scan.actions.slice(0, 2).map(a => a.label);
+      quickList = [...dynActions, ...quickList.slice(0, 3 - dynActions.length)];
+    }
 
-    const greeting = GREETINGS[role] || GREETINGS.proponent;
-    const quickList = QUICK[role] || QUICK.proponent;
+    const greeting = (GREETINGS[role] || GREETINGS.proponent) + contextNote;
 
     // Replace the static greeting message
     const msgs = document.getElementById('nai-msgs');
@@ -474,12 +742,21 @@ const NTZ_AI=(()=>{
       msgs.appendChild(d);
     }
 
-    // Replace quick suggestion buttons
+    // Replace quick suggestion buttons — include nav actions
     const sugs = document.getElementById('nai-sugs');
     if (sugs) {
-      sugs.innerHTML = quickList.map(q =>
-        `<button class="nai-sug" onclick="NTZ_AI.qs(this)">${q}</button>`
-      ).join('');
+      let sugHTML = '';
+      // Add scan-derived nav buttons first
+      scan.actions.slice(0, 2).forEach(a => {
+        sugHTML += `<button class="nai-sug" style="border-color:rgba(74,222,128,.35);color:#4ade80" onclick="showSection('${a.section}');NTZ_AI.toggle()">${a.label}</button>`;
+      });
+      // Then add text-based quick questions
+      quickList.forEach(q => {
+        if (!scan.actions.find(a => a.label === q)) {
+          sugHTML += `<button class="nai-sug" onclick="NTZ_AI.qs(this)">${q}</button>`;
+        }
+      });
+      sugs.innerHTML = sugHTML;
       sugs.style.display = '';
     }
   }
@@ -501,7 +778,13 @@ const NTZ_AI=(()=>{
   function _msg(role,text){
     const c=document.getElementById('nai-msgs');const d=document.createElement('div');d.className='nai-msg '+role;
     const ts=new Date().toLocaleTimeString('en-KE',{hour:'2-digit',minute:'2-digit'});
-    const html=text.replace(/</g,'&lt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    let html=text.replace(/</g,'&lt;').replace(/\*\*(.*?)\*\*/g,'<strong>$1</strong>').replace(/\n/g,'<br>');
+    // Parse [GO:section] navigation commands into clickable buttons
+    html = html.replace(/\[GO:([a-z-]+)\]/g, (match, sectionId) => {
+      const feat = NETZERRA_FEATURES[sectionId];
+      if (!feat) return match;
+      return `<button class="nai-nav-btn" onclick="showSection('${sectionId}');NTZ_AI.toggle()" style="display:inline-flex;align-items:center;gap:4px;margin:3px 2px;padding:3px 10px;background:rgba(74,222,128,.12);border:1px solid rgba(74,222,128,.3);border-radius:14px;color:#4ade80;font-size:.7rem;cursor:pointer;font-weight:600;transition:all .15s" onmouseover="this.style.background='rgba(74,222,128,.22)'" onmouseout="this.style.background='rgba(74,222,128,.12)'">${feat.icon} ${feat.label}</button>`;
+    });
     d.innerHTML=`<div class="nai-bub">${html}</div><span class="nai-mt">${ts}</span>`;
     c.appendChild(d);c.scrollTop=c.scrollHeight;
   }
@@ -620,8 +903,11 @@ const NTZ_AI=(()=>{
       county_floca:`Give 4 revenue and compliance actions for the County Government: FLLoCA reporting, carbon levy collection, community benefit tracking. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`,
     };
 
+    const wasteAIState = (typeof wasteData !== 'undefined')
+      ? ` Active waste draft: ${wasteData.w_facility_name || wasteData.w_company_name || 'unnamed'}; AI review: ${wasteData.ai_compliance_review ? (wasteData.ai_compliance_review.decision || 'reviewed') + ' score ' + (wasteData.ai_compliance_review.score || 'N/A') : 'not run'};`
+      : '';
     const prompt=isGov?(govPrompts[role]||govPrompts.nema_national)
-      :`Give 4 recommendations based on: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100${lc?' last calc '+lc.name+' '+lc.total_t+'tCO₂e':''}. Include Kenya-specific offset options and KNCR registration steps. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`;
+      :`Give 4 recommendations based on: emissions ${u.totalEmissions||0} tCO₂e, offsets ${u.totalOffsets||0}, NTZ ${u.score||0}/100${lc?' last calc '+lc.name+' '+lc.total_t+'tCO₂e':''}.${wasteAIState} Include Kenya-specific offset options, KNCR registration steps, and waste AI review/dossier actions when relevant. Format: TITLE: [title] PRIORITY: [high/med/low] DETAIL: [sentence]`;
     try{
       const reply=await window.ZerraQuery(prompt,false);
       const items=reply.split(/(?=TITLE:)/g).filter(s=>s.trim());

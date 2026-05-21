@@ -727,6 +727,152 @@ select.gcis-input option {
   box-shadow: 0 8px 32px rgba(0,0,0,.35), inset 0 1px 0 rgba(109,217,140,.08);
 }
 
+.waste-ai-console {
+  background: linear-gradient(135deg, rgba(0,201,167,.08), rgba(58,170,92,.05));
+  border: 1px solid rgba(109,217,140,.18);
+  border-radius: 12px;
+  padding: 1rem;
+  margin-bottom: 1rem;
+}
+.waste-ai-console-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: flex-start;
+}
+.waste-ai-kicker {
+  font-size: .63rem;
+  color: var(--mint);
+  text-transform: uppercase;
+  letter-spacing: .08em;
+  font-weight: 800;
+  margin-bottom: .24rem;
+}
+.waste-ai-console h3,
+.waste-ai-result h4 {
+  margin: 0;
+  color: #fff;
+  font-size: 1rem;
+}
+.waste-ai-console p,
+.waste-ai-result p {
+  margin: .35rem 0 0;
+  color: rgba(255,255,255,.62);
+  font-size: .78rem;
+  line-height: 1.55;
+}
+.waste-ai-actions {
+  display: flex;
+  gap: .4rem;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+}
+.waste-ai-actions button,
+.waste-ai-upload,
+.waste-ai-output button {
+  border: 1px solid rgba(109,217,140,.24);
+  background: rgba(109,217,140,.1);
+  color: #fff;
+  border-radius: 8px;
+  padding: .48rem .68rem;
+  font-size: .72rem;
+  font-weight: 700;
+  cursor: pointer;
+}
+.waste-ai-actions button:hover,
+.waste-ai-upload:hover,
+.waste-ai-output button:hover { background: rgba(109,217,140,.18); }
+.waste-ai-upload input { display: none; }
+.waste-ai-output { margin-top: .85rem; min-height: 34px; }
+.waste-ai-output > span,
+.waste-ai-output small {
+  display: block;
+  color: rgba(255,255,255,.45);
+  font-size: .72rem;
+}
+.waste-ai-loading {
+  border: 1px dashed rgba(109,217,140,.25);
+  border-radius: 8px;
+  padding: .75rem;
+  color: rgba(255,255,255,.72);
+  font-size: .76rem;
+}
+.waste-ai-result {
+  background: rgba(0,0,0,.18);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  padding: .9rem;
+}
+.waste-ai-result-head {
+  display: flex;
+  justify-content: space-between;
+  gap: 1rem;
+  align-items: center;
+}
+.waste-ai-score {
+  width: 58px;
+  height: 58px;
+  border-radius: 50%;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  background: rgba(109,217,140,.12);
+  border: 1px solid rgba(109,217,140,.3);
+  color: var(--mint);
+  font-size: 1.1rem;
+  font-weight: 900;
+  flex-shrink: 0;
+}
+.waste-ai-score span { font-size: .56rem; color: rgba(255,255,255,.5); }
+.waste-ai-list {
+  margin-top: .7rem;
+  border-left: 3px solid rgba(109,217,140,.45);
+  padding-left: .65rem;
+  display: flex;
+  flex-direction: column;
+  gap: .32rem;
+}
+.waste-ai-list strong { color: #fff; font-size: .72rem; }
+.waste-ai-list span {
+  color: rgba(255,255,255,.68);
+  font-size: .72rem;
+  line-height: 1.45;
+}
+.waste-ai-list.high { border-left-color: #EF5350; }
+.waste-ai-list.med { border-left-color: #F5A623; }
+.waste-ai-list.ok { border-left-color: var(--mint); }
+.waste-ai-dossier-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: .55rem;
+  margin-top: .85rem;
+}
+.waste-ai-dossier-grid section {
+  background: rgba(255,255,255,.04);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 8px;
+  padding: .65rem;
+}
+.waste-ai-dossier-grid strong,
+.waste-ai-dossier-grid span {
+  display: block;
+  font-size: .72rem;
+}
+.waste-ai-dossier-grid strong {
+  color: var(--mint);
+  margin-bottom: .25rem;
+}
+.waste-ai-dossier-grid span {
+  color: rgba(255,255,255,.66);
+  line-height: 1.45;
+}
+@media(max-width: 760px) {
+  .waste-ai-console-head { flex-direction: column; }
+  .waste-ai-actions { justify-content: flex-start; }
+  .waste-ai-dossier-grid { grid-template-columns: 1fr; }
+}
+
 /* ─── Header ─────────────────────────────────────── */
 .wzc-header {
   display: flex;
@@ -1070,3 +1216,126 @@ select.gcis-input option {
 }
 
 
+/* ═══════════════════════════════════════════════════════
+   dCoC AI FRAUD INTELLIGENCE ENGINE — Panel Styles
+   ═══════════════════════════════════════════════════════ */
+
+.fraud-intel-panel {
+  background: linear-gradient(135deg, rgba(239,83,80,.03) 0%, rgba(10,31,20,1) 100%);
+  border: 1px solid rgba(239,83,80,.25);
+  border-radius: 14px;
+  margin-bottom: 1.2rem;
+  overflow: hidden;
+}
+.fip-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid rgba(239,83,80,.12);
+  background: rgba(239,83,80,.04);
+  flex-wrap: wrap;
+  gap: .5rem;
+}
+.fip-title {
+  display: flex;
+  align-items: center;
+  gap: .5rem;
+  font-weight: 700;
+  font-size: .95rem;
+  color: #EF5350;
+}
+.fip-summary { display: flex; gap: .4rem; flex-wrap: wrap; }
+
+/* Pattern Analysis Cards */
+.fip-cards {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: .6rem;
+  padding: 1rem 1.2rem;
+  border-bottom: 1px solid rgba(255,255,255,.05);
+}
+.fip-card {
+  background: rgba(0,0,0,.3);
+  border: 1px solid rgba(255,255,255,.08);
+  border-radius: 10px;
+  padding: .85rem;
+  transition: border-color .3s, transform .2s;
+}
+.fip-card:hover { transform: translateY(-2px); }
+.fip-card-critical { border-color: rgba(239,83,80,.3); }
+.fip-card-critical:hover { border-color: rgba(239,83,80,.5); }
+.fip-card-warning { border-color: rgba(245,166,35,.3); }
+.fip-card-clear { border-color: rgba(58,170,92,.2); }
+.fip-card-head {
+  display: flex;
+  align-items: center;
+  gap: .4rem;
+  margin-bottom: .5rem;
+}
+.fip-card-icon { font-size: 1.1rem; }
+.fip-card-title { flex: 1; font-size: .75rem; font-weight: 600; color: rgba(255,255,255,.8); }
+.fip-card-count { font-size: 1.3rem; font-weight: 800; }
+.fip-card-body {
+  font-size: .68rem;
+  color: rgba(255,255,255,.45);
+  line-height: 1.5;
+}
+.fip-card-body strong { color: rgba(255,255,255,.75); }
+
+/* Driver Leaderboard */
+.fip-drivers {
+  padding: 1rem 1.2rem 1.2rem;
+}
+.fip-drivers-head {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-bottom: .75rem;
+  font-weight: 700;
+  font-size: .88rem;
+  color: #fff;
+}
+.fip-driver-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: .72rem;
+}
+.fip-driver-table thead th {
+  background: rgba(0,0,0,.3);
+  color: rgba(255,255,255,.5);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: .4px;
+  font-size: .6rem;
+  padding: .6rem .5rem;
+  text-align: left;
+  border-bottom: 1px solid rgba(255,255,255,.08);
+}
+.fip-driver-table tbody td {
+  padding: .6rem .5rem;
+  color: rgba(255,255,255,.7);
+  border-bottom: 1px solid rgba(255,255,255,.04);
+  vertical-align: middle;
+}
+.fip-driver-table tbody tr:hover {
+  background: rgba(255,255,255,.03);
+}
+.fip-score-badge {
+  display: inline-block;
+  padding: .2rem .55rem;
+  border-radius: 12px;
+  font-weight: 700;
+  font-size: .7rem;
+  letter-spacing: .02em;
+}
+
+@media (max-width: 768px) {
+  .fip-cards { grid-template-columns: 1fr 1fr; }
+  .fip-driver-table { font-size: .65rem; }
+  .fip-driver-table thead th,
+  .fip-driver-table tbody td { padding: .45rem .3rem; }
+}
+@media (max-width: 480px) {
+  .fip-cards { grid-template-columns: 1fr; }
+}

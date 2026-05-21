@@ -287,6 +287,13 @@ let wasteData = {
   
   // Traceability Ledger (dCoC)
   ledger_blocks: [],
+
+  // AI compliance intelligence
+  ai_compliance_review: null,
+  ai_dossier: '',
+  ai_evidence: [],
+  ai_last_mode: '',
+  ai_last_updated: '',
   
   // Meta
   created_at: null,
@@ -359,7 +366,9 @@ function clearWasteState() {
     project_id: '', prl_score: 0, prl_breakdown: { data_quality: 0, cda_compliance: 0, methodology: 0 },
     status: 'draft', submitted_at: '', submittedToConsultant: false,
     // Ledger
-    ledger_blocks: [], created_at: null, updated_at: null
+    ledger_blocks: [],
+    ai_compliance_review: null, ai_dossier: '', ai_evidence: [], ai_last_mode: '', ai_last_updated: '',
+    created_at: null, updated_at: null
   };
   console.log('🗑️ Waste state cleared - fresh 10-step wizard ready');
 }
@@ -408,7 +417,13 @@ function registerWasteProject() {
     lat: wasteData.w_facility_lat,
     lng: wasteData.w_facility_lng,
     nemaLicense: wasteData.w_nema_license,
+    w_nema_license: wasteData.w_nema_license,
+    w_license_expiry: wasteData.w_license_expiry,
+    dcocEnabled: !!(wasteData.dcoCleared || wasteData.ledger_blocks?.length),
     dcoCleared: wasteData.dcoCleared,
+    aiComplianceReview: wasteData.ai_compliance_review,
+    aiLastMode: wasteData.ai_last_mode,
+    aiLastUpdated: wasteData.ai_last_updated,
     certifiedBy: wasteData.certifiedBy,
     certifiedAt: wasteData.certifiedAt
   };
@@ -1083,6 +1098,330 @@ function calculatePRL(data) {
   };
 }
 
+function getWasteAISnapshot() {
+  const prl = calculatePRL(wasteData);
+  const minShare = wasteData.land_type === 'Public/Community'
+    ? SOVEREIGN_VALUES.REGULATION_23E_LAND_SHARE_PCT
+    : SOVEREIGN_VALUES.REGULATION_23E_NONLAND_SHARE_PCT;
+  return {
+    project_id: wasteData.project_id || '',
+    facility_name: wasteData.w_facility_name || wasteData.w_company_name || '',
+    company_name: wasteData.w_company_name || '',
+    proponent_name: wasteData.w_proponent_name || '',
+    kra_pin: wasteData.w_kra_pin || '',
+    business_registration: wasteData.w_business_reg || '',
+    county: wasteData.w_county || '',
+    nema_license: wasteData.w_nema_license || '',
+    license_expiry: wasteData.w_license_expiry || '',
+    contractor: wasteData.w_contractor || '',
+    contractor_license: wasteData.w_contractor_license || '',
+    transport_certificate: wasteData.w_transport_cert || '',
+    stream_type: wasteData.w_stream_type || 'Municipal Solid Waste',
+    annual_volume_tonnes: Number(wasteData.w_annual_volume || 0),
+    doc_fraction: Number(wasteData.w_doc_fraction || 0),
+    methane_baseline_tco2e_yr: Number(wasteData.methane_baseline_tco2e_yr || 0),
+    cda_share_pct: Number(wasteData.cda_share_pct || 0),
+    cda_minimum_pct: minShare,
+    land_type: wasteData.land_type || '',
+    source_weight_kg: Number(wasteData.weight_at_source || wasteData.tonnage_source || 0),
+    facility_weight_kg: Number(wasteData.weight_at_facility || wasteData.tonnage_facility || 0),
+    dco_cleared: !!wasteData.dcoCleared,
+    vision_images: wasteData.vision_images?.length || 0,
+    ai_composition: wasteData.ai_composition || {},
+    ai_synthesis: wasteData.ai_synthesis || '',
+    ledger_blocks: wasteData.ledger_blocks?.length || 0,
+    current_step: wasteCurrentStep + 1,
+    status: wasteData.status || 'draft',
+    prl
+  };
+}
+
+function buildWasteLocalReview(snapshot) {
+  const critical_flags = [];
+  const recommendations = [];
+  const evidence_gaps = [];
+  const strengths = [];
+  const today = Date.now();
+
+  if (!snapshot.company_name) evidence_gaps.push('Company name is missing.');
+  if (!snapshot.kra_pin) evidence_gaps.push('KRA PIN is missing.');
+  if (!snapshot.business_registration) evidence_gaps.push('Business registration number is missing.');
+  if (!snapshot.nema_license) critical_flags.push('NEMA waste management licence is missing under EMCA Section 87.');
+  if (snapshot.license_expiry) {
+    const expiry = new Date(snapshot.license_expiry).getTime();
+    if (expiry < today) critical_flags.push('NEMA waste management licence appears expired under EMCA Section 87.');
+    else if ((expiry - today) < 30 * 86400000) recommendations.push('Renew or verify the NEMA licence because it expires within 30 days.');
+  } else {
+    evidence_gaps.push('NEMA licence expiry date is missing.');
+  }
+  if (!snapshot.contractor) recommendations.push('Select a NEMA-registered waste contractor before submission.');
+  if (!snapshot.annual_volume_tonnes) evidence_gaps.push('Annual waste volume is missing.');
+  if (!snapshot.methane_baseline_tco2e_yr) recommendations.push('Run the IPCC methane baseline before consultant review.');
+  if (snapshot.cda_share_pct < snapshot.cda_minimum_pct) {
+    critical_flags.push(`CDA share ${snapshot.cda_share_pct || 0}% is below the ${snapshot.cda_minimum_pct}% minimum community benefit threshold.`);
+  } else {
+    strengths.push(`CDA share meets the ${snapshot.cda_minimum_pct}% minimum threshold.`);
+  }
+  if (!snapshot.dco_cleared && (snapshot.source_weight_kg || snapshot.facility_weight_kg)) {
+    recommendations.push('Complete dCoC weight reconciliation before final submission.');
+  }
+  if (snapshot.source_weight_kg && snapshot.facility_weight_kg) {
+    const variance = Math.abs(snapshot.source_weight_kg - snapshot.facility_weight_kg) / snapshot.source_weight_kg * 100;
+    if (variance > SOVEREIGN_VALUES.WEIGHT_VARIANCE_THRESHOLD_PCT) {
+      critical_flags.push(`Weight variance is ${variance.toFixed(1)}%, above the ${SOVEREIGN_VALUES.WEIGHT_VARIANCE_THRESHOLD_PCT}% Regulation 37 trigger.`);
+    } else {
+      strengths.push(`Weight variance is ${variance.toFixed(1)}%, within the dCoC tolerance.`);
+    }
+  }
+  if (!snapshot.vision_images && !snapshot.ai_synthesis) recommendations.push('Upload evidence photos or run the demo extraction so AI can verify waste composition.');
+
+  const score = Math.max(0, Math.min(100, snapshot.prl.total - (critical_flags.length * 12) - (evidence_gaps.length * 4)));
+  const decision = critical_flags.length ? 'needs_clarification' : (score >= 75 ? 'submission_ready' : 'needs_improvement');
+
+  return {
+    mode: 'local_fallback',
+    score,
+    decision,
+    critical_flags,
+    evidence_gaps,
+    recommendations,
+    strengths,
+    summary: critical_flags.length
+      ? 'The waste project has material compliance blockers that should be resolved before consultant or NEMA review.'
+      : 'The waste project is progressing well; the remaining work is mainly evidence quality and final documentation.',
+    next_actions: [
+      'Resolve every critical flag.',
+      'Attach verifiable evidence for the missing fields.',
+      'Generate the AI dossier for consultant review.'
+    ]
+  };
+}
+
+function parseWasteAIJSON(raw) {
+  if (!raw) return null;
+  if (typeof raw === 'object') return raw;
+  let text = String(raw).trim();
+  text = text.replace(/^```(?:json)?/i, '').replace(/```$/i, '').trim();
+  try { return JSON.parse(text); } catch (_) {}
+  const first = text.indexOf('{');
+  const last = text.lastIndexOf('}');
+  if (first >= 0 && last > first) {
+    try { return JSON.parse(text.slice(first, last + 1)); } catch (_) {}
+  }
+  return null;
+}
+
+async function callWasteAI(mode, prompt, extra = {}) {
+  const snapshot = getWasteAISnapshot();
+  const system = `You are Zerra, Netzerra's AI waste compliance analyst. Return strict JSON only. Do not wrap in Markdown. Cite Kenyan regulatory hooks where relevant: EMCA Section 87 for waste licences, Sustainable Waste Management Act 2022 for digital chain of custody, Carbon Markets Regulations Regulation 23E for community benefits, and Regulation 37 for false data or weight fraud risk.`;
+  const user = `${prompt}\n\nPROJECT_SNAPSHOT:\n${JSON.stringify(snapshot, null, 2)}\n\nEXTRA:\n${JSON.stringify(extra, null, 2)}`;
+  const r = await fetch(WASTE_WORKER_URL, {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      mode,
+      project: snapshot,
+      extra,
+      messages: [
+        { role: 'system', content: system },
+        { role: 'user', content: user }
+      ]
+    })
+  });
+  if (!r.ok) throw new Error('Worker ' + r.status);
+  const d = await r.json();
+  const text = d.result || d.output || d.content || d.text ||
+    (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content);
+  return parseWasteAIJSON(text || d);
+}
+
+function renderWasteAIReview(review) {
+  const el = document.getElementById('waste-ai-output');
+  if (!el || !review) return;
+  const decisionLabel = (review.decision || 'reviewed').replace(/_/g, ' ').toUpperCase();
+  const flags = review.critical_flags || review.flags || [];
+  const gaps = review.evidence_gaps || [];
+  const recs = review.recommendations || review.next_actions || [];
+  const strengths = review.strengths || [];
+  el.innerHTML = `
+    <div class="waste-ai-result">
+      <div class="waste-ai-result-head">
+        <div>
+          <div class="waste-ai-kicker">AI Compliance Review</div>
+          <h4>${decisionLabel}</h4>
+        </div>
+        <div class="waste-ai-score">${Math.round(review.score || 0)}<span>/100</span></div>
+      </div>
+      <p>${review.summary || 'Review complete.'}</p>
+      ${flags.length ? `<div class="waste-ai-list high"><strong>Critical flags</strong>${flags.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+      ${gaps.length ? `<div class="waste-ai-list med"><strong>Evidence gaps</strong>${gaps.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+      ${recs.length ? `<div class="waste-ai-list"><strong>Recommended actions</strong>${recs.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+      ${strengths.length ? `<div class="waste-ai-list ok"><strong>Strengths</strong>${strengths.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+    </div>
+  `;
+}
+
+async function runWasteAIComplianceReview() {
+  const out = document.getElementById('waste-ai-output');
+  if (out) out.innerHTML = '<div class="waste-ai-loading">Zerra is reviewing licence, CDA, dCoC, methane baseline, and evidence quality...</div>';
+  try {
+    const review = await callWasteAI(
+      'waste_compliance_review',
+      `Review this waste project and return JSON with keys: score, decision, summary, critical_flags, evidence_gaps, recommendations, strengths, next_actions. Keep each list item short and action-oriented.`
+    );
+    if (!review) throw new Error('Worker returned non-JSON review');
+    wasteData.ai_compliance_review = review;
+    wasteData.ai_last_mode = 'waste_compliance_review';
+    wasteData.ai_last_updated = new Date().toISOString();
+    saveWasteState();
+    renderWasteAIReview(review);
+    toast('AI waste compliance review complete.', 'success');
+  } catch (e) {
+    const fallback = buildWasteLocalReview(getWasteAISnapshot());
+    wasteData.ai_compliance_review = fallback;
+    wasteData.ai_last_mode = 'local_fallback_review';
+    wasteData.ai_last_updated = new Date().toISOString();
+    saveWasteState();
+    renderWasteAIReview(fallback);
+    toast('Worker unavailable; local compliance review generated.', 'info');
+  }
+}
+
+async function generateAIWasteDossier() {
+  const out = document.getElementById('waste-ai-output');
+  if (out) out.innerHTML = '<div class="waste-ai-loading">Drafting AI waste dossier for consultant review...</div>';
+  const prompt = `Generate a waste project dossier as JSON with keys: title, executive_summary, regulatory_position, methane_baseline_note, dcoc_note, cda_note, consultant_questions, nema_risk_memo. consultant_questions must be an array of 5 short questions.`;
+  try {
+    const dossier = await callWasteAI('waste_dossier', prompt);
+    if (!dossier) throw new Error('Worker returned non-JSON dossier');
+    const html = buildWasteDossierHTML(dossier);
+    wasteData.ai_dossier = html;
+    wasteData.ai_last_mode = 'waste_dossier';
+    wasteData.ai_last_updated = new Date().toISOString();
+    saveWasteState();
+    if (out) out.innerHTML = html;
+    toast('AI waste dossier drafted.', 'success');
+  } catch (e) {
+    const snap = getWasteAISnapshot();
+    const local = {
+      title: `${snap.facility_name || 'Waste Facility'} - AI Waste Compliance Dossier`,
+      executive_summary: `${snap.stream_type} project in ${snap.county || 'Kenya'} with estimated baseline of ${snap.methane_baseline_tco2e_yr.toFixed(1)} tCO2e/year and PRL ${snap.prl.total}/100.`,
+      regulatory_position: 'Submission should remain in preparation until licence evidence, CDA share, and dCoC evidence are complete.',
+      methane_baseline_note: 'Baseline uses IPCC waste methane assumptions already configured in Netzerra. A qualified expert should verify DOC and annual tonnage.',
+      dcoc_note: snap.dco_cleared ? 'dCoC appears cleared in the current project data.' : 'dCoC is not fully cleared. Reconcile source and facility weights before submission.',
+      cda_note: `CDA share is ${snap.cda_share_pct || 0}% against a minimum of ${snap.cda_minimum_pct}%.`,
+      consultant_questions: [
+        'Is the NEMA licence active and attached?',
+        'Can annual tonnage be supported by weighbridge evidence?',
+        'Has the CDA share been approved by affected communities?',
+        'Are waste picker safeguards documented?',
+        'Has the methane baseline been reviewed by a qualified expert?'
+      ],
+      nema_risk_memo: 'Primary risk areas are licence evidence, weight variance, and Regulation 37 false-data exposure.'
+    };
+    const html = buildWasteDossierHTML(local);
+    wasteData.ai_dossier = html;
+    wasteData.ai_last_mode = 'local_fallback_dossier';
+    wasteData.ai_last_updated = new Date().toISOString();
+    saveWasteState();
+    if (out) out.innerHTML = html;
+    toast('Worker unavailable; local dossier drafted.', 'info');
+  }
+}
+
+function buildWasteDossierHTML(dossier) {
+  const qs = Array.isArray(dossier.consultant_questions) ? dossier.consultant_questions : [];
+  return `
+    <div class="waste-ai-result dossier">
+      <div class="waste-ai-kicker">AI Waste Dossier</div>
+      <h4>${dossier.title || 'Waste Compliance Dossier'}</h4>
+      <p>${dossier.executive_summary || ''}</p>
+      <div class="waste-ai-dossier-grid">
+        <section><strong>Regulatory position</strong><span>${dossier.regulatory_position || ''}</span></section>
+        <section><strong>Methane baseline</strong><span>${dossier.methane_baseline_note || ''}</span></section>
+        <section><strong>dCoC</strong><span>${dossier.dcoc_note || ''}</span></section>
+        <section><strong>CDA</strong><span>${dossier.cda_note || ''}</span></section>
+      </div>
+      <div class="waste-ai-list med"><strong>Consultant questions</strong>${qs.map(q => `<span>${q}</span>`).join('')}</div>
+      <div class="waste-ai-list high"><strong>NEMA risk memo</strong><span>${dossier.nema_risk_memo || ''}</span></div>
+    </div>
+  `;
+}
+
+async function handleWasteAIEvidence(input) {
+  const files = Array.from(input.files || []);
+  if (!files.length) return;
+  const out = document.getElementById('waste-ai-output');
+  if (out) out.innerHTML = '<div class="waste-ai-loading">Reading evidence and sending it through the Worker vision/OCR route...</div>';
+  try {
+    const evidence = await Promise.all(files.slice(0, 4).map(file => new Promise((resolve, reject) => {
+      const reader = new FileReader();
+      reader.onload = () => resolve({ name: file.name, type: file.type, size: file.size, data_url: reader.result });
+      reader.onerror = reject;
+      reader.readAsDataURL(file);
+    })));
+    const messages = [
+      { role: 'system', content: 'You are Zerra OCR. Extract waste compliance evidence. Return strict JSON only with keys: documents, extracted_fields, confidence, flags, apply_patch_suggestions.' },
+      { role: 'user', content: [
+        { type: 'text', text: `Extract useful fields for Netzerra waste compliance from these files. Current project: ${JSON.stringify(getWasteAISnapshot())}` },
+        ...evidence.map(item => ({ type: 'image_url', image_url: { url: item.data_url } }))
+      ] }
+    ];
+    const r = await fetch(WASTE_WORKER_URL, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ mode: 'waste_evidence_parse', project: getWasteAISnapshot(), evidence: evidence.map(({ data_url, ...rest }) => rest), messages })
+    });
+    if (!r.ok) throw new Error('Worker ' + r.status);
+    const d = await r.json();
+    const text = d.result || d.output || d.content || d.text ||
+      (d.choices && d.choices[0] && d.choices[0].message && d.choices[0].message.content);
+    const parsed = parseWasteAIJSON(text || d);
+    if (!parsed) throw new Error('Worker returned non-JSON evidence result');
+    wasteData.ai_evidence = (wasteData.ai_evidence || []).concat(parsed);
+    applyWasteEvidenceSuggestions(parsed);
+    wasteData.ai_last_mode = 'waste_evidence_parse';
+    wasteData.ai_last_updated = new Date().toISOString();
+    saveWasteState();
+    if (out) {
+      const fields = parsed.extracted_fields || {};
+      out.innerHTML = `
+        <div class="waste-ai-result">
+          <div class="waste-ai-kicker">AI Evidence Parser</div>
+          <h4>${parsed.documents?.length || files.length} file(s) reviewed</h4>
+          <p>Confidence: ${Math.round((parsed.confidence || 0) * 100) || 'N/A'}%</p>
+          <div class="waste-ai-list ok"><strong>Extracted fields</strong>${Object.entries(fields).map(([k,v]) => `<span>${k}: ${v}</span>`).join('') || '<span>No fields extracted.</span>'}</div>
+          ${(parsed.flags || []).length ? `<div class="waste-ai-list high"><strong>Flags</strong>${parsed.flags.map(x => `<span>${x}</span>`).join('')}</div>` : ''}
+        </div>
+      `;
+    }
+    toast('AI evidence parsed and applied where possible.', 'success');
+  } catch (e) {
+    if (out) out.innerHTML = `<div class="waste-ai-result"><h4>Evidence parser unavailable</h4><p>${e.message}</p></div>`;
+    toast('Evidence parser failed: ' + e.message, 'error');
+  } finally {
+    input.value = '';
+  }
+}
+
+function applyWasteEvidenceSuggestions(parsed) {
+  const f = parsed.extracted_fields || parsed.fields || {};
+  const map = {
+    kra_pin: 'w_kra_pin',
+    business_registration: 'w_business_reg',
+    nema_license: 'w_nema_license',
+    license_expiry: 'w_license_expiry',
+    contractor_license: 'w_contractor_license',
+    truck_plate: 'truck_vessel_id',
+    source_weight_kg: 'weight_at_source',
+    facility_weight_kg: 'weight_at_facility',
+    annual_volume_tonnes: 'w_annual_volume'
+  };
+  Object.entries(map).forEach(([src, dest]) => {
+    if (f[src] !== undefined && f[src] !== null && f[src] !== '') wasteData[dest] = f[src];
+  });
+}
+
 // ── SHA-256 Hash Generator (for dCoC Ledger) ───────
 async function generateSHA256(input) {
   const msgBuffer = new TextEncoder().encode(input);
@@ -1346,6 +1685,27 @@ function renderWasteWizard() {
 
   container.innerHTML = `
     ${projectSummary}
+    <div class="waste-ai-console">
+      <div class="waste-ai-console-head">
+        <div>
+          <div class="waste-ai-kicker">Groq Worker Intelligence</div>
+          <h3>Zerra Waste Compliance Console</h3>
+          <p>AI checks licence evidence, CDA share, dCoC variance, methane baseline quality, and consultant readiness.</p>
+        </div>
+        <div class="waste-ai-actions">
+          <button onclick="runWasteAIComplianceReview()">AI Review</button>
+          <button onclick="generateAIWasteDossier()">Draft Dossier</button>
+          <label class="waste-ai-upload">
+            Parse Evidence
+            <input type="file" accept="image/*,.pdf" multiple onchange="handleWasteAIEvidence(this)">
+          </label>
+        </div>
+      </div>
+      <div id="waste-ai-output" class="waste-ai-output">
+        ${wasteData.ai_compliance_review ? '<button onclick="renderWasteAIReview(wasteData.ai_compliance_review)">Show Last AI Review</button>' : '<span>Run an AI review when you want a regulator-style readiness check.</span>'}
+        ${wasteData.ai_last_updated ? `<small>Last AI run: ${new Date(wasteData.ai_last_updated).toLocaleString('en-KE')}</small>` : ''}
+      </div>
+    </div>
     <div class="wzc-wrapper">
       <div class="wzc-header">
         <div class="wzc-header-left">
@@ -1685,6 +2045,12 @@ async function wasteGcisSubmit() {
   if (!wasteData.w_doc_fraction) wasteData.w_doc_fraction = SOVEREIGN_VALUES.DOC_MUNICIPAL;
   if (!wasteData.methane_baseline_tco2e_yr && wasteData.w_annual_volume) {
     wasteData.methane_baseline_tco2e_yr = wasteData.w_annual_volume * wasteData.w_doc_fraction * SOVEREIGN_VALUES.SOLID_WASTE_EF * SOVEREIGN_VALUES.METHANE_GWP / 1000;
+  }
+
+  if (!wasteData.ai_compliance_review) {
+    wasteData.ai_compliance_review = buildWasteLocalReview(getWasteAISnapshot());
+    wasteData.ai_last_mode = 'local_submit_review';
+    wasteData.ai_last_updated = new Date().toISOString();
   }
 
   await submitWasteForAudit();
@@ -2421,6 +2787,15 @@ function generateWasteDossierAndConsultant() {
   wasteData.status = 'pending-review'; // Set status for consultant queue
   wasteData.submittedToConsultant = true;
   wasteData.submittedAt = new Date().toISOString();
+  wasteData.w_name = wasteData.w_name || wasteData.w_facility_name || wasteData.w_company_name || 'Waste Facility';
+  wasteData.w_type = wasteData.w_type || wasteData.w_stream_type || 'Waste Facility';
+  wasteData.w_proponent = wasteData.w_proponent || wasteData.w_proponent_name || window.S?.user?.name || 'Waste Proponent';
+  wasteData.w_lat = wasteData.w_lat || wasteData.w_facility_lat || '';
+  wasteData.w_lng = wasteData.w_lng || wasteData.w_facility_lng || '';
+  wasteData.cda_share = wasteData.cda_share || wasteData.cda_share_pct || 0;
+  wasteData.tonnage_source = wasteData.tonnage_source || wasteData.weight_at_source || 0;
+  wasteData.tonnage_facility = wasteData.tonnage_facility || wasteData.weight_at_facility || 0;
+  wasteData.methane_baseline = Number(wasteData.methane_baseline || wasteData.methane_baseline_tco2e_yr || 0);
   saveWasteState();
 
   // Register the project FIRST so it appears in all queues
@@ -2709,6 +3084,9 @@ function renderNemaWasteAlerts() {
         `).join('')}
       </div>
     </div>
+
+    <!-- dCoC AI FRAUD INTELLIGENCE ENGINE -->
+    ${typeof renderFraudIntelligencePanel === 'function' ? renderFraudIntelligencePanel() : ''}
   `;
 }
 
@@ -2827,6 +3205,14 @@ function generateWasteAlerts(projects) {
     }
   });
 
+  // Merge AI fraud detection alerts
+  try {
+    if (typeof generateFraudAlerts === 'function') {
+      const fraudAlerts = generateFraudAlerts();
+      alerts.push(...fraudAlerts);
+    }
+  } catch(e) { console.warn('[Fraud Engine]', e); }
+
   // Sort: critical first, then warning
   const severityOrder = { critical: 0, warning: 1, info: 2 };
   alerts.sort((a, b) => (severityOrder[a.severity] || 2) - (severityOrder[b.severity] || 2));
@@ -2888,4 +3274,455 @@ function calculateWasteKPIs(projects, alerts) {
 function _randomTimeAgo() {
   const mins = Math.floor(Math.random() * 120) + 5;
   return mins < 60 ? mins + ' min ago' : Math.floor(mins / 60) + 'h ' + (mins % 60) + 'm ago';
+}
+
+// ═══════════════════════════════════════════════════════════
+// dCoC AI FRAUD DETECTION ENGINE v1.0
+// Pattern Recognition · Route Deviation · Ghost Trips
+// Collusion Detection · Weight Signatures · Driver Scoring
+// ═══════════════════════════════════════════════════════════
+
+const DCOC_DRIVERS = [
+  { id:'DRV-001', name:'James Mwangi',  plate:'KCH 420A', licence:'DL-2024-11234' },
+  { id:'DRV-002', name:'Peter Ochieng', plate:'KCH 301B', licence:'DL-2023-08891' },
+  { id:'DRV-003', name:'Samuel Kiprop', plate:'KCH 105C', licence:'DL-2025-04421' },
+  { id:'DRV-004', name:'John Kamau',    plate:'KDA 219F', licence:'DL-2024-07762' },
+  { id:'DRV-005', name:'David Njoroge', plate:'KBZ 882K', licence:'DL-2023-15503' },
+  { id:'DRV-006', name:'Moses Wekesa',  plate:'KCJ 445D', licence:'DL-2024-19987' },
+  { id:'DRV-007', name:'Brian Otieno',  plate:'KCB 771E', licence:'DL-2025-02218' },
+  { id:'DRV-008', name:'Patrick Mutua', plate:'KDD 333G', licence:'DL-2024-06645' },
+];
+
+const DCOC_ROUTES = [
+  { id:'RT-01', from:'Dandora',   to:'Athi River',  distKm:38, wasteType:'Municipal Solid Waste',
+    approved:[[-1.2505,36.8972],[-1.2650,36.8800],[-1.3000,36.8600],[-1.3500,36.8900],[-1.4000,36.9200],[-1.4520,36.9780]] },
+  { id:'RT-02', from:'Kibera',    to:'Dandora',     distKm:22, wasteType:'Municipal Solid Waste',
+    approved:[[-1.3150,36.7830],[-1.2950,36.8100],[-1.2700,36.8400],[-1.2505,36.8972]] },
+  { id:'RT-03', from:'Ruiru',     to:'Thika',       distKm:18, wasteType:'Industrial Waste',
+    approved:[[-1.1800,36.9650],[-1.1400,36.9800],[-1.0800,36.9900],[-1.0330,37.0720]] },
+  { id:'RT-04', from:'Westlands', to:'Kasarani',    distKm:15, wasteType:'Municipal Solid Waste',
+    approved:[[-1.2640,36.8050],[-1.2500,36.8200],[-1.2350,36.8500],[-1.2250,36.8900]] },
+  { id:'RT-05', from:'Embakasi',  to:'Ruai',        distKm:12, wasteType:'Agricultural Waste',
+    approved:[[-1.3200,36.8900],[-1.3100,36.9100],[-1.2900,36.9300],[-1.2700,36.9500]] },
+  { id:'RT-06', from:'Kangundo',  to:'Athi River',  distKm:32, wasteType:'Industrial Waste',
+    approved:[[-1.2200,37.1200],[-1.2800,37.0800],[-1.3400,37.0200],[-1.4000,36.9800],[-1.4520,36.9780]] },
+];
+
+// Generate 60+ realistic trip records over 30 days
+function _generateTripHistory() {
+  const trips = [];
+  const now = Date.now();
+  const DAY = 86400000;
+
+  // Helper: add GPS noise
+  const jitter = (coords, maxDev) => coords.map(c => [c[0]+(Math.random()-.5)*maxDev, c[1]+(Math.random()-.5)*maxDev]);
+
+  for (let day = 0; day < 30; day++) {
+    const tripsPerDay = 2 + Math.floor(Math.random() * 3);
+    for (let t = 0; t < tripsPerDay; t++) {
+      const driver = DCOC_DRIVERS[Math.floor(Math.random() * DCOC_DRIVERS.length)];
+      const route = DCOC_ROUTES[Math.floor(Math.random() * DCOC_ROUTES.length)];
+      const baseWeight = 2000 + Math.floor(Math.random() * 6000);
+
+      // Different drivers have different fraud signatures
+      let lossRate, gpsPoints, deviated = false, ghostTrip = false;
+      if (driver.id === 'DRV-002') {
+        // Pattern gamer: always 9.5-9.9% variance — suspiciously consistent
+        lossRate = 0.095 + Math.random() * 0.004;
+      } else if (driver.id === 'DRV-004') {
+        // Route deviator: GPS shows off-route stops
+        lossRate = 0.02 + Math.random() * 0.06;
+        deviated = Math.random() > 0.3;
+      } else if (driver.id === 'DRV-006') {
+        // Ghost tripper: sometimes has minimal/no GPS data
+        lossRate = 0.01 + Math.random() * 0.04;
+        ghostTrip = day % 5 === 0;
+      } else if (driver.id === 'DRV-008') {
+        // Collusion partner with DRV-002: similar pattern at different facility
+        lossRate = 0.094 + Math.random() * 0.005;
+      } else {
+        // Legitimate drivers: natural 1-5% variance
+        lossRate = 0.01 + Math.random() * 0.04;
+      }
+
+      const facilityWeight = Math.round(baseWeight * (1 - lossRate));
+      const variance = ((baseWeight - facilityWeight) / baseWeight * 100);
+      const tripDate = new Date(now - (30 - day) * DAY + t * 3600000 * 3);
+      const duration = Math.round(route.distKm / 35 * 60 + Math.random() * 20);
+
+      // Generate GPS track
+      let gpsTrack;
+      if (ghostTrip) {
+        gpsTrack = route.approved.length > 1 ? [{ lat: route.approved[0][0], lng: route.approved[0][1], ts: tripDate.getTime(), speedKmh: 0 }] : [];
+      } else {
+        const trackBase = deviated
+          ? [...route.approved.slice(0, 2), [route.approved[1][0] + (Math.random()-.3)*0.02, route.approved[1][1] + (Math.random()-.3)*0.02], ...route.approved.slice(2)]
+          : route.approved;
+        gpsTrack = jitter(trackBase, deviated ? 0.008 : 0.002).map((c, i) => ({
+          lat: c[0], lng: c[1],
+          ts: tripDate.getTime() + i * (duration / trackBase.length) * 60000,
+          speedKmh: 25 + Math.random() * 30 + (driver.id === 'DRV-004' && deviated ? 40 : 0)
+        }));
+      }
+
+      const stopDur = driver.id === 'DRV-004' && deviated ? 25 + Math.floor(Math.random() * 35) : 3 + Math.floor(Math.random() * 8);
+
+      trips.push({
+        id: `TRIP-${String(day).padStart(2,'0')}-${t}`,
+        date: tripDate.toISOString(),
+        driverId: driver.id, driverName: driver.name, truckPlate: driver.plate,
+        routeId: route.id, routeFrom: route.from, routeTo: route.to,
+        wasteType: route.wasteType, facilityId: route.to,
+        sourceWeightKg: baseWeight, facilityWeightKg: facilityWeight,
+        variance: parseFloat(variance.toFixed(2)),
+        gpsTrack, approvedRoute: route.approved,
+        stopDurationMin: stopDur, totalDurationMin: duration, distanceKm: route.distKm,
+        deviated, ghostTrip
+      });
+    }
+  }
+  return trips;
+}
+
+// Lazily cached
+let _tripHistoryCache = null;
+function getDcocTripHistory() {
+  if (!_tripHistoryCache) _tripHistoryCache = _generateTripHistory();
+  return _tripHistoryCache;
+}
+
+// ── ALGORITHM 1: Variance Pattern Gaming ──────────────
+function analyseVariancePatterns(trips) {
+  const byDriver = {};
+  trips.forEach(t => { (byDriver[t.driverId] = byDriver[t.driverId] || []).push(t); });
+  const flags = [];
+  Object.entries(byDriver).forEach(([driverId, dTrips]) => {
+    if (dTrips.length < 5) return;
+    const vars = dTrips.map(t => t.variance);
+    const mean = vars.reduce((s,v) => s+v, 0) / vars.length;
+    const stdDev = Math.sqrt(vars.reduce((s,v) => s + (v-mean)**2, 0) / vars.length);
+    if (stdDev < 0.5 && mean > 7) {
+      flags.push({
+        type: 'pattern_gaming', severity: 'critical', driverId,
+        driverName: dTrips[0].driverName, plate: dTrips[0].truckPlate,
+        detail: `${dTrips.length} trips with mean variance ${mean.toFixed(1)}% (std dev: ${stdDev.toFixed(2)}%). Suspiciously consistent — appears to be gaming the ${SOVEREIGN_VALUES.WEIGHT_VARIANCE_THRESHOLD_PCT}% threshold.`,
+        mean: parseFloat(mean.toFixed(2)), stdDev: parseFloat(stdDev.toFixed(2)), tripCount: dTrips.length
+      });
+    }
+  });
+  return flags;
+}
+
+// ── ALGORITHM 2: Route Deviation Detection ────────────
+function detectRouteDeviations(trips) {
+  const CORRIDOR_KM = 0.5;
+  const flags = [];
+  const haversine = (a,b) => {
+    const R=6371, dLat=(b[0]-a[0])*Math.PI/180, dLng=(b[1]-a[1])*Math.PI/180;
+    const x = Math.sin(dLat/2)**2 + Math.cos(a[0]*Math.PI/180)*Math.cos(b[0]*Math.PI/180)*Math.sin(dLng/2)**2;
+    return R * 2 * Math.atan2(Math.sqrt(x), Math.sqrt(1-x));
+  };
+  const distToRoute = (pt, route) => {
+    let min = Infinity;
+    route.forEach(rp => { const d = haversine([pt.lat,pt.lng], rp); if (d < min) min = d; });
+    return min;
+  };
+
+  trips.forEach(trip => {
+    if (!trip.gpsTrack || trip.gpsTrack.length < 3 || !trip.approvedRoute) return;
+    const deviations = [];
+    trip.gpsTrack.forEach(pt => {
+      const dist = distToRoute(pt, trip.approvedRoute);
+      if (dist > CORRIDOR_KM) deviations.push({ lat: pt.lat, lng: pt.lng, ts: pt.ts, distKm: parseFloat(dist.toFixed(2)) });
+    });
+    if (deviations.length > 0) {
+      const maxDev = deviations.reduce((m,d) => d.distKm > m.distKm ? d : m);
+      flags.push({
+        type: 'route_deviation', severity: 'critical', tripId: trip.id,
+        driverId: trip.driverId, driverName: trip.driverName, plate: trip.truckPlate,
+        detail: `${deviations.length} GPS point(s) outside ${CORRIDOR_KM}km approved corridor on ${trip.routeFrom}→${trip.routeTo}. Max deviation: ${maxDev.distKm}km at ${new Date(maxDev.ts).toLocaleTimeString('en-KE')}.`,
+        deviations, maxDevKm: maxDev.distKm, route: `${trip.routeFrom}→${trip.routeTo}`, date: trip.date
+      });
+    }
+  });
+  return flags;
+}
+
+// ── ALGORITHM 3: Ghost Trip Detection ─────────────────
+function detectGhostTrips(trips) {
+  const flags = [];
+  trips.forEach(trip => {
+    const pts = trip.gpsTrack ? trip.gpsTrack.length : 0;
+    let reason = '';
+    if (pts < 3) {
+      reason = `Only ${pts} GPS point(s) recorded for a ${trip.distanceKm}km route. Trip may not have occurred.`;
+    } else {
+      // Check impossible speed
+      for (let i = 1; i < trip.gpsTrack.length; i++) {
+        if (trip.gpsTrack[i].speedKmh > 120) {
+          reason = `Impossible speed ${trip.gpsTrack[i].speedKmh.toFixed(0)}km/h detected between GPS pings. Possible GPS spoofing.`;
+          break;
+        }
+      }
+    }
+    if (reason) {
+      flags.push({
+        type: 'ghost_trip', severity: 'critical', tripId: trip.id,
+        driverId: trip.driverId, driverName: trip.driverName, plate: trip.truckPlate,
+        detail: reason, route: `${trip.routeFrom}→${trip.routeTo}`, date: trip.date, gpsPoints: pts
+      });
+    }
+  });
+  return flags;
+}
+
+// ── ALGORITHM 4: Collusion Detection ──────────────────
+function detectCollusionPatterns(trips) {
+  const byFacility = {};
+  trips.forEach(t => { (byFacility[t.facilityId] = byFacility[t.facilityId] || []).push(t); });
+  const facilityStats = {};
+  Object.entries(byFacility).forEach(([fid, fTrips]) => {
+    if (fTrips.length < 5) return;
+    const vars = fTrips.map(t => t.variance);
+    facilityStats[fid] = {
+      mean: parseFloat((vars.reduce((s,v)=>s+v,0)/vars.length).toFixed(2)),
+      stdDev: parseFloat(Math.sqrt(vars.reduce((s,v)=>s+(v-facilityStats[fid]?.mean||0)**2,0)/vars.length).toFixed(2)),
+      count: fTrips.length
+    };
+    // Recalculate stdDev properly
+    const mean = facilityStats[fid].mean;
+    facilityStats[fid].stdDev = parseFloat(Math.sqrt(vars.reduce((s,v)=>s+(v-mean)**2,0)/vars.length).toFixed(2));
+  });
+
+  const flags = [];
+  const fids = Object.keys(facilityStats);
+  for (let i = 0; i < fids.length; i++) {
+    for (let j = i+1; j < fids.length; j++) {
+      const a = facilityStats[fids[i]], b = facilityStats[fids[j]];
+      if (Math.abs(a.mean - b.mean) < 0.3 && a.mean > 7 && b.mean > 7) {
+        flags.push({
+          type: 'collusion', severity: 'critical',
+          facilities: [fids[i], fids[j]],
+          detail: `Facilities "${fids[i]}" and "${fids[j]}" show near-identical variance patterns (${a.mean}% vs ${b.mean}%, diff ${Math.abs(a.mean-b.mean).toFixed(2)}%). Combined ${a.count+b.count} trips suggest coordinated weight manipulation.`,
+          meanA: a.mean, meanB: b.mean, combinedTrips: a.count + b.count
+        });
+      }
+    }
+  }
+  return flags;
+}
+
+// ── ALGORITHM 5: Weight Signatures ────────────────────
+function buildWeightSignatures(trips) {
+  const byKey = {};
+  trips.forEach(t => {
+    const key = `${t.wasteType}|${t.routeId}`;
+    (byKey[key] = byKey[key] || []).push(t.variance);
+  });
+  const sigs = {};
+  Object.entries(byKey).forEach(([key, vars]) => {
+    if (vars.length < 3) return;
+    const mean = vars.reduce((s,v)=>s+v,0) / vars.length;
+    const stdDev = Math.sqrt(vars.reduce((s,v)=>s+(v-mean)**2,0) / vars.length);
+    sigs[key] = { mean: parseFloat(mean.toFixed(2)), stdDev: parseFloat(stdDev.toFixed(2)), lo: parseFloat(Math.max(0, mean-2*stdDev).toFixed(2)), hi: parseFloat((mean+2*stdDev).toFixed(2)), n: vars.length };
+  });
+  // Flag outliers
+  const flags = [];
+  trips.forEach(t => {
+    const key = `${t.wasteType}|${t.routeId}`;
+    const sig = sigs[key];
+    if (!sig) return;
+    if (t.variance < sig.lo || t.variance > sig.hi) {
+      flags.push({
+        type: 'weight_anomaly', severity: 'warning', tripId: t.id,
+        driverId: t.driverId, driverName: t.driverName,
+        detail: `Variance ${t.variance}% is outside expected range [${sig.lo}%–${sig.hi}%] for ${t.wasteType} on route ${t.routeFrom}→${t.routeTo}.`,
+        variance: t.variance, expected: `${sig.lo}–${sig.hi}%`, route: `${t.routeFrom}→${t.routeTo}`, date: t.date
+      });
+    }
+  });
+  return { signatures: sigs, flags };
+}
+
+// ── ALGORITHM 6: Driver Behaviour Scoring ─────────────
+function scoreDriverBehaviour(trips) {
+  const byDriver = {};
+  trips.forEach(t => { (byDriver[t.driverId] = byDriver[t.driverId] || []).push(t); });
+  const scores = [];
+  Object.entries(byDriver).forEach(([driverId, dTrips]) => {
+    const driver = DCOC_DRIVERS.find(d => d.id === driverId) || { name: driverId, plate: '—' };
+    const vars = dTrips.map(t => t.variance);
+    const avgVar = vars.reduce((s,v)=>s+v,0) / vars.length;
+    const varStd = Math.sqrt(vars.reduce((s,v)=>s+(v-avgVar)**2,0)/vars.length);
+
+    // Scoring components (each 0-25, total 0-100)
+    const varianceScore = Math.max(0, 25 - avgVar * 2.5); // lower avg variance = better
+    const consistencyScore = varStd < 0.5 && avgVar > 7 ? 0 : Math.min(25, varStd * 8); // too consistent at high variance = bad
+    const routeScore = 25 - Math.min(25, dTrips.filter(t => t.deviated).length / dTrips.length * 50);
+    const ghostScore = 25 - Math.min(25, dTrips.filter(t => t.ghostTrip).length * 12.5);
+    const total = Math.round(Math.max(0, Math.min(100, varianceScore + consistencyScore + routeScore + ghostScore)));
+    const flagCount = dTrips.filter(t => t.variance > 8 || t.deviated || t.ghostTrip).length;
+
+    scores.push({
+      driverId, driverName: driver.name, plate: driver.plate, licence: driver.licence,
+      score: total, grade: total >= 80 ? 'A' : total >= 60 ? 'B' : total >= 40 ? 'C' : 'F',
+      avgVariance: parseFloat(avgVar.toFixed(1)), varStdDev: parseFloat(varStd.toFixed(2)),
+      tripCount: dTrips.length, flagCount,
+      routeAdherence: Math.round((1 - dTrips.filter(t=>t.deviated).length/dTrips.length) * 100),
+      ghostTrips: dTrips.filter(t => t.ghostTrip).length
+    });
+  });
+  scores.sort((a,b) => a.score - b.score); // worst first
+  return scores;
+}
+
+// ── Master Fraud Analysis Runner ──────────────────────
+function runDcocFraudAnalysis() {
+  const trips = getDcocTripHistory();
+  const patterns = analyseVariancePatterns(trips);
+  const routeDevs = detectRouteDeviations(trips);
+  const ghosts = detectGhostTrips(trips);
+  const collusion = detectCollusionPatterns(trips);
+  const { signatures, flags: weightFlags } = buildWeightSignatures(trips);
+  const driverScores = scoreDriverBehaviour(trips);
+
+  return {
+    tripCount: trips.length,
+    patterns, routeDeviations: routeDevs, ghostTrips: ghosts,
+    collusion, weightSignatures: signatures, weightAnomalies: weightFlags,
+    driverScores,
+    totalFlags: patterns.length + routeDevs.length + ghosts.length + collusion.length + weightFlags.length,
+    criticalCount: patterns.length + routeDevs.length + ghosts.length + collusion.length,
+    summary: `${trips.length} trips analysed. ${patterns.length} pattern gaming, ${routeDevs.length} route deviations, ${ghosts.length} ghost trips, ${collusion.length} collusion pairs, ${weightFlags.length} weight anomalies detected.`
+  };
+}
+window.runDcocFraudAnalysis = runDcocFraudAnalysis;
+
+// ── Fraud Intelligence Panel (NEMA Oversight UI) ──────
+function renderFraudIntelligencePanel() {
+  const fraud = runDcocFraudAnalysis();
+  const scoreColor = s => s >= 80 ? 'var(--mint)' : s >= 60 ? 'var(--gold)' : 'var(--coral)';
+  const gradeColor = g => g === 'A' ? 'rgba(58,170,92,.15)' : g === 'B' ? 'rgba(245,166,35,.15)' : 'rgba(239,83,80,.15)';
+
+  // Pattern cards
+  const patternCards = [
+    { icon:'📊', title:'Variance Pattern Gaming', count: fraud.patterns.length, severity: fraud.patterns.length > 0 ? 'critical' : 'clear',
+      desc: fraud.patterns.length > 0 ? fraud.patterns.map(p => `<strong>${p.driverName}</strong> (${p.plate}): ${p.tripCount} trips, mean ${p.mean}% variance, σ=${p.stdDev}`).join('<br>') : 'No suspicious patterns detected.' },
+    { icon:'🗺️', title:'Route Deviations', count: fraud.routeDeviations.length, severity: fraud.routeDeviations.length > 0 ? 'critical' : 'clear',
+      desc: fraud.routeDeviations.length > 0 ? `${fraud.routeDeviations.length} trips with GPS points outside approved corridor. Max deviation: ${Math.max(...fraud.routeDeviations.map(r=>r.maxDevKm)).toFixed(1)}km.` : 'All trips within approved corridors.' },
+    { icon:'👻', title:'Ghost Trips', count: fraud.ghostTrips.length, severity: fraud.ghostTrips.length > 0 ? 'critical' : 'clear',
+      desc: fraud.ghostTrips.length > 0 ? `${fraud.ghostTrips.length} trips with insufficient GPS data or impossible speeds. Possible fabricated manifests.` : 'All trips have verified GPS tracks.' },
+    { icon:'🤝', title:'Collusion Patterns', count: fraud.collusion.length, severity: fraud.collusion.length > 0 ? 'critical' : 'clear',
+      desc: fraud.collusion.length > 0 ? fraud.collusion.map(c => `<strong>${c.facilities[0]}</strong> ↔ <strong>${c.facilities[1]}</strong>: identical variance ${c.meanA}% vs ${c.meanB}%`).join('<br>') : 'No cross-facility collusion detected.' },
+    { icon:'⚖️', title:'Weight Signature Anomalies', count: fraud.weightAnomalies.length, severity: fraud.weightAnomalies.length > 0 ? 'warning' : 'clear',
+      desc: fraud.weightAnomalies.length > 0 ? `${fraud.weightAnomalies.length} trips with variance outside expected range for their waste type × route combination.` : 'All trips within expected weight signatures.' },
+  ];
+
+  return `
+    <div class="fraud-intel-panel">
+      <div class="fip-header">
+        <div class="fip-title">
+          <span class="nwfc-live-dot"></span>
+          <svg width="22" height="22" fill="none" stroke="#EF5350" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4.5c-.77-.833-2.694-.833-3.464 0L3.34 16.5c-.77.833.192 2.5 1.732 2.5z"></path></svg>
+          <span>dCoC AI Fraud Intelligence Engine</span>
+        </div>
+        <div class="fip-summary">
+          <span class="tag-pill" style="background:rgba(239,83,80,.15);color:var(--coral)">${fraud.criticalCount} Critical</span>
+          <span class="tag-pill" style="background:rgba(245,166,35,.15);color:var(--gold)">${fraud.weightAnomalies.length} Warning</span>
+          <span class="tag-pill" style="background:rgba(255,255,255,.08);color:rgba(255,255,255,.5)">${fraud.tripCount} Trips Scanned</span>
+        </div>
+      </div>
+
+      <!-- PATTERN ANALYSIS CARDS -->
+      <div class="fip-cards">
+        ${patternCards.map(c => `
+        <div class="fip-card fip-card-${c.severity}">
+          <div class="fip-card-head">
+            <span class="fip-card-icon">${c.icon}</span>
+            <span class="fip-card-title">${c.title}</span>
+            <span class="fip-card-count" style="color:${c.severity==='critical'?'var(--coral)':c.severity==='warning'?'var(--gold)':'var(--mint)'}">${c.count}</span>
+          </div>
+          <div class="fip-card-body">${c.desc}</div>
+        </div>
+        `).join('')}
+      </div>
+
+      <!-- DRIVER BEHAVIOUR LEADERBOARD -->
+      <div class="fip-drivers">
+        <div class="fip-drivers-head">
+          <span>🚛 Driver Behaviour Leaderboard</span>
+          <span style="font-size:.7rem;color:rgba(255,255,255,.4)">Ranked by risk score (worst first)</span>
+        </div>
+        <table class="fip-driver-table">
+          <thead><tr><th>Driver</th><th>Plate</th><th>Score</th><th>Trips</th><th>Avg Var%</th><th>σ</th><th>Route%</th><th>Ghosts</th><th>Flags</th></tr></thead>
+          <tbody>
+            ${fraud.driverScores.map(d => `
+            <tr style="${d.grade==='F'?'background:rgba(239,83,80,.06);':d.grade==='C'?'background:rgba(245,166,35,.04);':''}">
+              <td><strong>${d.driverName}</strong><br><span style="font-size:.65rem;color:rgba(255,255,255,.4)">${d.driverId}</span></td>
+              <td>${d.plate}</td>
+              <td><span class="fip-score-badge" style="background:${gradeColor(d.grade)};color:${scoreColor(d.score)}">${d.score} (${d.grade})</span></td>
+              <td>${d.tripCount}</td>
+              <td style="color:${d.avgVariance>7?'var(--coral)':d.avgVariance>4?'var(--gold)':'var(--mint)'}">${d.avgVariance}%</td>
+              <td style="color:${d.varStdDev<0.5&&d.avgVariance>7?'var(--coral)':'rgba(255,255,255,.5)'}">${d.varStdDev}</td>
+              <td style="color:${d.routeAdherence<80?'var(--coral)':'var(--mint)'}">${d.routeAdherence}%</td>
+              <td style="color:${d.ghostTrips>0?'var(--coral)':'rgba(255,255,255,.5)'}">${d.ghostTrips}</td>
+              <td><span class="tag-pill" style="background:${d.flagCount>3?'rgba(239,83,80,.15)':d.flagCount>0?'rgba(245,166,35,.15)':'rgba(255,255,255,.06)'};color:${d.flagCount>3?'var(--coral)':d.flagCount>0?'var(--gold)':'rgba(255,255,255,.5)'}">${d.flagCount}</span></td>
+            </tr>
+            `).join('')}
+          </tbody>
+        </table>
+      </div>
+    </div>`;
+}
+window.renderFraudIntelligencePanel = renderFraudIntelligencePanel;
+
+// ── Enhanced Fraud Alerts (inject into generateWasteAlerts) ──
+function generateFraudAlerts() {
+  const fraud = runDcocFraudAnalysis();
+  const alerts = [];
+
+  fraud.patterns.forEach(p => {
+    alerts.push({ severity:'critical', icon:'📊', title:'Variance Pattern Gaming — Threshold Manipulation',
+      projectName: p.driverName + ' (' + p.plate + ')', county:'Multi-route',
+      detail: p.detail, regulation:'Reg. 37 · AI Pattern Detection', timeAgo: 'Last 30 days',
+      actions: [{ label:'🔒 Suspend Driver', type:'danger', onclick:"toast('Driver suspended pending investigation.','success')" },
+                { label:'📋 Full Report', type:'secondary', onclick:"toast('Fraud report generated.','success')" }]
+    });
+  });
+
+  fraud.routeDeviations.slice(0,3).forEach(r => {
+    alerts.push({ severity:'critical', icon:'🗺️', title:'Route Deviation — Off-Corridor GPS Track',
+      projectName: r.driverName + ' (' + r.plate + ')', county: r.route,
+      detail: r.detail, regulation:'SWMA 2022 · Route Compliance', timeAgo: new Date(r.date).toLocaleDateString('en-KE'),
+      actions: [{ label:'🛑 Flag Trip', type:'danger', onclick:"toast('Trip flagged for investigation.','success')" }]
+    });
+  });
+
+  fraud.ghostTrips.forEach(g => {
+    alerts.push({ severity:'critical', icon:'👻', title:'Ghost Trip Suspected — No GPS Verification',
+      projectName: g.driverName + ' (' + g.plate + ')', county: g.route,
+      detail: g.detail, regulation:'Reg. 37 · False Data', timeAgo: new Date(g.date).toLocaleDateString('en-KE'),
+      actions: [{ label:'🚨 Investigate', type:'danger', onclick:"toast('Investigation dispatched.','success')" }]
+    });
+  });
+
+  fraud.collusion.forEach(c => {
+    alerts.push({ severity:'critical', icon:'🤝', title:'Collusion Pattern — Cross-Facility Manipulation',
+      projectName: c.facilities.join(' ↔ '), county:'Multi-facility',
+      detail: c.detail, regulation:'Reg. 37 · Coordinated Fraud', timeAgo:'Last 30 days',
+      actions: [{ label:'🔒 Freeze Both', type:'danger', onclick:"toast('Both facilities frozen.','success')" },
+                { label:'📋 Report', type:'secondary', onclick:"toast('Collusion report generated.','success')" }]
+    });
+  });
+
+  fraud.driverScores.filter(d => d.score < 40).forEach(d => {
+    alerts.push({ severity:'warning', icon:'🚛', title:'Driver Risk Score Critical — ' + d.driverName,
+      projectName: d.plate, county:'Fleet-wide',
+      detail: `Behaviour score ${d.score}/100 (Grade ${d.grade}). Avg variance ${d.avgVariance}%, route adherence ${d.routeAdherence}%, ${d.ghostTrips} ghost trips, ${d.flagCount} total flags.`,
+      regulation:'SWMA 2022 · Fleet Compliance', timeAgo:'Rolling 30-day',
+      actions: [{ label:'⏸ Restrict Routes', type:'primary', onclick:"toast('Driver restricted to verified routes.','success')" }]
+    });
+  });
+
+  return alerts;
 }

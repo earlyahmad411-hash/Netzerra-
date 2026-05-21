@@ -387,6 +387,7 @@ const LABELS = {
   enterprise:'Enterprise Dashboard',
   exchange:'Carbon Credit Exchange',
   'nema-oversight':'NEMA Oversight Portal',
+  'ai-intelligence':'AI Intelligence Suite',
   'gcis-wizard':'GCIS Application Wizard',
   'my-projects':'My Projects',
   'messages':'Message Center',

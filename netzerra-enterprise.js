@@ -10,14 +10,14 @@
 const AUTH = {
   currentUser: null,
   roles: {
-    proponent: { label: 'Project Proponent', sections: ['home', 'dashboard', 'gcis-wizard', 'my-projects', 'messages', 'passport', 'calculator', 'offsets', 'sequestration', 'county', 'leaderboard', 'community', 'methodology', 'docs', 'marketplace', 'education', 'membership', 'about', 'profile', 'disclaimer', 'kncr'] },
-    consultant: { label: 'Carbon Consultant', sections: ['home', 'dashboard', 'review-queue', 'messages', 'registry', 'methodology', 'docs', 'about', 'profile', 'disclaimer'] },
+    proponent: { label: 'Project Proponent', sections: ['home', 'dashboard', 'gcis-wizard', 'my-projects', 'messages', 'passport', 'calculator', 'offsets', 'sequestration', 'county', 'leaderboard', 'community', 'methodology', 'ai-intelligence', 'docs', 'marketplace', 'education', 'membership', 'about', 'profile', 'disclaimer', 'kncr'] },
+    consultant: { label: 'Carbon Consultant', sections: ['home', 'dashboard', 'review-queue', 'messages', 'registry', 'methodology', 'ai-intelligence', 'docs', 'about', 'profile', 'disclaimer'] },
     developer: { label: 'Project Developer', sections: 'all' },
-    enterprise: { label: 'Enterprise', sections: ['home', 'dashboard', 'passport', 'calculator', 'offsets', 'enterprise', 'exchange', 'b2b', 'county', 'leaderboard', 'community', 'methodology', 'docs', 'marketplace', 'education', 'membership', 'about', 'profile', 'disclaimer'] },
-    nema_national: { label: 'NEMA National Director', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'profile'] },
-    nema_county: { label: 'NEMA County Officer', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'profile'] },
-    nema_reviewer: { label: 'NEMA Technical Reviewer', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'profile'] },
-    personal: { label: 'Personal', sections: ['home', 'dashboard', 'passport', 'calculator', 'offsets', 'county', 'leaderboard', 'community', 'methodology', 'docs', 'education', 'membership', 'about', 'profile', 'disclaimer'] },
+    enterprise: { label: 'Enterprise', sections: ['home', 'dashboard', 'passport', 'calculator', 'offsets', 'enterprise', 'exchange', 'b2b', 'county', 'leaderboard', 'community', 'methodology', 'ai-intelligence', 'docs', 'marketplace', 'education', 'membership', 'about', 'profile', 'disclaimer'] },
+    nema_national: { label: 'NEMA National Director', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'ai-intelligence', 'profile'] },
+    nema_county: { label: 'NEMA County Officer', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'ai-intelligence', 'profile'] },
+    nema_reviewer: { label: 'NEMA Technical Reviewer', sections: ['home', 'dashboard', 'nema-oversight', 'leaderboard', 'methodology', 'ai-intelligence', 'profile'] },
+    personal: { label: 'Personal', sections: ['home', 'dashboard', 'passport', 'calculator', 'offsets', 'county', 'leaderboard', 'community', 'methodology', 'ai-intelligence', 'docs', 'education', 'membership', 'about', 'profile', 'disclaimer'] },
   },
   demoAccounts: {
     'demo-proponent': { name: 'Shukri Ali', org: 'Netzerra', role: 'proponent', county: null, plan: 'Project Proponent' },

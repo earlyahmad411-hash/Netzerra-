@@ -4,7 +4,7 @@
    without internet (Kenya field use)
 ══════════════════════════════════════════════ */
 
-const CACHE = 'netzerra-v6-nuclear';
+const CACHE = 'netzerra-v7-waste-ai';
 const PRECACHE = [
   './',
   './index.html',
@@ -16,6 +16,10 @@ const PRECACHE = [
   './netzerra-ai.js',
   './netzerra-nuclear.js',
   './netzerra-nuclear.css',
+  './netzerra-waste-management.js',
+  './netzerra-waste-management.css',
+  './netzerra-intelligence.js',
+  './netzerra-intelligence.css',
   'https://fonts.googleapis.com/css2?family=Sora:wght@300;400;500;600;700;800&family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;600&display=swap',
   'https://cdn.jsdelivr.net/npm/chart.js@4.4.0/dist/chart.umd.min.js',
   'https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js',
